@@ -39,6 +39,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +49,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -153,19 +155,21 @@ fun MigraineScreen(
                     ) {
                         items(episodes, key = { it.id }) { ep ->
                             SectionCard(title = formatTs(ep.timestampMillis)) {
-                                Text("Intensity ${ep.overallIntensity}/10 · ${ep.markers.size} points")
+                                Text("Intensity ${ep.overallIntensity}/10 - ${ep.markers.size} points")
                                 if (ep.symptoms.isNotEmpty()) {
                                     Text(ep.symptoms.joinToString { it.label })
                                 }
-                                if (ep.notes.isNotBlank()) Text(ep.notes, style = MaterialTheme.typography.bodyMedium)
-                                Row(Modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                    AssistChip(
-                                        onClick = {
-                                            detailId = ep.id
-                                            pane = MigrainePane.Detail
-                                        },
-                                        label = { Text("Open") },
-                                    )
+                                if (ep.notes.isNotBlank()) {
+                                    Text(ep.notes, style = MaterialTheme.typography.bodyMedium)
+                                }
+                                TextButton(
+                                    onClick = {
+                                        detailId = ep.id
+                                        pane = MigrainePane.Detail
+                                    },
+                                    modifier = Modifier.align(Alignment.End),
+                                ) {
+                                    Text("Open")
                                 }
                             }
                         }
