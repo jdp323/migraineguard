@@ -1,0 +1,13 @@
+## Copy to local.properties (gitignored) and fill in values.
+## Never commit real keys or client IDs with secrets.
+
+# Android SDK path (Android Studio usually writes this automatically)
+# sdk.dir=/Users/YOU/Library/Android/sdk
+
+# Google Sign-In / Credential Manager — Web client ID from Google Cloud Console
+GOOGLE_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
+
+# AI provider keys (configure later; used via BuildConfig — never commit)
+# GEMINI_API_KEY=
+# GROQ_API_KEY=
+# OPENROUTER_API_KEY=
