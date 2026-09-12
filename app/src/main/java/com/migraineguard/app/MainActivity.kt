@@ -6,11 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.migraineguard.app.core.data.prefs.UserPreferences
 import com.migraineguard.app.core.design.MigraineGuardTheme
-import com.migraineguard.app.di.AppContainer
 import com.migraineguard.app.navigation.MigraineGuardNavHost
 
 class MainActivity : ComponentActivity() {
@@ -19,18 +19,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val app = application as MigraineGuardApp
         setContent {
-            MigraineGuardTheme {
+            val prefs by app.container.preferencesRepository.preferences
+                .collectAsStateWithLifecycle(UserPreferences())
+            MigraineGuardTheme(
+                themeMode = prefs.themeMode,
+                dynamicColor = prefs.dynamicColor,
+            ) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    MigraineGuardRoot(container = app.container)
+                    MigraineGuardNavHost(container = app.container)
                 }
             }
         }
     }
-}
-
-@Composable
-private fun MigraineGuardRoot(container: AppContainer) {
-    // Keep LocalContext available for future permission / Credential Manager flows
-    LocalContext.current
-    MigraineGuardNavHost(container = container)
 }

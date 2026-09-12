@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#1B6CA8</color>
+    <color name="ic_launcher_background">#0D9488</color>
+    <color name="seed_teal">#0D9488</color>
+    <color name="seed_indigo">#4F46E5</color>
 </resources>

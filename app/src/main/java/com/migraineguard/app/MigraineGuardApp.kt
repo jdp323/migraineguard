@@ -3,10 +3,7 @@ package com.migraineguard.app
 import android.app.Application
 import com.migraineguard.app.di.AppContainer
 
-/**
- * Application entry point. Holds a simple manual DI container (no Hilt yet)
- * so features can share fake repositories during the starter phase.
- */
+/** Application entry — holds the manual DI container. */
 class MigraineGuardApp : Application() {
     lateinit var container: AppContainer
         private set

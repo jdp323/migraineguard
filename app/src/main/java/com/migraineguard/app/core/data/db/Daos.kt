@@ -1,0 +1,54 @@
+package com.migraineguard.app.core.data.db
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface MigraineDao {
+    @Query("SELECT * FROM migraine_episodes ORDER BY timestampMillis DESC")
+    fun observeAll(): Flow<List<MigraineEpisodeEntity>>
+
+    @Query("SELECT * FROM migraine_episodes WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): MigraineEpisodeEntity?
+
+    @Query(
+        "SELECT * FROM migraine_episodes WHERE timestampMillis BETWEEN :start AND :end ORDER BY timestampMillis DESC"
+    )
+    suspend fun inRange(start: Long, end: Long): List<MigraineEpisodeEntity>
+
+    @Insert
+    suspend fun insert(entity: MigraineEpisodeEntity): Long
+
+    @Query("DELETE FROM migraine_episodes WHERE id = :id")
+    suspend fun delete(id: Long)
+}
+
+@Dao
+interface NutritionDao {
+    @Query("SELECT * FROM nutrition_scans ORDER BY timestampMillis DESC LIMIT :limit")
+    fun observeRecent(limit: Int = 50): Flow<List<NutritionScanEntity>>
+
+    @Insert
+    suspend fun insert(entity: NutritionScanEntity): Long
+
+    @Query("DELETE FROM nutrition_scans WHERE id = :id")
+    suspend fun delete(id: Long)
+}
+
+@Dao
+interface WaterHistoryDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(day: WaterDayEntity)
+
+    @Query("SELECT * FROM water_history WHERE dateIso = :dateIso LIMIT 1")
+    suspend fun get(dateIso: String): WaterDayEntity?
+
+    @Query("SELECT * FROM water_history ORDER BY dateIso DESC LIMIT :limit")
+    fun observeRecent(limit: Int = 30): Flow<List<WaterDayEntity>>
+
+    @Query("SELECT * FROM water_history WHERE dateIso BETWEEN :start AND :end ORDER BY dateIso ASC")
+    suspend fun inRange(start: String, end: String): List<WaterDayEntity>
+}

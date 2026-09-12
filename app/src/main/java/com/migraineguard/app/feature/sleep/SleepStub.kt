@@ -1,7 +1,4 @@
 package com.migraineguard.app.feature.sleep
 
-/**
- * Sleep feature package marker.
- * Combined with Fitness on the Track tab; keep domain logic here as the feature grows.
- */
+/** Sleep feature marker — combined with Fitness on the Track tab. */
 object SleepFeature

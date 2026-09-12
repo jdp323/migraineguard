@@ -1,28 +1,31 @@
 package com.migraineguard.app.feature.nutrition
 
+import com.migraineguard.app.core.ai.FallbackAiClient
+import com.migraineguard.app.core.data.db.NutritionDao
+import com.migraineguard.app.core.data.db.NutritionScanEntity
+import com.migraineguard.app.core.domain.NutritionScanRecord
 import com.migraineguard.app.core.domain.NutritionScanResult
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
-/**
- * Food / camera scan analysis.
- * Later: free AI APIs with fallback chain via core/ai.FallbackAiClient.
- */
 interface NutritionAnalyzer {
-    suspend fun analyzeFoodLabel(description: String): NutritionScanResult
-    suspend fun analyzeCameraStub(): NutritionScanResult
+    suspend fun analyzeFoodLabel(description: String, imageUri: String? = null): NutritionScanResult
+    fun observeRecent(limit: Int = 30): Flow<List<NutritionScanRecord>>
+    suspend fun persist(result: NutritionScanResult): Long
 }
 
-class FakeNutritionAnalyzer : NutritionAnalyzer {
-    override suspend fun analyzeFoodLabel(description: String): NutritionScanResult =
-        NutritionScanResult(
-            foodLabel = description.ifBlank { "Unknown food" },
-            caloriesEstimate = 250,
-            notes = "Fake analyzer — wire Gemini/Groq/OpenRouter later.",
-        )
+class AiNutritionAnalyzer(
+    private val aiClient: FallbackAiClient,
+    private val dao: NutritionDao,
+) : NutritionAnalyzer {
+    override suspend fun analyzeFoodLabel(description: String, imageUri: String?): NutritionScanResult {
+        val base = aiClient.analyzeNutrition(description, hasImage = imageUri != null)
+        return base.copy(imageUri = imageUri)
+    }
 
-    override suspend fun analyzeCameraStub(): NutritionScanResult =
-        NutritionScanResult(
-            foodLabel = "Sample salad (camera stub)",
-            caloriesEstimate = 180,
-            notes = "No camera capture yet; placeholder for ML Kit / AI vision.",
-        )
+    override fun observeRecent(limit: Int): Flow<List<NutritionScanRecord>> =
+        dao.observeRecent(limit).map { list -> list.map { it.toDomain() } }
+
+    override suspend fun persist(result: NutritionScanResult): Long =
+        dao.insert(NutritionScanEntity.from(result, System.currentTimeMillis()))
 }

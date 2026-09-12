@@ -1,182 +1,136 @@
 # MigraineGuard
 
-Android starter app (Kotlin + Jetpack Compose + Material 3) for tracking migraines, habits, and environmental triggers.
+Kotlin + Jetpack Compose + Material 3 app for tracking migraines, hydration, fitness/sleep (via **Health Connect** / Samsung Health), nutrition, weather pressure, and AI-assisted insights.
 
 **Package:** `com.migraineguard.app`  
+**Version:** 1.0.0  
 **Min SDK:** 26 · **Target / Compile SDK:** 35  
-**Auth:** Google Sign-In only (Credential Manager placeholders + demo toggle)
-
-This repo was scaffolded from scratch (not cloned). Fake repositories power every feature so you can run and navigate immediately.
+**Auth:** Google Sign-In (Credential Manager) + demo mode
 
 ---
 
-## What you get
+## v1 features
 
-| Area | Status |
-|------|--------|
-| Sign-in gate | Demo toggle; Google Identity / Credential Manager sketched |
-| Bottom nav | Home, Migraine, Track, Food, Water, Insights |
-| Migraine map | Interactive head silhouette (Canvas) + intensity slider |
-| Water | Cup +/- with DataStore persistence |
-| Fitness / Sleep / Weather / Nutrition / Insights | Interfaces + fake impls |
-| AI | `FallbackAiClient` + GeminiFree → GroqFree → OpenRouterFree stubs |
-| Settings | Google Drive sync interface stub |
+| Area | What ships |
+|------|------------|
+| Theme | Teal/indigo medical-calm Material 3; System / Light / Dark (DataStore); optional dynamic color |
+| Onboarding | First-launch tip pager |
+| Auth | Google Credential Manager when `GOOGLE_WEB_CLIENT_ID` is set; demo mode always works |
+| Migraine | Canvas head map, multi points, intensity 1–10, symptom chips, notes, Room history + detail |
+| Water | Cups UI, progress ring, daily goal, Room history |
+| Track | Health Connect permissions + Samsung Health explainer; fake fallback when HC unavailable |
+| Food | Camera / gallery → preview → `FallbackAiClient` (Gemini→Groq→OpenRouter) → Room recent scans |
+| Weather | Location → **Open-Meteo** (free, no key); daily cache + offline fake |
+| Insights | 7 / 14 / 30 day aggregates + AI narrative |
+| Drive sync | Settings toggle + status TODO (builds without Drive credentials) |
+| Home | Risk hints, water progress, sleep/steps, weather, quick actions |
 
 ---
 
-## Folder map
+## Architecture
+
+Single-module `app` with feature packages and a manual `AppContainer` (no Hilt).
 
 ```
-migraineguard/
-├── app/
-│   ├── build.gradle.kts          # Module deps, BuildConfig fields
-│   └── src/main/
-│       ├── AndroidManifest.xml
-│       ├── java/com/migraineguard/app/
-│       │   ├── MigraineGuardApp.kt
-│       │   ├── MainActivity.kt
-│       │   ├── di/AppContainer.kt          # Manual DI / fakes
-│       │   ├── navigation/                 # NavHost + routes
-│       │   ├── core/
-│       │   │   ├── ai/                     # AiProvider + FallbackAiClient
-│       │   │   ├── data/                   # Result wrapper
-│       │   │   ├── design/                 # Theme, typography
-│       │   │   ├── domain/                 # Shared models
-│       │   │   └── ui/                     # Shared Compose widgets
-│       │   └── feature/
-│       │       ├── auth/
-│       │       ├── home/
-│       │       ├── migraine/
-│       │       ├── fitness/ + sleep/ + track/
-│       │       ├── nutrition/
-│       │       ├── water/
-│       │       ├── weather/
-│       │       ├── insights/
-│       │       └── settings/
-│       └── res/
-├── gradle/libs.versions.toml     # Version catalog
-├── local.properties.example      # Copy → local.properties (gitignored)
-├── settings.gradle.kts
-└── README.md
+com.migraineguard.app/
+├── di/AppContainer.kt
+├── navigation/
+├── core/{ai,data/db,data/prefs,design,domain,ui}
+└── feature/{auth,home,migraine,track,fitness,sleep,nutrition,water,weather,insights,settings,onboarding}
 ```
 
-**Single-module `app`** with clean feature packages — easy to split into Gradle modules later.
+- **Room** — migraine episodes, nutrition scans, water history  
+- **DataStore** — theme, goals, notification prefs, onboarding, Drive toggle, today’s cups  
+- **OkHttp** — Open-Meteo + optional AI HTTP  
 
 ---
 
-## Open in Android Studio
+## Build / run
 
-1. Install [Android Studio](https://developer.android.com/studio) (Ladybug / newer recommended).
-2. **File → Open** and select this `migraineguard` folder.
-3. Let Gradle sync. If the wrapper JAR is missing, Android Studio offers to generate it, or run:
-   ```bash
-   gradle wrapper --gradle-version 8.11.1
-   ```
-   (requires a local Gradle install once).
-4. Create an emulator (API 26+) or plug in a device.
-5. Run the **app** configuration.
-
-On first launch: **Continue as demo user** (or Sign in with Google — currently also demo until you add a client ID).
-
----
-
-## Push to GitHub
-
-Remote intended: https://github.com/jdp323/migraineguard
+1. Open this folder in **Android Studio** (Ladybug+).
+2. Copy `local.properties.example` → `local.properties` and set `sdk.dir=…`.
+3. Sync Gradle (`./gradlew` wrapper is included).
+4. Run on a device/emulator (API 26+). **No emulator required** for development if you use a physical phone.
 
 ```bash
-cd /path/to/migraineguard
-git init
-git add .
-git commit -m "Initial MigraineGuard Compose starter"
-git branch -M main
-git remote add origin https://github.com/jdp323/migraineguard.git
-git push -u origin main
+./gradlew :app:assembleDebug
 ```
 
-Use SSH if you prefer: `git@github.com:jdp323/migraineguard.git`.  
-Do **not** commit `local.properties` or API keys (already in `.gitignore`).
+Release:
 
----
-
-## Google Sign-In setup (no secrets in git)
-
-1. Open [Google Cloud Console](https://console.cloud.google.com/).
-2. Create/select a project → **APIs & Services → Credentials**.
-3. Create an **OAuth 2.0 Client ID** of type **Web application** (this is the *server client ID* Credential Manager needs).
-4. Also create an **Android** client ID with your app’s package `com.migraineguard.app` and SHA-1 (debug keystore: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android`).
-5. Copy `local.properties.example` → `local.properties` and set:
-   ```properties
-   GOOGLE_WEB_CLIENT_ID=123456789-xxxx.apps.googleusercontent.com
-   sdk.dir=/path/to/Android/sdk
-   ```
-6. Sync Gradle. `BuildConfig.GOOGLE_WEB_CLIENT_ID` is populated from that property.
-7. Replace the demo handlers in `feature/auth/SignInScreen.kt` / `MigraineGuardNavHost.kt` with a real `CredentialManager.getCredential(...)` flow (comments in `SignInScreen.kt` show the sketch).
-
-**Never commit** client secrets or service-account JSON.
-
----
-
-## AI provider fallback plan
-
-Package: `core/ai`
-
-1. **`AiProvider`** — `complete(prompt)` → `Result<String>`
-2. **`FallbackAiClient`** — tries providers sorted by `priority` (lowest first); on failure moves to the next.
-3. Stub order (most powerful free first):
-   - `GeminiFree` (priority 0)
-   - `GroqFree` (priority 1)
-   - `OpenRouterFree` (priority 2)
-
-Later: read keys from `local.properties` → `BuildConfig` fields already reserved:
-
-- `GEMINI_API_KEY`
-- `GROQ_API_KEY`
-- `OPENROUTER_API_KEY`
-
-Nutrition and Insights will call `FallbackAiClient` for summaries / food labels. No real HTTP in this starter.
-
----
-
-## How to add a feature
-
-1. Create `feature/<name>/` under `com.migraineguard.app`.
-2. Add domain types to `core/domain` if shared.
-3. Define a repository / analyzer **interface** + fake impl.
-4. Register the fake in `di/AppContainer`.
-5. Add a Compose screen; register a route in `navigation/Routes.kt` and `MigraineGuardNavHost`.
-6. Wire bottom nav or a Home shortcut as needed.
-7. Keep Android-free models in `core/domain`; keep theme tokens in `core/design`.
-
----
-
-## Navigation overview
-
-```
-Signed out → SignInScreen
-Signed in  → Scaffold + bottom bar
-               Home (→ Settings)
-               Migraine
-               Track (Fitness + Sleep)
-               Food
-               Water
-               Insights
+```bash
+./gradlew :app:assembleRelease
+# Sign with your keystore (do not commit keystores)
 ```
 
 ---
 
-## Known starter limitations
+## Optional keys (`local.properties` → BuildConfig)
 
-- Google Sign-In is **not** live; demo auth only.
-- No Health Connect, camera, or GPS implementations.
-- AI providers return placeholder strings.
-- Drive sync is a toggle stub.
-- Migraine markers are **in-memory** only (not saved).
-- Gradle Wrapper JAR may need generation on first open (see above).
-- Adaptive launcher icons only (`mipmap-anydpi-v26`); fine for minSdk 26.
+| Key | Purpose |
+|-----|---------|
+| `GOOGLE_WEB_CLIENT_ID` | Credential Manager Google Sign-In (Web client ID) |
+| `GEMINI_API_KEY` | Gemini Flash nutrition / insights |
+| `GROQ_API_KEY` | Groq fallback |
+| `OPENROUTER_API_KEY` | OpenRouter fallback |
+
+Without keys, AI returns **structured stub JSON** so Food and Insights remain usable offline. **Never commit** `local.properties` or secrets.
+
+Also create an Android OAuth client (`com.migraineguard.app` + SHA-1) in Google Cloud Console for real Sign-In.
 
 ---
 
-## License / medical note
+## Health Connect + Samsung
 
-Personal / educational starter. Not a medical device. Migraine logging is for awareness, not diagnosis or treatment advice.
+1. Install **Health Connect** (or use the one bundled on recent Androids).
+2. Samsung Health → allow data sharing with Health Connect.
+3. In MigraineGuard **Track** or **Settings**, request permissions / open Health Connect.
+4. Galaxy Watch data flows: Watch → Samsung Health → Health Connect → MigraineGuard.
+
+If Health Connect is missing, the app shows calm **demo** fitness/sleep numbers.
+
+---
+
+## Weather
+
+Uses [Open-Meteo](https://open-meteo.com/) forecast API (no API key). Needs coarse/fine location for local pressure/humidity; otherwise a demo snapshot is shown and cached per day.
+
+---
+
+## AI fallback order
+
+1. Gemini (if key) else structured stub success  
+2. Groq (if key)  
+3. OpenRouter (if key)  
+
+`FallbackAiClient` walks the chain for text completion, nutrition JSON, and insight narratives.
+
+---
+
+## Permissions used
+
+- Internet (weather / AI)  
+- Location (weather)  
+- Camera (food scan)  
+- Health Connect read: steps, heart rate, sleep  
+
+---
+
+## Known gaps
+
+- Drive sync toggle queues locally; Drive REST upload is TODO (no credentials needed to compile).  
+- Notification toggles are persisted prefs; WorkManager push not wired yet.  
+- Google Sign-In needs a real Web client ID + device Google Play services.  
+- Health Connect reads need a phone with HC installed and granted permissions.
+
+---
+
+## Medical note
+
+Personal / educational tool. **Not a medical device.** Logging supports awareness only — not diagnosis or treatment.
+
+---
+
+## License
+
+Personal project starter. Remote: https://github.com/jdp323/migraineguard

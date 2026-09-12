@@ -1,1 +1,4 @@
-# MigraineGuard ProGuard rules (add keep rules as needed when enabling minify)
+# MigraineGuard v1 — minify disabled by default; keep rules for future release builds.
+-keepclassmembers class * {
+    @androidx.room.* <methods>;
+}

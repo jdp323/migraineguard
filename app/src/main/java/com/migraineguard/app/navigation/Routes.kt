@@ -1,6 +1,7 @@
 package com.migraineguard.app.navigation
 
 object Routes {
+    const val Onboarding = "onboarding"
     const val SignIn = "sign_in"
     const val Home = "home"
     const val Migraine = "migraine"
