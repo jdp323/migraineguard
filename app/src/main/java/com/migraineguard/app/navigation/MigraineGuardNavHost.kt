@@ -15,7 +15,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -27,11 +30,14 @@ import androidx.navigation.compose.rememberNavController
 import com.migraineguard.app.core.data.prefs.UserPreferences
 import com.migraineguard.app.di.AppContainer
 import com.migraineguard.app.feature.auth.SignInScreen
+import com.migraineguard.app.feature.body.BodyMetricsScreen
 import com.migraineguard.app.feature.home.HomeScreen
 import com.migraineguard.app.feature.insights.InsightsScreen
+import com.migraineguard.app.feature.meds.MedicationsScreen
 import com.migraineguard.app.feature.migraine.MigraineScreen
 import com.migraineguard.app.feature.nutrition.NutritionScreen
 import com.migraineguard.app.feature.onboarding.OnboardingScreen
+import com.migraineguard.app.feature.profile.ProfileSetupScreen
 import com.migraineguard.app.feature.settings.SettingsScreen
 import com.migraineguard.app.feature.track.TrackScreen
 import com.migraineguard.app.feature.water.WaterScreen
@@ -42,6 +48,8 @@ fun MigraineGuardNavHost(container: AppContainer) {
     val authState by container.authRepository.authState.collectAsStateWithLifecycle()
     val prefs by container.preferencesRepository.preferences.collectAsStateWithLifecycle(UserPreferences())
     val scope = rememberCoroutineScope()
+    var forceProfileEdit by remember { mutableStateOf(false) }
+    var pendingGoogleFocus by remember { mutableStateOf(false) }
 
     if (!prefs.onboardingDone) {
         OnboardingScreen(
@@ -51,7 +59,32 @@ fun MigraineGuardNavHost(container: AppContainer) {
     }
 
     if (!authState.isSignedIn) {
-        SignInScreen(authRepository = container.authRepository)
+        // Allow configuring Google ID before sign-in via a lightweight settings gate
+        if (pendingGoogleFocus) {
+            SettingsScreen(
+                preferencesRepository = container.preferencesRepository,
+                driveSyncRepository = container.driveSyncRepository,
+                healthDataRepository = container.healthDataRepository,
+                onSignOut = {},
+                onBack = { pendingGoogleFocus = false },
+                focusGoogle = true,
+            )
+            return
+        }
+        SignInScreen(
+            authRepository = container.authRepository,
+            onNeedGoogleSetup = { pendingGoogleFocus = true },
+        )
+        return
+    }
+
+    if (!prefs.bodyProfile.profileComplete || forceProfileEdit) {
+        ProfileSetupScreen(
+            preferencesRepository = container.preferencesRepository,
+            prefilledName = authState.user?.displayName ?: prefs.bodyProfile.displayName,
+            initial = prefs.bodyProfile,
+            onComplete = { forceProfileEdit = false },
+        )
         return
     }
 
@@ -73,11 +106,13 @@ fun MigraineGuardNavHost(container: AppContainer) {
         }
     }
 
+    val hideBottom = setOf(Routes.Settings, Routes.BodyMetrics, Routes.Medications, Routes.ProfileSetup)
+
     Scaffold(
         bottomBar = {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
-            if (currentRoute != Routes.Settings) {
+            if (currentRoute !in hideBottom) {
                 NavigationBar {
                     bottomItems.forEach { item ->
                         NavigationBarItem(
@@ -104,6 +139,8 @@ fun MigraineGuardNavHost(container: AppContainer) {
                     onOpenWater = { goBottom(Routes.Water) },
                     onOpenFood = { goBottom(Routes.Food) },
                     onOpenFitness = { goBottom(Routes.Track) },
+                    onOpenBody = { navController.navigate(Routes.BodyMetrics) },
+                    onOpenMeds = { navController.navigate(Routes.Medications) },
                     weatherRepository = container.weatherRepository,
                     healthDataRepository = container.healthDataRepository,
                     waterIntakeRepository = container.waterIntakeRepository,
@@ -142,6 +179,22 @@ fun MigraineGuardNavHost(container: AppContainer) {
                     driveSyncRepository = container.driveSyncRepository,
                     healthDataRepository = container.healthDataRepository,
                     onSignOut = { container.authRepository.signOut() },
+                    onBack = { navController.popBackStack() },
+                    onEditProfile = { forceProfileEdit = true },
+                    onOpenBody = { navController.navigate(Routes.BodyMetrics) },
+                    onOpenMeds = { navController.navigate(Routes.Medications) },
+                )
+            }
+            composable(Routes.BodyMetrics) {
+                BodyMetricsScreen(
+                    weightRepository = container.weightRepository,
+                    preferencesRepository = container.preferencesRepository,
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable(Routes.Medications) {
+                MedicationsScreen(
+                    medicationRepository = container.medicationRepository,
                     onBack = { navController.popBackStack() },
                 )
             }

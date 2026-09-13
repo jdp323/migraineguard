@@ -9,11 +9,13 @@ import com.migraineguard.app.core.data.db.AppDatabase
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
 import com.migraineguard.app.feature.auth.AuthRepository
 import com.migraineguard.app.feature.auth.DefaultAuthRepository
+import com.migraineguard.app.feature.body.WeightRepository
 import com.migraineguard.app.feature.fitness.HealthConnectHealthDataRepository
 import com.migraineguard.app.feature.fitness.HealthDataRepository
 import com.migraineguard.app.feature.fitness.WorkoutRepository
 import com.migraineguard.app.feature.insights.DefaultInsightsAnalyzer
 import com.migraineguard.app.feature.insights.InsightsAnalyzer
+import com.migraineguard.app.feature.meds.MedicationRepository
 import com.migraineguard.app.feature.migraine.MigraineRepository
 import com.migraineguard.app.feature.nutrition.AiNutritionAnalyzer
 import com.migraineguard.app.feature.nutrition.NutritionAnalyzer
@@ -31,12 +33,14 @@ class AppContainer(context: Context) {
     private val db = AppDatabase.get(appContext)
 
     val preferencesRepository = UserPreferencesRepository(appContext)
-    val authRepository: AuthRepository = DefaultAuthRepository()
+    val authRepository: AuthRepository = DefaultAuthRepository(preferencesRepository)
     val migraineRepository = MigraineRepository(db.migraineDao())
     val waterIntakeRepository = WaterIntakeRepository(appContext, db.waterHistoryDao())
     val weatherRepository: WeatherRepository = OpenMeteoWeatherRepository(appContext)
     val healthDataRepository: HealthDataRepository = HealthConnectHealthDataRepository(appContext)
     val workoutRepository = WorkoutRepository(db.workoutDao())
+    val weightRepository = WeightRepository(db.weightDao())
+    val medicationRepository = MedicationRepository(db.medicationDao())
 
     val aiClient: FallbackAiClient = FallbackAiClient(
         providers = listOf(

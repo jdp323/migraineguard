@@ -5,7 +5,7 @@
 # sdk.dir=/Users/YOU/Library/Android/sdk
 
 # Google Sign-In / Credential Manager — Web client ID from Google Cloud Console
-# Build succeeds without this; Google button falls back to demo mode.
+# Prefer pasting into Settings → Google at runtime (DataStore). BuildConfig still works.
 # GOOGLE_WEB_CLIENT_ID=123456789-xxxx.apps.googleusercontent.com
 
 # AI provider keys (optional free tiers; BuildConfig fields — never commit)

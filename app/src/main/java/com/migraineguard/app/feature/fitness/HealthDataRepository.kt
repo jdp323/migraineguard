@@ -2,6 +2,7 @@ package com.migraineguard.app.feature.fitness
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
@@ -24,6 +25,8 @@ interface HealthDataRepository {
     suspend fun availabilityStatus(): HealthConnectStatus
     fun requiredPermissions(): Set<String>
     fun openHealthConnectSettingsIntent(): Intent
+    fun openHealthConnectInstallOrSettingsIntents(): List<Intent>
+    fun openSamsungHealthSettingsIntent(): Intent?
     suspend fun hasAllPermissions(): Boolean
 }
 
@@ -40,15 +43,31 @@ class HealthConnectHealthDataRepository(
 
     private val fake = FakeHealthDataRepository()
 
-    override fun requiredPermissions(): Set<String> = setOf(
-        HealthPermission.getReadPermission(StepsRecord::class),
-        HealthPermission.getReadPermission(HeartRateRecord::class),
-        HealthPermission.getReadPermission(SleepSessionRecord::class),
-        HealthPermission.getReadPermission(ExerciseSessionRecord::class),
-        HealthPermission.getReadPermission(DistanceRecord::class),
-        HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
-        HealthPermission.getWritePermission(ExerciseSessionRecord::class),
-    )
+    override fun requiredPermissions(): Set<String> {
+        val base = linkedSetOf(
+            HealthPermission.getReadPermission(StepsRecord::class),
+            HealthPermission.getReadPermission(HeartRateRecord::class),
+            HealthPermission.getReadPermission(SleepSessionRecord::class),
+            HealthPermission.getReadPermission(ExerciseSessionRecord::class),
+            HealthPermission.getReadPermission(DistanceRecord::class),
+            HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
+            HealthPermission.getWritePermission(ExerciseSessionRecord::class),
+        )
+        // Rebuild never-empty set (defensive against SDK quirks)
+        return if (base.isEmpty()) {
+            setOf(
+                "android.permission.health.READ_STEPS",
+                "android.permission.health.READ_SLEEP",
+                "android.permission.health.READ_HEART_RATE",
+                "android.permission.health.READ_EXERCISE",
+                "android.permission.health.READ_DISTANCE",
+                "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+                "android.permission.health.WRITE_EXERCISE",
+            )
+        } else {
+            base
+        }
+    }
 
     override suspend fun availabilityStatus(): HealthConnectStatus {
         val status = HealthConnectClient.getSdkStatus(context)
@@ -68,15 +87,39 @@ class HealthConnectHealthDataRepository(
         }.getOrDefault(false)
     }
 
-    override fun openHealthConnectSettingsIntent(): Intent {
-        val settings = Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS")
-        return if (settings.resolveActivity(context.packageManager) != null) {
-            settings
-        } else {
+    override fun openHealthConnectSettingsIntent(): Intent =
+        openHealthConnectInstallOrSettingsIntents().first()
+
+    override fun openHealthConnectInstallOrSettingsIntents(): List<Intent> {
+        val candidates = listOf(
+            Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS"),
+            Intent(Intent.ACTION_VIEW).setPackage("com.google.android.apps.healthdata"),
+            Intent(Intent.ACTION_MAIN).setPackage("com.google.android.apps.healthdata"),
             Intent(
                 Intent.ACTION_VIEW,
                 Uri.parse("market://details?id=com.google.android.apps.healthdata"),
-            )
+            ),
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata"),
+            ),
+        )
+        val pm = context.packageManager
+        val resolvable = candidates.filter { intent ->
+            intent.resolveActivity(pm) != null
+        }
+        return resolvable.ifEmpty { listOf(candidates.last()) }
+    }
+
+    override fun openSamsungHealthSettingsIntent(): Intent? {
+        val pm = context.packageManager
+        return try {
+            pm.getPackageInfo("com.sec.android.app.shealth", 0)
+            val launch = pm.getLaunchIntentForPackage("com.sec.android.app.shealth")
+            launch?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            launch
+        } catch (_: PackageManager.NameNotFoundException) {
+            null
         }
     }
 
@@ -181,6 +224,11 @@ class FakeHealthDataRepository : HealthDataRepository {
 
     override fun openHealthConnectSettingsIntent(): Intent =
         Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.healthdata"))
+
+    override fun openHealthConnectInstallOrSettingsIntents(): List<Intent> =
+        listOf(openHealthConnectSettingsIntent())
+
+    override fun openSamsungHealthSettingsIntent(): Intent? = null
 
     override suspend fun hasAllPermissions(): Boolean = false
 }

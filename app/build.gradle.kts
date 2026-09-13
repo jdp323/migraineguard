@@ -26,8 +26,8 @@ android {
         applicationId = "com.migraineguard.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -102,6 +102,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.androidx.health.connect)
     implementation(libs.coil.compose)
+    implementation(libs.androidx.work.runtime.ktx)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

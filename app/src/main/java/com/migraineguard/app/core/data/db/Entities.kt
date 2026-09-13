@@ -2,11 +2,14 @@ package com.migraineguard.app.core.data.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.migraineguard.app.core.domain.MedicationEntry
 import com.migraineguard.app.core.domain.MigraineEpisode
 import com.migraineguard.app.core.domain.MigraineSymptom
+import com.migraineguard.app.core.domain.MigraineTrigger
 import com.migraineguard.app.core.domain.NutritionScanRecord
 import com.migraineguard.app.core.domain.NutritionScanResult
 import com.migraineguard.app.core.domain.PainMarker
+import com.migraineguard.app.core.domain.WeightEntry
 import com.migraineguard.app.core.domain.WorkoutEntry
 import com.migraineguard.app.core.domain.WorkoutType
 
@@ -18,6 +21,7 @@ data class MigraineEpisodeEntity(
     val notes: String,
     val symptoms: List<MigraineSymptom>,
     val markers: List<PainMarker>,
+    val triggers: List<MigraineTrigger> = emptyList(),
 ) {
     fun toDomain() = MigraineEpisode(
         id = id,
@@ -26,6 +30,7 @@ data class MigraineEpisodeEntity(
         notes = notes,
         symptoms = symptoms,
         markers = markers,
+        triggers = triggers,
     )
 
     companion object {
@@ -36,6 +41,7 @@ data class MigraineEpisodeEntity(
             notes = e.notes,
             symptoms = e.symptoms,
             markers = e.markers,
+            triggers = e.triggers,
         )
     }
 }
@@ -118,6 +124,57 @@ data class WorkoutEntity(
             calories = e.calories,
             notes = e.notes,
             fromExerciseOfDay = e.fromExerciseOfDay,
+        )
+    }
+}
+
+@Entity(tableName = "weight_entries")
+data class WeightEntryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val timestampMillis: Long,
+    val weightKg: Float,
+    val notes: String = "",
+) {
+    fun toDomain() = WeightEntry(id, timestampMillis, weightKg, notes)
+
+    companion object {
+        fun fromDomain(e: WeightEntry) = WeightEntryEntity(
+            id = e.id,
+            timestampMillis = e.timestampMillis,
+            weightKg = e.weightKg,
+            notes = e.notes,
+        )
+    }
+}
+
+@Entity(tableName = "medications")
+data class MedicationEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val dose: String,
+    val timeLabel: String,
+    val takenToday: Boolean = false,
+    val lastTakenMillis: Long = 0,
+    val takenDateIso: String = "",
+) {
+    fun toDomain(todayIso: String) = MedicationEntry(
+        id = id,
+        name = name,
+        dose = dose,
+        timeLabel = timeLabel,
+        takenToday = takenToday && takenDateIso == todayIso,
+        lastTakenMillis = lastTakenMillis,
+    )
+
+    companion object {
+        fun fromDomain(e: MedicationEntry, todayIso: String) = MedicationEntity(
+            id = e.id,
+            name = e.name,
+            dose = e.dose,
+            timeLabel = e.timeLabel,
+            takenToday = e.takenToday,
+            lastTakenMillis = e.lastTakenMillis,
+            takenDateIso = if (e.takenToday) todayIso else "",
         )
     }
 }

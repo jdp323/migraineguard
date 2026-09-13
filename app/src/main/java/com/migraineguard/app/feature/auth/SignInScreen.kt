@@ -22,7 +22,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,13 +43,18 @@ import kotlinx.coroutines.launch
 @Composable
 fun SignInScreen(
     authRepository: AuthRepository,
+    onNeedGoogleSetup: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    val configured = authRepository.hasConfiguredClientId()
+    var configured by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        configured = authRepository.hasConfiguredClientId()
+    }
 
     Column(
         modifier = modifier
@@ -97,9 +104,18 @@ fun SignInScreen(
                         scope.launch {
                             loading = true
                             error = null
+                            configured = authRepository.hasConfiguredClientId()
+                            if (!configured) {
+                                loading = false
+                                error = "Add Google Web Client ID in Settings → Google"
+                                onNeedGoogleSetup()
+                                return@launch
+                            }
                             val result = authRepository.signInWithGoogle(context)
                             loading = false
-                            result.onFailure { error = it.message ?: "Google Sign-In failed" }
+                            result.onFailure {
+                                error = it.message ?: "Google Sign-In failed"
+                            }
                         }
                     },
                     modifier = Modifier
@@ -133,15 +149,18 @@ fun SignInScreen(
                 modifier = Modifier.padding(top = 12.dp),
                 textAlign = TextAlign.Center,
             )
+            if (it.contains("Google Web Client ID", ignoreCase = true)) {
+                TextButton(onClick = onNeedGoogleSetup) {
+                    Text("Open Google setup tip")
+                }
+            }
         }
 
         Text(
             text = if (configured) {
                 "Google Web client ID found — Credential Manager Google ID path is active."
             } else {
-                "Demo mode always works. For real Google Sign-In, set GOOGLE_WEB_CLIENT_ID in local.properties " +
-                    "(Web client ID from Google Cloud Console) and add an Android OAuth client for com.migraineguard.app + SHA-1. " +
-                    "Build stays green without the ID."
+                "Paste your Web client ID in Settings → Google (or local.properties) before using Google Sign-In. Demo mode works anytime."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

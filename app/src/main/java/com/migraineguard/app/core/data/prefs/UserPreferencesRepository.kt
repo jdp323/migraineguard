@@ -5,12 +5,17 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.migraineguard.app.core.domain.ActivityLevel
+import com.migraineguard.app.core.domain.BodyProfile
+import com.migraineguard.app.core.domain.SexGender
 import com.migraineguard.app.core.domain.ThemeMode
 import com.migraineguard.app.core.domain.WaterUnit
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore("user_settings")
@@ -21,12 +26,19 @@ data class UserPreferences(
     val waterGoalCups: Int = 8,
     val waterUnit: WaterUnit = WaterUnit.CUPS,
     val dailyStepGoal: Int = 8000,
+    val sleepGoalHours: Float = 8f,
+    val weightGoalKg: Float? = null,
     val notificationsEnabled: Boolean = true,
     val waterReminders: Boolean = true,
     val migraineReminders: Boolean = false,
+    val medicationReminders: Boolean = false,
     val driveSyncEnabled: Boolean = false,
     val onboardingDone: Boolean = false,
     val useCelsius: Boolean = true,
+    val googleWebClientId: String = "",
+    val energyLevel: Int = 3,
+    val energyDateIso: String = "",
+    val bodyProfile: BodyProfile = BodyProfile(),
 )
 
 class UserPreferencesRepository(context: Context) {
@@ -37,12 +49,27 @@ class UserPreferencesRepository(context: Context) {
     private val waterGoalKey = intPreferencesKey("water_goal_cups")
     private val waterUnitKey = stringPreferencesKey("water_unit")
     private val stepGoalKey = intPreferencesKey("daily_step_goal")
+    private val sleepGoalKey = floatPreferencesKey("sleep_goal_hours")
+    private val weightGoalKey = floatPreferencesKey("weight_goal_kg")
     private val notifKey = booleanPreferencesKey("notifications")
     private val waterRemindKey = booleanPreferencesKey("water_reminders")
     private val migraineRemindKey = booleanPreferencesKey("migraine_reminders")
+    private val medRemindKey = booleanPreferencesKey("medication_reminders")
     private val driveKey = booleanPreferencesKey("drive_sync")
     private val onboardingKey = booleanPreferencesKey("onboarding_done")
     private val celsiusKey = booleanPreferencesKey("use_celsius")
+    private val googleClientKey = stringPreferencesKey("google_web_client_id")
+    private val energyKey = intPreferencesKey("energy_level")
+    private val energyDateKey = stringPreferencesKey("energy_date_iso")
+
+    private val profileNameKey = stringPreferencesKey("profile_display_name")
+    private val profileDobKey = stringPreferencesKey("profile_dob")
+    private val profileSexKey = stringPreferencesKey("profile_sex")
+    private val profileHeightKey = floatPreferencesKey("profile_height_cm")
+    private val profileWeightKey = floatPreferencesKey("profile_weight_kg")
+    private val profileActivityKey = stringPreferencesKey("profile_activity")
+    private val profileMetricKey = booleanPreferencesKey("profile_use_metric")
+    private val profileCompleteKey = booleanPreferencesKey("profile_complete")
 
     val preferences: Flow<UserPreferences> = dataStore.data.map { p ->
         UserPreferences(
@@ -53,14 +80,35 @@ class UserPreferencesRepository(context: Context) {
             waterUnit = runCatching { WaterUnit.valueOf(p[waterUnitKey] ?: WaterUnit.CUPS.name) }
                 .getOrDefault(WaterUnit.CUPS),
             dailyStepGoal = p[stepGoalKey] ?: 8000,
+            sleepGoalHours = p[sleepGoalKey] ?: 8f,
+            weightGoalKg = p[weightGoalKey],
             notificationsEnabled = p[notifKey] ?: true,
             waterReminders = p[waterRemindKey] ?: true,
             migraineReminders = p[migraineRemindKey] ?: false,
+            medicationReminders = p[medRemindKey] ?: false,
             driveSyncEnabled = p[driveKey] ?: false,
             onboardingDone = p[onboardingKey] ?: false,
             useCelsius = p[celsiusKey] ?: true,
+            googleWebClientId = p[googleClientKey] ?: "",
+            energyLevel = p[energyKey] ?: 3,
+            energyDateIso = p[energyDateKey] ?: "",
+            bodyProfile = BodyProfile(
+                displayName = p[profileNameKey] ?: "",
+                dateOfBirthIso = p[profileDobKey] ?: "",
+                sex = p[profileSexKey]?.let { runCatching { SexGender.valueOf(it) }.getOrNull() },
+                heightCm = p[profileHeightKey],
+                weightKg = p[profileWeightKey],
+                activityLevel = p[profileActivityKey]?.let {
+                    runCatching { ActivityLevel.valueOf(it) }.getOrNull()
+                },
+                useMetric = p[profileMetricKey] ?: true,
+                profileComplete = p[profileCompleteKey] ?: false,
+            ),
         )
     }
+
+    suspend fun getGoogleWebClientId(): String =
+        preferences.first().googleWebClientId
 
     suspend fun setThemeMode(mode: ThemeMode) {
         dataStore.edit { it[themeKey] = mode.name }
@@ -82,6 +130,16 @@ class UserPreferencesRepository(context: Context) {
         dataStore.edit { it[stepGoalKey] = goal.coerceIn(1000, 30000) }
     }
 
+    suspend fun setSleepGoalHours(hours: Float) {
+        dataStore.edit { it[sleepGoalKey] = hours.coerceIn(4f, 12f) }
+    }
+
+    suspend fun setWeightGoalKg(kg: Float?) {
+        dataStore.edit {
+            if (kg == null) it.remove(weightGoalKey) else it[weightGoalKey] = kg
+        }
+    }
+
     suspend fun setNotificationsEnabled(enabled: Boolean) {
         dataStore.edit { it[notifKey] = enabled }
     }
@@ -94,6 +152,10 @@ class UserPreferencesRepository(context: Context) {
         dataStore.edit { it[migraineRemindKey] = enabled }
     }
 
+    suspend fun setMedicationReminders(enabled: Boolean) {
+        dataStore.edit { it[medRemindKey] = enabled }
+    }
+
     suspend fun setDriveSyncEnabled(enabled: Boolean) {
         dataStore.edit { it[driveKey] = enabled }
     }
@@ -104,5 +166,39 @@ class UserPreferencesRepository(context: Context) {
 
     suspend fun setUseCelsius(use: Boolean) {
         dataStore.edit { it[celsiusKey] = use }
+    }
+
+    suspend fun setGoogleWebClientId(id: String) {
+        dataStore.edit { it[googleClientKey] = id.trim() }
+    }
+
+    suspend fun setEnergyLevel(level: Int, dateIso: String) {
+        dataStore.edit {
+            it[energyKey] = level.coerceIn(1, 5)
+            it[energyDateKey] = dateIso
+        }
+    }
+
+    suspend fun saveBodyProfile(profile: BodyProfile) {
+        dataStore.edit {
+            it[profileNameKey] = profile.displayName
+            it[profileDobKey] = profile.dateOfBirthIso
+            profile.sex?.let { s -> it[profileSexKey] = s.name } ?: it.remove(profileSexKey)
+            profile.heightCm?.let { h -> it[profileHeightKey] = h } ?: it.remove(profileHeightKey)
+            profile.weightKg?.let { w -> it[profileWeightKey] = w } ?: it.remove(profileWeightKey)
+            profile.activityLevel?.let { a -> it[profileActivityKey] = a.name }
+                ?: it.remove(profileActivityKey)
+            it[profileMetricKey] = profile.useMetric
+            it[profileCompleteKey] = profile.profileComplete
+        }
+    }
+
+    suspend fun seedProfileNameIfBlank(name: String) {
+        dataStore.edit {
+            val current = it[profileNameKey]
+            if (current.isNullOrBlank() && name.isNotBlank()) {
+                it[profileNameKey] = name
+            }
+        }
     }
 }

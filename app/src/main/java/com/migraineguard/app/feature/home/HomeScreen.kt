@@ -18,12 +18,15 @@ import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Healing
-import androidx.compose.material.icons.filled.LocalDining
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -51,8 +54,8 @@ import com.migraineguard.app.feature.migraine.MigraineRepository
 import com.migraineguard.app.feature.water.WaterIntakeRepository
 import com.migraineguard.app.feature.weather.WeatherRepository
 import kotlinx.coroutines.launch
-import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +67,8 @@ fun HomeScreen(
     onOpenWater: () -> Unit,
     onOpenFood: () -> Unit,
     onOpenFitness: () -> Unit,
+    onOpenBody: () -> Unit = {},
+    onOpenMeds: () -> Unit = {},
     weatherRepository: WeatherRepository,
     healthDataRepository: HealthDataRepository,
     waterIntakeRepository: WaterIntakeRepository,
@@ -79,6 +84,7 @@ fun HomeScreen(
         com.migraineguard.app.core.data.prefs.UserPreferences(),
     )
     val episodes by migraineRepository.observeEpisodes().collectAsStateWithLifecycle(emptyList())
+    val waterHistory by waterIntakeRepository.observeHistory(14).collectAsStateWithLifecycle(emptyList())
 
     val scope = rememberCoroutineScope()
     val locationLauncher = rememberLauncherForActivityResult(
@@ -100,8 +106,19 @@ fun HomeScreen(
         sleep = healthDataRepository.latestSleep()
     }
 
-    val todayStart = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val today = LocalDate.now()
+    val todayIso = today.toString()
+    val todayStart = today.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     val todayMigraines = episodes.count { it.timestampMillis >= todayStart }
+    val displayName = prefs.bodyProfile.displayName.ifBlank { userName }.let { n ->
+        n.trim().substringBefore(' ').ifBlank { n }
+    }
+    val greeting = when (LocalTime.now().hour) {
+        in 5..11 -> "Good morning"
+        in 12..16 -> "Good afternoon"
+        in 17..21 -> "Good evening"
+        else -> "Hello"
+    }
     val riskHint = buildString {
         val w = weather
         when {
@@ -115,6 +132,26 @@ fun HomeScreen(
     val waterProgress = (cups.toFloat() / prefs.waterGoalCups.coerceAtLeast(1)).coerceAtMost(1f)
     val stepGoal = prefs.dailyStepGoal.coerceAtLeast(1)
     val stepProgress = ((health?.steps ?: 0).toFloat() / stepGoal).coerceAtMost(1f)
+    val sleepGoal = prefs.sleepGoalHours.coerceAtLeast(1f)
+    val sleepProgress = (((sleep?.hours ?: 0f) / sleepGoal).coerceAtMost(1f))
+    val streak = remember(waterHistory, health) {
+        var s = 0
+        var d = today
+        val waterDates = waterHistory.filter { it.cups > 0 }.map { it.dateIso }.toSet()
+        while (true) {
+            val iso = d.toString()
+            val hasWater = iso in waterDates || (iso == todayIso && cups > 0)
+            val hasSteps = iso == todayIso && (health?.steps ?: 0) > 0
+            if (hasWater || hasSteps) {
+                s++
+                d = d.minusDays(1)
+            } else break
+            if (s > 60) break
+        }
+        s
+    }
+    val energyToday = if (prefs.energyDateIso == todayIso) prefs.energyLevel else 0
+    val bmi = prefs.bodyProfile.bmi
 
     Scaffold(
         modifier = modifier,
@@ -137,13 +174,57 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Hello, $userName", style = MaterialTheme.typography.headlineSmall)
+            Text("$greeting, $displayName", style = MaterialTheme.typography.headlineSmall)
             Text(
-                Instant.now().atZone(ZoneId.systemDefault()).toLocalDate()
-                    .let { "Today · $it · MigraineGuard v1.1" },
+                "Today · $today · MigraineGuard v1.2 · streak $streak day${if (streak == 1) "" else "s"}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            SectionCard(title = "Daily summary", icon = Icons.Filled.LocalFireDepartment) {
+                Text("Steps ${(health?.steps ?: 0)} / $stepGoal")
+                LinearProgressIndicator(progress = { stepProgress }, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+                Text("Water $cups / ${prefs.waterGoalCups} cups")
+                LinearProgressIndicator(progress = { waterProgress }, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+                Text("Sleep ${sleep?.hours ?: "—"}h / ${prefs.sleepGoalHours}h goal")
+                LinearProgressIndicator(progress = { sleepProgress }, modifier = Modifier.fillMaxWidth())
+                health?.caloriesBurned?.let {
+                    Spacer(Modifier.height(6.dp))
+                    Text("Calories ~%.0f kcal".format(it))
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(riskHint, style = MaterialTheme.typography.bodyMedium)
+            }
+
+            if (bmi != null) {
+                SectionCard(title = "BMI", icon = Icons.Filled.MonitorWeight) {
+                    Text("%.1f · %s".format(bmi, prefs.bodyProfile.bmiLabel), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "From your profile height/weight. Not a medical diagnosis.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    AssistChip(onClick = onOpenBody, label = { Text("Body metrics") })
+                }
+            }
+
+            SectionCard(title = "Energy check-in", icon = Icons.Filled.Bolt) {
+                Text("How’s your energy today? (1–5)")
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    (1..5).forEach { level ->
+                        FilterChip(
+                            selected = energyToday == level,
+                            onClick = {
+                                scope.launch {
+                                    preferencesRepository.setEnergyLevel(level, todayIso)
+                                }
+                            },
+                            label = { Text("$level") },
+                        )
+                    }
+                }
+            }
 
             SectionCard(title = "Migraine risk hint", icon = Icons.Filled.Healing) {
                 Text(riskHint)
@@ -153,13 +234,8 @@ fun HomeScreen(
                     AssistChip(onClick = onOpenWater, label = { Text("Add water") })
                     AssistChip(onClick = onOpenFood, label = { Text("Scan food") })
                     AssistChip(onClick = onOpenFitness, label = { Text("Fitness") })
+                    AssistChip(onClick = onOpenMeds, label = { Text("Meds") })
                 }
-            }
-
-            SectionCard(title = "Water today", icon = Icons.Filled.WaterDrop) {
-                Text("$cups / ${prefs.waterGoalCups} cups")
-                Spacer(Modifier.height(8.dp))
-                LinearProgressIndicator(progress = { waterProgress }, modifier = Modifier.fillMaxWidth())
             }
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -188,7 +264,11 @@ fun HomeScreen(
             SectionCard(title = "Quick actions", icon = Icons.Filled.FitnessCenter) {
                 Text("Use the bottom bar for Migraine, Fitness, Food, Water, and Insights.")
                 Spacer(Modifier.height(8.dp))
-                AssistChip(onClick = onOpenFitness, label = { Text("Open Fitness hub") })
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AssistChip(onClick = onOpenFitness, label = { Text("Fitness hub") })
+                    AssistChip(onClick = onOpenBody, label = { Text("Weight log") })
+                    AssistChip(onClick = onOpenMeds, label = { Text("Medications") })
+                }
             }
         }
     }

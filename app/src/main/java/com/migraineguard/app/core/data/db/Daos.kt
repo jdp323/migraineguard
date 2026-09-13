@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -72,5 +73,35 @@ interface WorkoutDao {
     suspend fun insert(entity: WorkoutEntity): Long
 
     @Query("DELETE FROM workouts WHERE id = :id")
+    suspend fun delete(id: Long)
+}
+
+@Dao
+interface WeightDao {
+    @Query("SELECT * FROM weight_entries ORDER BY timestampMillis DESC")
+    fun observeAll(): Flow<List<WeightEntryEntity>>
+
+    @Insert
+    suspend fun insert(entity: WeightEntryEntity): Long
+
+    @Query("DELETE FROM weight_entries WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("SELECT * FROM weight_entries ORDER BY timestampMillis DESC LIMIT 1")
+    suspend fun latest(): WeightEntryEntity?
+}
+
+@Dao
+interface MedicationDao {
+    @Query("SELECT * FROM medications ORDER BY id ASC")
+    fun observeAll(): Flow<List<MedicationEntity>>
+
+    @Insert
+    suspend fun insert(entity: MedicationEntity): Long
+
+    @Update
+    suspend fun update(entity: MedicationEntity)
+
+    @Query("DELETE FROM medications WHERE id = :id")
     suspend fun delete(id: Long)
 }

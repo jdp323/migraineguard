@@ -8,6 +8,7 @@ import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.migraineguard.app.BuildConfig
+import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
 import com.migraineguard.app.core.domain.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,20 +23,34 @@ data class AuthState(
 
 interface AuthRepository {
     val authState: StateFlow<AuthState>
-    fun hasConfiguredClientId(): Boolean
+    suspend fun resolveClientId(): String?
+    suspend fun hasConfiguredClientId(): Boolean
     fun signInDemo()
     suspend fun signInWithGoogle(activityContext: Context): Result<UserProfile>
     fun signOut()
 }
 
-class DefaultAuthRepository : AuthRepository {
+class DefaultAuthRepository(
+    private val preferencesRepository: UserPreferencesRepository,
+) : AuthRepository {
     private val _state = MutableStateFlow(AuthState())
     override val authState: StateFlow<AuthState> = _state.asStateFlow()
 
-    override fun hasConfiguredClientId(): Boolean {
-        val id = BuildConfig.GOOGLE_WEB_CLIENT_ID
-        return id.isNotBlank() && !id.startsWith("YOUR_") && id.contains(".apps.googleusercontent.com")
+    override suspend fun resolveClientId(): String? {
+        val prefsId = preferencesRepository.getGoogleWebClientId().trim()
+        val buildId = BuildConfig.GOOGLE_WEB_CLIENT_ID.trim()
+        val id = when {
+            isValidClientId(prefsId) -> prefsId
+            isValidClientId(buildId) -> buildId
+            else -> null
+        }
+        return id
     }
+
+    override suspend fun hasConfiguredClientId(): Boolean = resolveClientId() != null
+
+    private fun isValidClientId(id: String): Boolean =
+        id.isNotBlank() && !id.startsWith("YOUR_") && id.contains(".apps.googleusercontent.com")
 
     override fun signInDemo() {
         _state.value = AuthState(
@@ -50,18 +65,17 @@ class DefaultAuthRepository : AuthRepository {
     }
 
     override suspend fun signInWithGoogle(activityContext: Context): Result<UserProfile> {
-        if (!hasConfiguredClientId()) {
-            // Soft demo path so UI still works without client ID
-            signInDemo()
-            return Result.success(
-                _state.value.user!!,
+        val clientId = resolveClientId()
+            ?: return Result.failure(
+                IllegalStateException(
+                    "Add Google Web Client ID in Settings → Google",
+                ),
             )
-        }
         return try {
             val credentialManager = CredentialManager.create(activityContext)
             val googleIdOption = GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                .setServerClientId(clientId)
                 .setAutoSelectEnabled(false)
                 .build()
             val request = GetCredentialRequest.Builder()
@@ -82,6 +96,7 @@ class DefaultAuthRepository : AuthRepository {
                     email = google.id,
                     photoUrl = google.profilePictureUri?.toString(),
                 )
+                preferencesRepository.seedProfileNameIfBlank(profile.displayName)
                 _state.value = AuthState(isSignedIn = true, isDemo = false, user = profile)
                 Result.success(profile)
             } else {

@@ -12,6 +12,55 @@ data class UserProfile(
     val photoUrl: String? = null,
 )
 
+enum class SexGender(val label: String) {
+    MAN("Man"),
+    WOMAN("Woman"),
+    PREFER_NOT("Prefer not to say"),
+    OTHER("Other"),
+}
+
+enum class ActivityLevel(val label: String) {
+    SEDENTARY("Sedentary"),
+    LIGHT("Light"),
+    MODERATE("Moderate"),
+    ACTIVE("Active"),
+    VERY_ACTIVE("Very active"),
+}
+
+data class BodyProfile(
+    val displayName: String = "",
+    val dateOfBirthIso: String = "",
+    val sex: SexGender? = null,
+    val heightCm: Float? = null,
+    val weightKg: Float? = null,
+    val activityLevel: ActivityLevel? = null,
+    val useMetric: Boolean = true,
+    val profileComplete: Boolean = false,
+) {
+    val bmi: Float?
+        get() {
+            val h = heightCm ?: return null
+            val w = weightKg ?: return null
+            if (h <= 0f) return null
+            val m = h / 100f
+            return w / (m * m)
+        }
+
+    val bmiLabel: String
+        get() {
+            val v = bmi ?: return "—"
+            return when {
+                v < 18.5f -> "Underweight"
+                v < 25f -> "Healthy"
+                v < 30f -> "Overweight"
+                else -> "Obese range"
+            }
+        }
+
+    val firstName: String
+        get() = displayName.trim().substringBefore(' ').ifBlank { displayName.ifBlank { "Friend" } }
+}
+
 enum class HeadView(val label: String) {
     FRONT("Front"),
     LEFT("Left"),
@@ -41,6 +90,17 @@ enum class MigraineSymptom(val label: String) {
     FATIGUE("Fatigue"),
 }
 
+enum class MigraineTrigger(val label: String) {
+    CAFFEINE("Caffeine"),
+    STRESS("Stress"),
+    SCREEN("Screen"),
+    WEATHER("Weather"),
+    SLEEP("Sleep"),
+    FOOD("Food"),
+    DEHYDRATION("Dehydration"),
+    OTHER("Other"),
+}
+
 data class MigraineEpisode(
     val id: Long = 0,
     val timestampMillis: Long,
@@ -48,6 +108,7 @@ data class MigraineEpisode(
     val notes: String,
     val symptoms: List<MigraineSymptom>,
     val markers: List<PainMarker>,
+    val triggers: List<MigraineTrigger> = emptyList(),
 )
 
 data class HealthSnapshot(
@@ -144,4 +205,20 @@ data class ExerciseSuggestion(
     val type: WorkoutType,
     val durationMinutes: Int,
     val description: String,
+)
+
+data class WeightEntry(
+    val id: Long = 0,
+    val timestampMillis: Long,
+    val weightKg: Float,
+    val notes: String = "",
+)
+
+data class MedicationEntry(
+    val id: Long = 0,
+    val name: String,
+    val dose: String,
+    val timeLabel: String,
+    val takenToday: Boolean = false,
+    val lastTakenMillis: Long = 0,
 )

@@ -3,6 +3,7 @@ package com.migraineguard.app.navigation
 object Routes {
     const val Onboarding = "onboarding"
     const val SignIn = "sign_in"
+    const val ProfileSetup = "profile_setup"
     const val Home = "home"
     const val Migraine = "migraine"
     const val Track = "track"
@@ -10,6 +11,8 @@ object Routes {
     const val Water = "water"
     const val Insights = "insights"
     const val Settings = "settings"
+    const val BodyMetrics = "body_metrics"
+    const val Medications = "medications"
 }
 
 enum class BottomDest(

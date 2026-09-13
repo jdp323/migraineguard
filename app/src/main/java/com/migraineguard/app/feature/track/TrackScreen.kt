@@ -1,5 +1,6 @@
 package com.migraineguard.app.feature.track
 
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -89,13 +92,73 @@ fun TrackScreen(
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val snackbar = remember { SnackbarHostState() }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = PermissionController.createRequestPermissionResultContract(),
-    ) {
-        scope.launch { refresh(healthDataRepository) { s, f, sl, p ->
-            status = s; fitness = f; sleep = sl; permitted = p
-        } }
+    ) { granted ->
+        scope.launch {
+            refresh(healthDataRepository) { s, f, sl, p ->
+                status = s; fitness = f; sleep = sl; permitted = p
+            }
+            if (granted.isNotEmpty() && healthDataRepository.hasAllPermissions()) {
+                Toast.makeText(context, "Health Connect connected ✓", Toast.LENGTH_SHORT).show()
+                snackbar.showSnackbar("Permissions granted — MigraineGuard should appear in Health Connect Connected apps.")
+            } else if (granted.isNotEmpty()) {
+                snackbar.showSnackbar("Some permissions granted. You can grant the rest anytime.")
+            } else {
+                snackbar.showSnackbar("No permissions granted. Sideloaded debug apps appear after the first successful request.")
+            }
+        }
+    }
+
+    fun openHcFallback() {
+        val intents = healthDataRepository.openHealthConnectInstallOrSettingsIntents()
+        var opened = false
+        for (intent in intents) {
+            try {
+                context.startActivity(intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+                opened = true
+                break
+            } catch (_: Exception) {
+            }
+        }
+        if (!opened) {
+            scope.launch { snackbar.showSnackbar("Could not open Health Connect / Play Store") }
+        }
+        healthDataRepository.openSamsungHealthSettingsIntent()?.let {
+            runCatching { context.startActivity(it) }
+        }
+    }
+
+    fun connectHealth() {
+        scope.launch {
+            val avail = healthDataRepository.availabilityStatus()
+            status = avail
+            when (avail) {
+                HealthConnectStatus.NOT_INSTALLED -> {
+                    snackbar.showSnackbar("Health Connect not installed — opening Play Store / settings…")
+                    openHcFallback()
+                }
+                HealthConnectStatus.UNSUPPORTED -> {
+                    snackbar.showSnackbar("Health Connect unsupported on this device — opening settings…")
+                    openHcFallback()
+                }
+                HealthConnectStatus.AVAILABLE, HealthConnectStatus.USING_FALLBACK -> {
+                    var perms = healthDataRepository.requiredPermissions()
+                    if (perms.isEmpty()) {
+                        perms = healthDataRepository.requiredPermissions()
+                    }
+                    if (perms.isEmpty()) {
+                        snackbar.showSnackbar("Could not build permission set — opening Health Connect settings…")
+                        openHcFallback()
+                    } else {
+                        snackbar.showSnackbar("Opening Health Connect permissions…")
+                        permissionLauncher.launch(perms)
+                    }
+                }
+            }
+        }
     }
 
     fun reload() {
@@ -124,6 +187,7 @@ fun TrackScreen(
 
     Scaffold(
         modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = { TopAppBar(title = { Text("Fitness") }) },
     ) { padding ->
         Column(
@@ -136,8 +200,8 @@ fun TrackScreen(
         ) {
             SectionCard(title = "Samsung Health / Health Connect", icon = Icons.Filled.Watch) {
                 Text(
-                    "MigraineGuard appears under Health Connect → Connected apps after you grant permissions. " +
-                        "Also enable Samsung Health → Health Connect sharing so Galaxy Watch data flows here.",
+                    "MigraineGuard appears under Health Connect → Connected apps after the first successful permission request (including sideloaded debug builds). " +
+                        "Enable Samsung Health → Health Connect sharing so Galaxy Watch data flows here.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
@@ -146,23 +210,21 @@ fun TrackScreen(
                     modifier = Modifier.padding(top = 8.dp),
                 )
                 Button(
-                    onClick = {
-                        val perms = healthDataRepository.requiredPermissions()
-                        if (perms.isNotEmpty()) permissionLauncher.launch(perms)
-                        else reload()
-                    },
+                    onClick = { connectHealth() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
                 ) { Text(stringResource(R.string.connect_health_connect)) }
                 OutlinedButton(
-                    onClick = {
-                        runCatching {
-                            context.startActivity(healthDataRepository.openHealthConnectSettingsIntent())
-                        }
-                    },
+                    onClick = { openHcFallback() },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(stringResource(R.string.open_health_connect_settings)) }
+                healthDataRepository.openSamsungHealthSettingsIntent()?.let {
+                    OutlinedButton(
+                        onClick = { runCatching { context.startActivity(it) } },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Open Samsung Health") }
+                }
             }
 
             SectionCard(title = stringResource(R.string.steps_today), icon = Icons.Filled.DirectionsWalk) {

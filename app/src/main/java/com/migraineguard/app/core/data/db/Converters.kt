@@ -3,6 +3,7 @@ package com.migraineguard.app.core.data.db
 import androidx.room.TypeConverter
 import com.migraineguard.app.core.domain.HeadView
 import com.migraineguard.app.core.domain.MigraineSymptom
+import com.migraineguard.app.core.domain.MigraineTrigger
 import com.migraineguard.app.core.domain.PainMarker
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -28,6 +29,15 @@ class Converters {
     fun stringToSymptoms(value: String): List<MigraineSymptom> =
         if (value.isBlank()) emptyList()
         else value.split(",").mapNotNull { runCatching { MigraineSymptom.valueOf(it) }.getOrNull() }
+
+    @TypeConverter
+    fun triggersToString(value: List<MigraineTrigger>): String =
+        value.joinToString(",") { it.name }
+
+    @TypeConverter
+    fun stringToTriggers(value: String?): List<MigraineTrigger> =
+        if (value.isNullOrBlank()) emptyList()
+        else value.split(",").mapNotNull { runCatching { MigraineTrigger.valueOf(it) }.getOrNull() }
 
     @TypeConverter
     fun markersToString(value: List<PainMarker>): String =
