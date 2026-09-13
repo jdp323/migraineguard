@@ -40,9 +40,9 @@ import com.migraineguard.app.feature.insights.InsightsScreen
 import com.migraineguard.app.feature.meds.MedicationsScreen
 import com.migraineguard.app.feature.migraine.MigraineScreen
 import com.migraineguard.app.feature.nutrition.NutritionScreen
-import com.migraineguard.app.feature.onboarding.OnboardingScreen
 import com.migraineguard.app.feature.profile.ProfileSetupScreen
 import com.migraineguard.app.feature.settings.SettingsScreen
+import com.migraineguard.app.feature.setup.SetupWizardScreen
 import com.migraineguard.app.feature.track.TrackScreen
 import com.migraineguard.app.feature.water.WaterScreen
 import kotlinx.coroutines.launch
@@ -53,71 +53,46 @@ fun MigraineGuardNavHost(container: AppContainer) {
     val prefs by container.preferencesRepository.preferences.collectAsStateWithLifecycle(UserPreferences())
     val scope = rememberCoroutineScope()
     var forceProfileEdit by remember { mutableStateOf(false) }
-    var pendingGoogleFocus by remember { mutableStateOf(false) }
     var coachPersona by remember { mutableStateOf(AiPersona.COACH) }
-    // Session flag: after skip, don't re-show Connect Gemini until next cold start / sign-in
-    var geminiConnectSkipped by remember { mutableStateOf(false) }
     var forceConnectGemini by remember { mutableStateOf(false) }
 
-    if (!prefs.onboardingDone) {
-        OnboardingScreen(
-            onFinished = { scope.launch { container.preferencesRepository.setOnboardingDone(true) } },
-        )
-        return
-    }
-
-    LaunchedEffect(authState.isSignedIn) {
-        if (!authState.isSignedIn) {
-            geminiConnectSkipped = false
-            forceConnectGemini = false
-        }
-    }
-
-    if (!authState.isSignedIn) {
-        if (pendingGoogleFocus) {
-            SettingsScreen(
-                preferencesRepository = container.preferencesRepository,
-                driveSyncRepository = container.driveSyncRepository,
-                healthDataRepository = container.healthDataRepository,
-                aiClient = container.aiClient,
-                onSignOut = {},
-                onBack = { pendingGoogleFocus = false },
-                focusGoogle = true,
-            )
-            return
-        }
-        SignInScreen(
+    // First-run: single ordered SetupWizard until setupComplete
+    if (!prefs.setupComplete) {
+        SetupWizardScreen(
             authRepository = container.authRepository,
-            onNeedGoogleSetup = { pendingGoogleFocus = true },
+            preferencesRepository = container.preferencesRepository,
+            healthDataRepository = container.healthDataRepository,
+            aiClient = container.aiClient,
+            onFinished = { /* prefs flow will recompose */ },
         )
         return
     }
 
-    val needsGemini =
-        forceConnectGemini || (prefs.geminiApiKey.isBlank() && !geminiConnectSkipped)
-    if (needsGemini) {
+    // Settings-driven Gemini reconnect (post-setup)
+    if (forceConnectGemini) {
         ConnectGeminiScreen(
             preferencesRepository = container.preferencesRepository,
             aiClient = container.aiClient,
-            onConnected = {
-                forceConnectGemini = false
-                geminiConnectSkipped = false
-            },
-            onSkipOffline = {
-                forceConnectGemini = false
-                geminiConnectSkipped = true
-            },
+            onConnected = { forceConnectGemini = false },
+            onSkipOffline = { forceConnectGemini = false },
         )
         return
     }
 
-    if (!prefs.bodyProfile.profileComplete || forceProfileEdit) {
+    // Settings-driven profile edit (post-setup)
+    if (forceProfileEdit) {
         ProfileSetupScreen(
             preferencesRepository = container.preferencesRepository,
             prefilledName = authState.user?.displayName ?: prefs.bodyProfile.displayName,
             initial = prefs.bodyProfile,
             onComplete = { forceProfileEdit = false },
         )
+        return
+    }
+
+    // After setup, sign-out only needs Sign-In (not the full wizard again)
+    if (!authState.isSignedIn) {
+        SignInScreen(authRepository = container.authRepository)
         return
     }
 
@@ -132,6 +107,8 @@ fun MigraineGuardNavHost(container: AppContainer) {
     )
 
     fun goBottom(route: String) {
+        // Debounced HC refresh on tab switch
+        container.healthRefreshCoordinator.refresh(force = false)
         navController.navigate(route) {
             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
             launchSingleTop = true
@@ -145,6 +122,11 @@ fun MigraineGuardNavHost(container: AppContainer) {
     }
 
     val hideBottom = setOf(Routes.Settings, Routes.BodyMetrics, Routes.Medications, Routes.ProfileSetup, Routes.Water)
+
+    // Initial refresh when entering main app
+    LaunchedEffect(Unit) {
+        container.healthRefreshCoordinator.refresh(force = true)
+    }
 
     Scaffold(
         bottomBar = {
@@ -183,6 +165,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
                     onHealthAnalyst = { openCoach(AiPersona.ANALYST) },
                     weatherRepository = container.weatherRepository,
                     healthDataRepository = container.healthDataRepository,
+                    healthRefreshCoordinator = container.healthRefreshCoordinator,
                     waterIntakeRepository = container.waterIntakeRepository,
                     preferencesRepository = container.preferencesRepository,
                     migraineRepository = container.migraineRepository,
@@ -194,6 +177,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
             composable(Routes.Track) {
                 TrackScreen(
                     healthDataRepository = container.healthDataRepository,
+                    healthRefreshCoordinator = container.healthRefreshCoordinator,
                     workoutRepository = container.workoutRepository,
                     preferencesRepository = container.preferencesRepository,
                 )

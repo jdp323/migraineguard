@@ -3,9 +3,20 @@
 Kotlin + Jetpack Compose + Material 3 app for tracking migraines, hydration, fitness/sleep (via **Health Connect** / Samsung Health), nutrition, weather pressure, body metrics, medications, and **AI Coach / Health Analyst** insights.
 
 **Package:** `com.migraineguard.app`  
-**Version:** 1.5.0 (versionCode 6)  
+**Version:** 1.6.0 (versionCode 7)  
 **Min SDK:** 26 · **Target / Compile SDK:** 35  
 **Auth:** Google Sign-In via Credential Manager with **baked Web Client ID** (Firebase project `migraineguard-66229`). Demo mode remains for offline testing.
+
+---
+
+## What’s new in v1.6
+
+| Area | Upgrade |
+|------|---------|
+| Setup wizard | Single ordered **SetupWizard** on first cold start (`setupComplete`): Welcome → Sign-in → Health Connect/Samsung tutorial → Gemini API key tutorial → Profile (DOB calendar) → Done |
+| DOB | Material3 `DatePicker` calendar everywhere (wizard + ProfileSetup / Settings edit) — no free-text YYYY-MM-DD |
+| Health refresh | `HealthRefreshCoordinator` auto-refreshes fitness/sleep on app foreground and bottom-nav tab switches (≈2s debounce); soft last-refreshed / errors |
+| Settings | Still edit profile / HC / Gemini later; first-time users go through the wizard (skips allowed for HC & Gemini) |
 
 ---
 
@@ -21,13 +32,18 @@ Kotlin + Jetpack Compose + Material 3 app for tracking migraines, hydration, fit
 
 ---
 
-## What’s new in v1.4
+## First-run setup wizard
 
-| Area | Upgrade |
-|------|---------|
-| Health Connect sleep | Hardened sleep/fitness; soft “Sleep permission needed” |
-| AI Coach / Analyst | Motivational coach + educational analyst; OfflineHealthBrain |
-| Settings | Runtime Gemini / Groq / OpenRouter keys + Test connection |
+On cold start, if `setupComplete` is not true, MigraineGuard runs one ordered wizard:
+
+1. **Welcome** — what the app does (+ medical disclaimer)
+2. **Sign in** — Google (baked client) or Demo continue
+3. **Health Connect / Samsung** — illustrated steps: install/open HC → grant permissions → enable Samsung Health sharing → confirm status (skip marks HC skipped)
+4. **Gemini API key** — Open AI Studio → create/copy key on YOUR Google account → paste → Save & Test (skip → OfflineHealthBrain; cloud AI needs your key)
+5. **Profile** — name (prefilled from Google), **DOB calendar**, height/weight/gender — validated
+6. **Done** — sets `setupComplete=true` → main app
+
+Existing v1.5 users who already finished onboarding + profile are migrated as `setupComplete` automatically.
 
 ---
 
@@ -47,13 +63,14 @@ Kotlin + Jetpack Compose + Material 3 app for tracking migraines, hydration, fit
 
 ## Per-user Gemini (never developer AI tokens)
 
-1. After Google Sign-In or demo, if you have no Gemini key → **Connect Gemini** screen.
-2. Open [Google AI Studio](https://aistudio.google.com/apikey), create a **free** key, paste, Save & Test.
-3. Cloud AI (Coach / Analyst / food cloud path) uses **only your** stored key(s).
-4. Without a key → **OfflineHealthBrain** only + CTA to connect Gemini.
-5. Settings → AI providers: manage / remove your keys. Never ship developer keys. Do **not** use the Firebase `api_key` from `google-services.json` as a Gemini key.
+1. During setup (or later in Settings / Connect Gemini), open [Google AI Studio](https://aistudio.google.com/apikey), create a **free** key, paste, Save & Test.
+2. Cloud AI (Coach / Analyst / food cloud path) uses **only your** stored key(s).
+3. Without a key → **OfflineHealthBrain** only + CTA to connect Gemini.
+4. Settings → AI providers: manage / remove your keys. Never ship developer keys. Do **not** use the Firebase `api_key` from `google-services.json` as a Gemini key.
 
 Fallback order: **Gemini (user) → Groq (user) → OpenRouter (user) → OfflineHealthBrain**.
+
+AI tips are educational — **not medical advice**.
 
 ---
 
@@ -71,10 +88,10 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 
 ## Health Connect troubleshooting
 
-1. Install **Health Connect** (Play Store / system app).
-2. Open MigraineGuard → **Fitness** → **Connect Samsung / Health Connect**.
-3. Grant permissions. Sleep is optional.
-4. Samsung: enable Health Connect sharing in Samsung Health.
+1. Install **Health Connect** (Play Store / system app) — also covered in the setup wizard.
+2. Grant permissions (wizard step or Fitness tab → Connect).
+3. Samsung: enable Health Connect sharing in Samsung Health.
+4. Data auto-refreshes on app resume and when switching bottom tabs.
 
 ---
 

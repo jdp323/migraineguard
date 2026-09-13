@@ -14,10 +14,12 @@ import com.migraineguard.app.core.design.MigraineGuardTheme
 import com.migraineguard.app.navigation.MigraineGuardNavHost
 
 class MainActivity : ComponentActivity() {
+    private lateinit var app: MigraineGuardApp
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val app = application as MigraineGuardApp
+        app = application as MigraineGuardApp
         setContent {
             val prefs by app.container.preferencesRepository.preferences
                 .collectAsStateWithLifecycle(UserPreferences())
@@ -29,6 +31,14 @@ class MainActivity : ComponentActivity() {
                     MigraineGuardNavHost(container = app.container)
                 }
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::app.isInitialized) {
+            // Soft auto-refresh Health Connect on foreground
+            app.container.healthRefreshCoordinator.refresh(force = false)
         }
     }
 }

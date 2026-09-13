@@ -35,6 +35,7 @@ import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
 import com.migraineguard.app.core.domain.ActivityLevel
 import com.migraineguard.app.core.domain.BodyProfile
 import com.migraineguard.app.core.domain.SexGender
+import com.migraineguard.app.core.ui.DateOfBirthField
 import com.migraineguard.app.core.ui.SectionCard
 import kotlinx.coroutines.launch
 
@@ -48,7 +49,7 @@ fun ProfileSetupScreen(
     modifier: Modifier = Modifier,
 ) {
     var name by remember { mutableStateOf(initial.displayName.ifBlank { prefilledName }) }
-    var dob by remember { mutableStateOf(initial.dateOfBirthIso.ifBlank { "1995-01-01" }) }
+    var dob by remember { mutableStateOf(initial.dateOfBirthIso) }
     var sex by remember { mutableStateOf(initial.sex ?: SexGender.PREFER_NOT) }
     var useMetric by remember { mutableStateOf(initial.useMetric) }
     var heightCm by remember {
@@ -97,13 +98,9 @@ fun ProfileSetupScreen(
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
                 )
-                OutlinedTextField(
-                    value = dob,
-                    onValueChange = { dob = it },
-                    label = { Text("Date of birth (YYYY-MM-DD)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
+                DateOfBirthField(
+                    isoDate = dob,
+                    onIsoDateChange = { dob = it },
                 )
                 Text("Sex / gender", style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -205,6 +202,8 @@ fun ProfileSetupScreen(
                     }
                     when {
                         name.isBlank() -> error = "Please enter a display name"
+                        dob.isBlank() || runCatching { java.time.LocalDate.parse(dob) }.isFailure ->
+                            error = "Please pick a valid date of birth"
                         hCm == null || hCm < 100f || hCm > 250f -> error = "Enter a valid height"
                         wKg == null || wKg < 30f || wKg > 300f -> error = "Enter a valid weight"
                         else -> {

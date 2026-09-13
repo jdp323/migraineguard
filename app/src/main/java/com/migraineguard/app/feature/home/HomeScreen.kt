@@ -54,6 +54,7 @@ import com.migraineguard.app.core.domain.SleepSnapshot
 import com.migraineguard.app.core.domain.WeatherSnapshot
 import com.migraineguard.app.core.ui.SectionCard
 import com.migraineguard.app.feature.fitness.HealthDataRepository
+import com.migraineguard.app.feature.fitness.HealthRefreshCoordinator
 import com.migraineguard.app.feature.migraine.MigraineRepository
 import com.migraineguard.app.feature.water.WaterIntakeRepository
 import com.migraineguard.app.feature.weather.WeatherRepository
@@ -77,6 +78,7 @@ fun HomeScreen(
     onHealthAnalyst: () -> Unit = {},
     weatherRepository: WeatherRepository,
     healthDataRepository: HealthDataRepository,
+    healthRefreshCoordinator: HealthRefreshCoordinator? = null,
     waterIntakeRepository: WaterIntakeRepository,
     preferencesRepository: UserPreferencesRepository,
     migraineRepository: MigraineRepository,
@@ -85,6 +87,8 @@ fun HomeScreen(
     var weather by remember { mutableStateOf<WeatherSnapshot?>(null) }
     var health by remember { mutableStateOf<HealthSnapshot?>(null) }
     var sleep by remember { mutableStateOf<SleepSnapshot?>(null) }
+    var lastRefreshedLabel by remember { mutableStateOf<String?>(null) }
+    var softHealthError by remember { mutableStateOf<String?>(null) }
     val cups by waterIntakeRepository.cupsToday.collectAsStateWithLifecycle(0)
     val prefs by preferencesRepository.preferences.collectAsStateWithLifecycle(
         com.migraineguard.app.core.data.prefs.UserPreferences(),
@@ -108,8 +112,27 @@ fun HomeScreen(
             ),
         )
         weather = weatherRepository.currentWeather(forceRefresh = true)
-        health = healthDataRepository.latestFitness()
-        sleep = healthDataRepository.latestSleep()
+        if (healthRefreshCoordinator == null) {
+            health = healthDataRepository.latestFitness()
+            sleep = healthDataRepository.latestSleep()
+        } else {
+            healthRefreshCoordinator.refresh(force = false)
+        }
+    }
+
+    val coordinator = healthRefreshCoordinator
+    if (coordinator != null) {
+        val rs by coordinator.state.collectAsStateWithLifecycle()
+        LaunchedEffect(rs) {
+            rs.fitness?.let { health = it }
+            rs.sleep?.let { sleep = it }
+            softHealthError = rs.lastError
+            lastRefreshedLabel = rs.lastRefreshed?.let { ts ->
+                java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+                    .withZone(java.time.ZoneId.systemDefault())
+                    .format(ts)
+            }
+        }
     }
 
     val today = LocalDate.now()
@@ -202,6 +225,14 @@ fun HomeScreen(
                 }
                 Spacer(Modifier.height(6.dp))
                 Text(riskHint, style = MaterialTheme.typography.bodyMedium)
+                lastRefreshedLabel?.let { label ->
+                    Text(
+                        "Health data · last refreshed $label" +
+                            (softHealthError?.let { " · $it" } ?: ""),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
             if (bmi != null) {

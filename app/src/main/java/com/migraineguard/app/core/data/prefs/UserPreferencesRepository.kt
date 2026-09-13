@@ -42,6 +42,8 @@ data class UserPreferences(
     val geminiApiKey: String = "",
     val groqApiKey: String = "",
     val openRouterApiKey: String = "",
+    val setupComplete: Boolean = false,
+    val healthConnectSkipped: Boolean = false,
 )
 
 class UserPreferencesRepository(context: Context) {
@@ -67,6 +69,8 @@ class UserPreferencesRepository(context: Context) {
     private val geminiKey = stringPreferencesKey("gemini_api_key")
     private val groqKey = stringPreferencesKey("groq_api_key")
     private val openRouterKey = stringPreferencesKey("openrouter_api_key")
+    private val setupCompleteKey = booleanPreferencesKey("setup_complete")
+    private val hcSkippedKey = booleanPreferencesKey("health_connect_skipped")
 
     private val profileNameKey = stringPreferencesKey("profile_display_name")
     private val profileDobKey = stringPreferencesKey("profile_dob")
@@ -101,6 +105,10 @@ class UserPreferencesRepository(context: Context) {
             geminiApiKey = p[geminiKey] ?: "",
             groqApiKey = p[groqKey] ?: "",
             openRouterApiKey = p[openRouterKey] ?: "",
+            // Migrate v1.5 users who already finished onboarding+profile
+            setupComplete = p[setupCompleteKey]
+                ?: ((p[onboardingKey] == true) && (p[profileCompleteKey] == true)),
+            healthConnectSkipped = p[hcSkippedKey] ?: false,
             bodyProfile = BodyProfile(
                 displayName = p[profileNameKey] ?: "",
                 dateOfBirthIso = p[profileDobKey] ?: "",
@@ -241,6 +249,17 @@ class UserPreferencesRepository(context: Context) {
             it[groqKey] = ""
             it[openRouterKey] = ""
         }
+    }
+
+    suspend fun setSetupComplete(done: Boolean) {
+        dataStore.edit {
+            it[setupCompleteKey] = done
+            if (done) it[onboardingKey] = true
+        }
+    }
+
+    suspend fun setHealthConnectSkipped(skipped: Boolean) {
+        dataStore.edit { it[hcSkippedKey] = skipped }
     }
 
     suspend fun getGeminiApiKey(): String = preferences.first().geminiApiKey

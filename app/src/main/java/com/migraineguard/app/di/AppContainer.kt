@@ -14,6 +14,7 @@ import com.migraineguard.app.feature.body.WeightRepository
 import com.migraineguard.app.feature.coach.AiCoachRepository
 import com.migraineguard.app.feature.fitness.HealthConnectHealthDataRepository
 import com.migraineguard.app.feature.fitness.HealthDataRepository
+import com.migraineguard.app.feature.fitness.HealthRefreshCoordinator
 import com.migraineguard.app.feature.fitness.WorkoutRepository
 import com.migraineguard.app.feature.insights.DefaultInsightsAnalyzer
 import com.migraineguard.app.feature.insights.InsightsAnalyzer
@@ -26,6 +27,9 @@ import com.migraineguard.app.feature.settings.DriveSyncRepositoryImpl
 import com.migraineguard.app.feature.water.WaterIntakeRepository
 import com.migraineguard.app.feature.weather.OpenMeteoWeatherRepository
 import com.migraineguard.app.feature.weather.WeatherRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Manual composition root — simple AppContainer (no Hilt).
@@ -33,6 +37,7 @@ import com.migraineguard.app.feature.weather.WeatherRepository
 class AppContainer(context: Context) {
     private val appContext = context.applicationContext
     private val db = AppDatabase.get(appContext)
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val preferencesRepository = UserPreferencesRepository(appContext)
     val authRepository: AuthRepository = DefaultAuthRepository(preferencesRepository)
@@ -40,6 +45,7 @@ class AppContainer(context: Context) {
     val waterIntakeRepository = WaterIntakeRepository(appContext, db.waterHistoryDao())
     val weatherRepository: WeatherRepository = OpenMeteoWeatherRepository(appContext)
     val healthDataRepository: HealthDataRepository = HealthConnectHealthDataRepository(appContext)
+    val healthRefreshCoordinator = HealthRefreshCoordinator(healthDataRepository, appScope)
     val workoutRepository = WorkoutRepository(db.workoutDao())
     val weightRepository = WeightRepository(db.weightDao())
     val medicationRepository = MedicationRepository(db.medicationDao())

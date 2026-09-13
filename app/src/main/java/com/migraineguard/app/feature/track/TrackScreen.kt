@@ -67,6 +67,7 @@ import com.migraineguard.app.feature.fitness.HealthConnectDiagnostics
 import com.migraineguard.app.feature.fitness.HealthConnectPackages
 import com.migraineguard.app.feature.fitness.HealthConnectStatus
 import com.migraineguard.app.feature.fitness.HealthDataRepository
+import com.migraineguard.app.feature.fitness.HealthRefreshCoordinator
 import com.migraineguard.app.feature.fitness.WorkoutRepository
 import com.migraineguard.app.feature.fitness.findActivity
 import com.migraineguard.app.feature.fitness.startHealthActivity
@@ -80,6 +81,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TrackScreen(
     healthDataRepository: HealthDataRepository,
+    healthRefreshCoordinator: HealthRefreshCoordinator? = null,
     workoutRepository: WorkoutRepository,
     preferencesRepository: UserPreferencesRepository,
     modifier: Modifier = Modifier,
@@ -119,6 +121,24 @@ fun TrackScreen(
     val activity = context.findActivity()
     val launchContext = activity ?: context
     val snackbar = remember { SnackbarHostState() }
+
+    var autoRefreshLabel by remember { mutableStateOf<String?>(null) }
+    var autoRefreshError by remember { mutableStateOf<String?>(null) }
+    val coordinator = healthRefreshCoordinator
+    if (coordinator != null) {
+        val rs by coordinator.state.collectAsStateWithLifecycle()
+        LaunchedEffect(rs) {
+            rs.fitness?.let { fitness = it }
+            rs.sleep?.let { sleep = it }
+            permitted = rs.permitted
+            status = rs.status
+            if (!rs.lastError.isNullOrBlank()) lastError = rs.lastError.orEmpty()
+            autoRefreshError = rs.lastError
+            autoRefreshLabel = rs.lastRefreshed?.let { ts ->
+                DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault()).format(ts)
+            }
+        }
+    }
 
     fun applyDiag() {
         val d = healthDataRepository.diagnostics(launchContext)
@@ -294,6 +314,7 @@ fun TrackScreen(
     }
 
     fun reload() {
+        healthRefreshCoordinator?.refresh(force = true)
         scope.launch {
             refresh(healthDataRepository) { s, f, sl, p ->
                 status = s; fitness = f; sleep = sl; permitted = p
@@ -585,6 +606,13 @@ fun TrackScreen(
                 )
             }
 
+            autoRefreshLabel?.let { label ->
+                Text(
+                    "Last auto-refresh $label" + (autoRefreshError?.let { " · $it" } ?: ""),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             OutlinedButton(
                 onClick = { reload() },
                 modifier = Modifier.fillMaxWidth(),
