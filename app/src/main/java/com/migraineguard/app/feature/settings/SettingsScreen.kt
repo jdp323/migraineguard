@@ -58,7 +58,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.migraineguard.app.BuildConfig
 import com.migraineguard.app.core.ai.FallbackAiClient
-import com.migraineguard.app.core.ai.resolveApiKey
 import com.migraineguard.app.core.data.Result
 import com.migraineguard.app.core.data.prefs.UserPreferences
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
@@ -82,6 +81,7 @@ fun SettingsScreen(
     onEditProfile: () -> Unit = {},
     onOpenBody: () -> Unit = {},
     onOpenMeds: () -> Unit = {},
+    onConnectGemini: () -> Unit = {},
     focusGoogle: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
@@ -127,7 +127,7 @@ fun SettingsScreen(
     LaunchedEffect(focusGoogle) {
         // scroll cue via snackbar-ish toast
         if (focusGoogle) {
-            Toast.makeText(context, "Paste Google Web Client ID below", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Optional: override Web Client ID below (baked ID already works)", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -166,13 +166,20 @@ fun SettingsScreen(
         ) {
             SectionCard(title = "Google Sign-In", icon = Icons.Filled.Key) {
                 Text(
-                    "Google Sign-In is still demo/optional until a Web Client ID is baked later. Paste one here (…apps.googleusercontent.com) to try real sign-in — runtime value overrides BuildConfig. Also create an Android OAuth client for package com.migraineguard.app.",
+                    "Web Client ID is baked for Firebase project migraineguard-66229 — friends can Sign in with Google out of the box (Credential Manager). " +
+                        "Optional override below. Google Sign-In is not Gemini access. " +
+                        "If Sign-In fails with SHA-1 / certificate errors, register this APK SHA-1 on the Android OAuth client.",
                     style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    "Baked default: " + BuildConfig.GOOGLE_WEB_CLIENT_ID.take(36) + "…",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OutlinedTextField(
                     value = googleId,
                     onValueChange = { googleId = it },
-                    label = { Text("Google Web Client ID") },
+                    label = { Text("Override Google Web Client ID (optional)") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
@@ -181,21 +188,21 @@ fun SettingsScreen(
                     onClick = {
                         scope.launch {
                             preferencesRepository.setGoogleWebClientId(googleId)
-                            Toast.makeText(context, "Client ID saved", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Client ID override saved", Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Save client ID") }
+                ) { Text("Save override") }
                 OutlinedButton(
                     onClick = { showSha = !showSha },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text(if (showSha) "Hide debug SHA-1 instructions" else "Show debug SHA-1 instructions") }
+                ) { Text(if (showSha) "Hide SHA-1 instructions" else "Show SHA-1 (fix mismatch)") }
                 if (showSha) {
                     Text(
-                        "Box debug keystore SHA-1:\nFD:56:20:0E:83:57:C4:97:47:E4:32:10:D8:60:3F:DE:0C:64:70:14\n\n" +
-                            "Android Studio local builds often use a different debug keystore — run:\n" +
-                            "keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android\n\n" +
-                            "Add both SHA-1 fingerprints to your Android OAuth client if you switch machines.",
+                        "Release / box APK SHA-1:\nFD:56:20:0E:83:57:C4:97:47:E4:32:10:D8:60:3F:DE:0C:64:70:14\n\n" +
+                            "Package: com.migraineguard.app · Firebase: migraineguard-66229\n\n" +
+                            "Add this SHA-1 to the Android OAuth client. Local Studio builds may use another debug keystore:\n" +
+                            "keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
@@ -203,7 +210,8 @@ fun SettingsScreen(
 
             SectionCard(title = "AI providers", icon = Icons.Filled.SmartToy) {
                 Text(
-                    "Order: Gemini → Groq → OpenRouter → OfflineHealthBrain. Runtime keys override BuildConfig. Offline always works without keys. Google Sign-In is separate from Gemini access.",
+                    "Uses YOUR keys only — never developer tokens or the Firebase api_key. Order: Gemini → Groq → OpenRouter → OfflineHealthBrain. " +
+                        "Cloud AI runs only with keys you paste. Without a key: OfflineHealthBrain + Connect Gemini CTA. Google Sign-In ≠ Gemini.",
                     style = MaterialTheme.typography.bodySmall,
                 )
                 OutlinedTextField(
@@ -285,13 +293,29 @@ fun SettingsScreen(
                 if (aiTestStatus.isNotBlank()) {
                     Text(aiTestStatus, style = MaterialTheme.typography.bodySmall)
                 }
-                val gConfigured = resolveApiKey(prefs.geminiApiKey, BuildConfig.GEMINI_API_KEY).isNotBlank()
-                val qConfigured = resolveApiKey(prefs.groqApiKey, BuildConfig.GROQ_API_KEY).isNotBlank()
-                val oConfigured = resolveApiKey(prefs.openRouterApiKey, BuildConfig.OPENROUTER_API_KEY).isNotBlank()
+                val gConfigured = prefs.geminiApiKey.isNotBlank()
+                val qConfigured = prefs.groqApiKey.isNotBlank()
+                val oConfigured = prefs.openRouterApiKey.isNotBlank()
                 Text(
-                    "Configured: Gemini=$gConfigured · Groq=$qConfigured · OpenRouter=$oConfigured · Offline=always",
+                    "Your keys: Gemini=$gConfigured · Groq=$qConfigured · OpenRouter=$oConfigured · Offline=always",
                     style = MaterialTheme.typography.bodySmall,
                 )
+                OutlinedButton(
+                    onClick = onConnectGemini,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Open Connect Gemini screen") }
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            preferencesRepository.clearAllAiKeys()
+                            geminiKey = ""
+                            groqKey = ""
+                            openRouterKey = ""
+                            Toast.makeText(context, "AI keys removed", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Remove all my AI keys") }
             }
 
             SectionCard(title = "Profile", icon = Icons.Filled.Person) {
@@ -486,7 +510,7 @@ fun SettingsScreen(
             SectionCard(title = "About", icon = Icons.Filled.Info) {
                 Text("MigraineGuard v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
                 Text("Package ${BuildConfig.APPLICATION_ID}")
-                Text("AI: Gemini/Groq/OpenRouter via Settings or BuildConfig; OfflineHealthBrain always on")
+                Text("AI: your Gemini/Groq/OpenRouter keys only; OfflineHealthBrain always on")
                 OutlinedButton(
                     onClick = {
                         runCatching {
@@ -502,8 +526,8 @@ fun SettingsScreen(
             SectionCard(title = "Privacy", icon = Icons.Filled.PrivacyTip) {
                 Text(
                     "Logs stay on-device (Room + DataStore) unless you enable Drive sync. " +
-                        "Weather uses Open-Meteo without an API key. AI calls happen for food analysis, insights, and Coach/Analyst — keys optional; offline brain always available. " +
-                        "Not a medical device — for personal awareness only.",
+                        "Weather uses Open-Meteo without an API key. Cloud AI uses only YOUR stored keys — never developer or Firebase api_key. " +
+                        "OfflineHealthBrain always available. Not a medical device — for personal awareness only.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }

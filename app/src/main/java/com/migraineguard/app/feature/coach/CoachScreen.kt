@@ -52,6 +52,8 @@ import java.time.format.DateTimeFormatter
 fun CoachScreen(
     coachRepository: AiCoachRepository,
     initialPersona: AiPersona = AiPersona.COACH,
+    hasUserGeminiKey: Boolean = false,
+    onConnectGemini: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var persona by remember { mutableStateOf(initialPersona) }
@@ -119,6 +121,19 @@ fun CoachScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onErrorContainer,
                     )
+                }
+            }
+
+            if (!hasUserGeminiKey) {
+                SectionCard(title = "Cloud AI", icon = Icons.Filled.AutoAwesome) {
+                    Text(
+                        "No Gemini key yet — Coach/Analyst use OfflineHealthBrain (your on-device logs). " +
+                            "Cloud AI needs YOUR free Google AI Studio key, not the developer’s.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    OutlinedButton(onClick = onConnectGemini, modifier = Modifier.fillMaxWidth()) {
+                        Text("Connect Gemini")
+                    }
                 }
             }
 

@@ -22,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -107,7 +106,7 @@ fun SignInScreen(
                             configured = authRepository.hasConfiguredClientId()
                             if (!configured) {
                                 loading = false
-                                error = "Add Google Web Client ID in Settings → Google"
+                                error = "Google Web Client ID missing — open Settings tip"
                                 onNeedGoogleSetup()
                                 return@launch
                             }
@@ -149,18 +148,14 @@ fun SignInScreen(
                 modifier = Modifier.padding(top = 12.dp),
                 textAlign = TextAlign.Center,
             )
-            if (it.contains("Google Web Client ID", ignoreCase = true)) {
-                TextButton(onClick = onNeedGoogleSetup) {
-                    Text("Open Google setup tip")
-                }
-            }
         }
 
         Text(
             text = if (configured) {
-                "Google Web client ID found — Credential Manager Google ID path is active."
+                "Google Sign-In is ready (Web Client ID baked for friends). " +
+                    "Demo continues work offline. Google Sign-In ≠ Gemini API access."
             } else {
-                "Paste your Web client ID in Settings → Google (or local.properties) before using Google Sign-In. Demo mode works anytime."
+                "Web Client ID not found — unusual for this build. Demo mode still works."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

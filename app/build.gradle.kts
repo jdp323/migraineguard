@@ -18,6 +18,11 @@ fun localOrDefault(key: String, default: String = ""): String =
         .replace("\\", "\\\\")
         .replace("\"", "\\\"")
 
+// Baked Web OAuth client (client_type 3) for Google Sign-In via Credential Manager.
+// Friends get Sign-In out of the box; Settings can still override at runtime.
+val bakedGoogleWebClientId =
+    "555526836064-aria393bjpcgr17j6fatl0nbeqtvqri6.apps.googleusercontent.com"
+
 android {
     namespace = "com.migraineguard.app"
     compileSdk = 35
@@ -26,19 +31,20 @@ android {
         applicationId = "com.migraineguard.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.4.0"
+        versionCode = 6
+        versionName = "1.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField(
             "String",
             "GOOGLE_WEB_CLIENT_ID",
-            "\"${localOrDefault("GOOGLE_WEB_CLIENT_ID", "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com")}\""
+            "\"${localOrDefault("GOOGLE_WEB_CLIENT_ID", bakedGoogleWebClientId)}\""
         )
-        buildConfigField("String", "GEMINI_API_KEY", "\"${localOrDefault("GEMINI_API_KEY")}\"")
-        buildConfigField("String", "GROQ_API_KEY", "\"${localOrDefault("GROQ_API_KEY")}\"")
-        buildConfigField("String", "OPENROUTER_API_KEY", "\"${localOrDefault("OPENROUTER_API_KEY")}\"")
+        // NEVER ship developer AI tokens — empty defaults only. Users paste their own keys.
+        buildConfigField("String", "GEMINI_API_KEY", "\"${localOrDefault("GEMINI_API_KEY", "")}\"")
+        buildConfigField("String", "GROQ_API_KEY", "\"${localOrDefault("GROQ_API_KEY", "")}\"")
+        buildConfigField("String", "OPENROUTER_API_KEY", "\"${localOrDefault("OPENROUTER_API_KEY", "")}\"")
     }
 
     buildTypes {

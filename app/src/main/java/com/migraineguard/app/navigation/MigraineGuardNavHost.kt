@@ -14,6 +14,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +34,7 @@ import com.migraineguard.app.di.AppContainer
 import com.migraineguard.app.feature.auth.SignInScreen
 import com.migraineguard.app.feature.body.BodyMetricsScreen
 import com.migraineguard.app.feature.coach.CoachScreen
+import com.migraineguard.app.feature.gemini.ConnectGeminiScreen
 import com.migraineguard.app.feature.home.HomeScreen
 import com.migraineguard.app.feature.insights.InsightsScreen
 import com.migraineguard.app.feature.meds.MedicationsScreen
@@ -53,12 +55,22 @@ fun MigraineGuardNavHost(container: AppContainer) {
     var forceProfileEdit by remember { mutableStateOf(false) }
     var pendingGoogleFocus by remember { mutableStateOf(false) }
     var coachPersona by remember { mutableStateOf(AiPersona.COACH) }
+    // Session flag: after skip, don't re-show Connect Gemini until next cold start / sign-in
+    var geminiConnectSkipped by remember { mutableStateOf(false) }
+    var forceConnectGemini by remember { mutableStateOf(false) }
 
     if (!prefs.onboardingDone) {
         OnboardingScreen(
             onFinished = { scope.launch { container.preferencesRepository.setOnboardingDone(true) } },
         )
         return
+    }
+
+    LaunchedEffect(authState.isSignedIn) {
+        if (!authState.isSignedIn) {
+            geminiConnectSkipped = false
+            forceConnectGemini = false
+        }
     }
 
     if (!authState.isSignedIn) {
@@ -77,6 +89,24 @@ fun MigraineGuardNavHost(container: AppContainer) {
         SignInScreen(
             authRepository = container.authRepository,
             onNeedGoogleSetup = { pendingGoogleFocus = true },
+        )
+        return
+    }
+
+    val needsGemini =
+        forceConnectGemini || (prefs.geminiApiKey.isBlank() && !geminiConnectSkipped)
+    if (needsGemini) {
+        ConnectGeminiScreen(
+            preferencesRepository = container.preferencesRepository,
+            aiClient = container.aiClient,
+            onConnected = {
+                forceConnectGemini = false
+                geminiConnectSkipped = false
+            },
+            onSkipOffline = {
+                forceConnectGemini = false
+                geminiConnectSkipped = true
+            },
         )
         return
     }
@@ -183,12 +213,16 @@ fun MigraineGuardNavHost(container: AppContainer) {
                     aiClient = container.aiClient,
                     onOpenCoach = { openCoach(AiPersona.COACH) },
                     onOpenAnalyst = { openCoach(AiPersona.ANALYST) },
+                    hasUserGeminiKey = prefs.geminiApiKey.isNotBlank(),
+                    onConnectGemini = { forceConnectGemini = true },
                 )
             }
             composable(Routes.Coach) {
                 CoachScreen(
                     coachRepository = container.aiCoachRepository,
                     initialPersona = coachPersona,
+                    hasUserGeminiKey = prefs.geminiApiKey.isNotBlank(),
+                    onConnectGemini = { forceConnectGemini = true },
                 )
             }
             composable(Routes.Settings) {
@@ -202,6 +236,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
                     onEditProfile = { forceProfileEdit = true },
                     onOpenBody = { navController.navigate(Routes.BodyMetrics) },
                     onOpenMeds = { navController.navigate(Routes.Medications) },
+                    onConnectGemini = { forceConnectGemini = true },
                 )
             }
             composable(Routes.BodyMetrics) {

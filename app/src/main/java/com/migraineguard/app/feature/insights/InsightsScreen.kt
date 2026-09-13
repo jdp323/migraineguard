@@ -66,6 +66,8 @@ fun InsightsScreen(
     aiClient: FallbackAiClient,
     onOpenCoach: () -> Unit = {},
     onOpenAnalyst: () -> Unit = {},
+    hasUserGeminiKey: Boolean = false,
+    onConnectGemini: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var range by remember { mutableStateOf(RangeMode.Week) }
@@ -113,6 +115,16 @@ fun InsightsScreen(
 
             SectionCard(title = "AI hub", icon = Icons.Filled.AutoAwesome) {
                 Text("Open Coach for habits or Health Analyst for an educational migraine review.")
+                if (!hasUserGeminiKey) {
+                    Text(
+                        "Cloud AI needs YOUR Gemini key. Without it, OfflineHealthBrain only.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    OutlinedButton(onClick = onConnectGemini, modifier = Modifier.fillMaxWidth()) {
+                        Text("Connect Gemini")
+                    }
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = onOpenCoach) { Text("Ask Coach") }
                     OutlinedButton(onClick = onOpenAnalyst) { Text("Health Analyst") }

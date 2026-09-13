@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MigraineGuard</string>
-    <string name="app_version_label">MigraineGuard v1.3</string>
+    <string name="app_version_label">MigraineGuard v1.5</string>
     <string name="nav_fitness">Fitness</string>
     <string name="health_connect_rationale_title">Why MigraineGuard needs health data</string>
     <string name="health_connect_rationale">MigraineGuard reads steps, sleep, heart rate, exercise, distance, and calories from Health Connect to correlate lifestyle with migraine patterns. Optionally we can write exercise sessions you log here. Data stays on your device unless you enable Drive sync.\n\nAlso enable sharing in Samsung Health → Health Connect so Galaxy Watch data appears.\n\nSideloaded debug builds appear under Connected apps after the first successful permission request.</string>

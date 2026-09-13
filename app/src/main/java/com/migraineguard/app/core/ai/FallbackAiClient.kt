@@ -7,7 +7,7 @@ import org.json.JSONObject
 
 /**
  * Tries providers in priority order: Gemini → Groq → OpenRouter → OfflineHealthBrain.
- * Runtime DataStore keys override BuildConfig when set on the HTTP providers.
+ * Uses per-user DataStore keys only for cloud providers; OfflineHealthBrain always available.
  */
 class FallbackAiClient(
     providers: List<AiProvider>,

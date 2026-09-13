@@ -1,6 +1,5 @@
 package com.migraineguard.app.core.ai
 
-import com.migraineguard.app.BuildConfig
 import com.migraineguard.app.core.data.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,14 +31,15 @@ fun resolveApiKey(runtime: String?, buildConfig: String): String {
     return buildConfig.trim()
 }
 
-/** Gemini free tier — runtime DataStore key overrides BuildConfig. */
+/** Gemini free tier — user DataStore key only (never developer tokens). */
 class GeminiFreeProvider(
     private val keyProvider: suspend () -> String = { "" },
 ) : BaseAiProvider("GeminiFree", 0) {
     override suspend fun complete(prompt: String): Result<String> = withContext(Dispatchers.IO) {
-        val key = resolveApiKey(keyProvider(), BuildConfig.GEMINI_API_KEY)
+        // Per-user keys only — never developer BuildConfig / Firebase api_key
+        val key = keyProvider().trim()
         if (key.isBlank()) {
-            return@withContext Result.Error("No GEMINI_API_KEY")
+            return@withContext Result.Error("No user Gemini key — connect yours in Settings or Connect Gemini")
         }
         runCatching {
             val body = JSONObject()
@@ -81,9 +81,9 @@ class GroqFreeProvider(
     private val keyProvider: suspend () -> String = { "" },
 ) : BaseAiProvider("GroqFree", 1) {
     override suspend fun complete(prompt: String): Result<String> = withContext(Dispatchers.IO) {
-        val key = resolveApiKey(keyProvider(), BuildConfig.GROQ_API_KEY)
+        val key = keyProvider().trim()
         if (key.isBlank()) {
-            return@withContext Result.Error("No GROQ_API_KEY")
+            return@withContext Result.Error("No user Groq key")
         }
         chatCompletions(
             url = "https://api.groq.com/openai/v1/chat/completions",
@@ -99,9 +99,9 @@ class OpenRouterFreeProvider(
     private val keyProvider: suspend () -> String = { "" },
 ) : BaseAiProvider("OpenRouterFree", 2) {
     override suspend fun complete(prompt: String): Result<String> = withContext(Dispatchers.IO) {
-        val key = resolveApiKey(keyProvider(), BuildConfig.OPENROUTER_API_KEY)
+        val key = keyProvider().trim()
         if (key.isBlank()) {
-            return@withContext Result.Error("No OPENROUTER_API_KEY")
+            return@withContext Result.Error("No user OpenRouter key")
         }
         chatCompletions(
             url = "https://openrouter.ai/api/v1/chat/completions",

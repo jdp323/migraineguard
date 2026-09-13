@@ -215,12 +215,32 @@ class UserPreferencesRepository(context: Context) {
         dataStore.edit { it[geminiKey] = key.trim() }
     }
 
+    suspend fun clearGeminiApiKey() {
+        dataStore.edit { it[geminiKey] = "" }
+    }
+
     suspend fun setGroqApiKey(key: String) {
         dataStore.edit { it[groqKey] = key.trim() }
     }
 
+    suspend fun clearGroqApiKey() {
+        dataStore.edit { it[groqKey] = "" }
+    }
+
     suspend fun setOpenRouterApiKey(key: String) {
         dataStore.edit { it[openRouterKey] = key.trim() }
+    }
+
+    suspend fun clearOpenRouterApiKey() {
+        dataStore.edit { it[openRouterKey] = "" }
+    }
+
+    suspend fun clearAllAiKeys() {
+        dataStore.edit {
+            it[geminiKey] = ""
+            it[groqKey] = ""
+            it[openRouterKey] = ""
+        }
     }
 
     suspend fun getGeminiApiKey(): String = preferences.first().geminiApiKey
