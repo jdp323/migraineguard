@@ -18,7 +18,7 @@ enum class BottomDest(
 ) {
     Home(Routes.Home, "Home"),
     Migraine(Routes.Migraine, "Migraine"),
-    Track(Routes.Track, "Track"),
+    Track(Routes.Track, "Fitness"),
     Food(Routes.Food, "Food"),
     Water(Routes.Water, "Water"),
     Insights(Routes.Insights, "Insights"),

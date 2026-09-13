@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.Button
@@ -136,6 +137,24 @@ fun SettingsScreen(
                 )
             }
 
+
+            SectionCard(title = "Fitness goals", icon = Icons.Filled.FitnessCenter) {
+                Text("Daily step goal: ${prefs.dailyStepGoal}")
+                Slider(
+                    value = prefs.dailyStepGoal.toFloat(),
+                    onValueChange = {
+                        scope.launch { preferencesRepository.setDailyStepGoal(it.roundToInt()) }
+                    },
+                    valueRange = 3000f..15000f,
+                    steps = 11,
+                )
+                Text(
+                    "Used by the Fitness tab step ring. Edit anytime.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
             SectionCard(title = "Notifications", icon = Icons.Filled.Notifications) {
                 PrefSwitch(
                     label = "Enable notifications (preference)",
@@ -153,7 +172,7 @@ fun SettingsScreen(
                     onCheckedChange = { scope.launch { preferencesRepository.setMigraineReminders(it) } },
                 )
                 Text(
-                    "Reminder delivery is preference-backed in v1; wire WorkManager / notifications later.",
+                    "Reminder delivery is preference-backed in v1.1; WorkManager push can be wired later.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -161,7 +180,7 @@ fun SettingsScreen(
 
             SectionCard(title = "Samsung Health / Health Connect", icon = Icons.Filled.Watch) {
                 Text(
-                    "Link Samsung Health → Health Connect so Galaxy Watch steps, HR, and sleep sync into MigraineGuard.",
+                    "MigraineGuard is a Health Connect connected app. Grant permissions on the Fitness tab, then enable Samsung Health → Health Connect sharing so Galaxy Watch steps, HR, sleep, and workouts sync in.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 OutlinedButton(

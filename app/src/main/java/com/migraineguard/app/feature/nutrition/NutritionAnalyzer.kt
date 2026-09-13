@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 interface NutritionAnalyzer {
     suspend fun analyzeFoodLabel(description: String, imageUri: String? = null): NutritionScanResult
     fun observeRecent(limit: Int = 30): Flow<List<NutritionScanRecord>>
+    suspend fun inRange(startMs: Long, endMs: Long): List<NutritionScanRecord>
     suspend fun persist(result: NutritionScanResult): Long
 }
 
@@ -25,6 +26,9 @@ class AiNutritionAnalyzer(
 
     override fun observeRecent(limit: Int): Flow<List<NutritionScanRecord>> =
         dao.observeRecent(limit).map { list -> list.map { it.toDomain() } }
+
+    override suspend fun inRange(startMs: Long, endMs: Long): List<NutritionScanRecord> =
+        dao.inRange(startMs, endMs).map { it.toDomain() }
 
     override suspend fun persist(result: NutritionScanResult): Long =
         dao.insert(NutritionScanEntity.from(result, System.currentTimeMillis()))

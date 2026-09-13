@@ -1,5 +1,6 @@
 package com.migraineguard.app.feature.insights
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,7 +11,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.LocalDining
+import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,11 +37,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.migraineguard.app.core.ai.FallbackAiClient
 import com.migraineguard.app.core.domain.InsightReport
+import com.migraineguard.app.core.ui.EmptyState
 import com.migraineguard.app.core.ui.SectionCard
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-private enum class RangeMode { Week, Days14, Days30 }
+private enum class RangeMode(val label: String, val days: Long?) {
+    Week("7 days", 7),
+    Days14("14 days", 14),
+    Days30("30 days", 30),
+    Custom("Custom 21d", 21),
+}
+
+private enum class InsightMode(val label: String) {
+    Overall("Overall"),
+    Migraine("Migraine"),
+    Food("Food"),
+    Water("Water"),
+    Fitness("Fitness"),
+    Sleep("Sleep"),
+    Weather("Weather"),
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +66,8 @@ fun InsightsScreen(
     aiClient: FallbackAiClient,
     modifier: Modifier = Modifier,
 ) {
-    var mode by remember { mutableStateOf(RangeMode.Week) }
+    var range by remember { mutableStateOf(RangeMode.Week) }
+    var mode by remember { mutableStateOf(InsightMode.Overall) }
     var report by remember { mutableStateOf<InsightReport?>(null) }
     var aiText by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
@@ -52,21 +76,20 @@ fun InsightsScreen(
     fun load() {
         scope.launch {
             loading = true
-            report = when (mode) {
-                RangeMode.Week -> insightsAnalyzer.weeklyTrends()
-                RangeMode.Days14 -> {
-                    val end = LocalDate.now()
-                    insightsAnalyzer.customRange(end.minusDays(13), end)
-                }
-                RangeMode.Days30 -> {
-                    val end = LocalDate.now()
-                    insightsAnalyzer.customRange(end.minusDays(29), end)
-                }
-            }
+            val end = LocalDate.now()
+            val days = (range.days ?: 7) - 1
+            report = insightsAnalyzer.customRange(end.minusDays(days), end).copy(
+                title = when (range) {
+                    RangeMode.Week -> "Weekly trends"
+                    else -> "${range.label} trends"
+                },
+            )
             aiText = null
             loading = false
         }
     }
+
+    LaunchedEffect(range) { load() }
 
     Scaffold(
         modifier = modifier,
@@ -81,44 +104,146 @@ fun InsightsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                "Aggregate migraines, water, sleep, and weather. AI narrative via ${aiClient.providerNames().joinToString(" → ")}.",
+                "Modes for migraines, food, water, fitness, sleep, and weather. AI via ${aiClient.providerNames().joinToString(" → ")}.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = mode == RangeMode.Week, onClick = { mode = RangeMode.Week }, label = { Text("7 days") })
-                FilterChip(selected = mode == RangeMode.Days14, onClick = { mode = RangeMode.Days14 }, label = { Text("14 days") })
-                FilterChip(selected = mode == RangeMode.Days30, onClick = { mode = RangeMode.Days30 }, label = { Text("30 days") })
-            }
-            Button(onClick = { load() }, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
-                Text(if (loading) "Loading…" else "Build trend report")
+
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                InsightMode.entries.forEach { m ->
+                    FilterChip(
+                        selected = mode == m,
+                        onClick = { mode = m },
+                        label = { Text(m.label) },
+                    )
+                }
             }
 
-            report?.let { r ->
-                SectionCard(title = r.title, icon = Icons.Filled.Insights) {
-                    Text(r.periodLabel, style = MaterialTheme.typography.labelLarge)
-                    Text(r.summary)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                RangeMode.entries.forEach { r ->
+                    FilterChip(
+                        selected = range == r,
+                        onClick = { range = r },
+                        label = { Text(r.label) },
+                    )
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SectionCard(title = "Migraines", modifier = Modifier.weight(1f)) {
-                        Text("${r.migraineCount}")
-                        Text("avg ${"%.1f".format(r.avgIntensity)}/10", style = MaterialTheme.typography.bodySmall)
+            }
+
+            Button(onClick = { load() }, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
+                Text(if (loading) "Loading…" else "Refresh report")
+            }
+
+            val r = report
+            if (r == null && !loading) {
+                EmptyState(
+                    title = "No insights yet",
+                    subtitle = "Log migraines, water, food, and workouts — then refresh.",
+                    icon = Icons.Filled.Insights,
+                )
+            } else if (r != null) {
+                when (mode) {
+                    InsightMode.Overall -> {
+                        SectionCard(title = r.title, icon = Icons.Filled.Insights) {
+                            Text(r.periodLabel, style = MaterialTheme.typography.labelLarge)
+                            Text(r.summary)
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            SectionCard(title = "Migraines", modifier = Modifier.weight(1f), icon = Icons.Filled.Healing) {
+                                Text("${r.migraineCount}")
+                                Text("avg ${"%.1f".format(r.avgIntensity)}/10", style = MaterialTheme.typography.bodySmall)
+                            }
+                            SectionCard(title = "Water", modifier = Modifier.weight(1f), icon = Icons.Filled.WaterDrop) {
+                                Text("${"%.1f".format(r.avgWaterCups)}")
+                                Text("cups/day", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            SectionCard(title = "Fitness", modifier = Modifier.weight(1f), icon = Icons.Filled.FitnessCenter) {
+                                Text("${r.workoutCount} workouts")
+                                Text("${r.workoutMinutes} min · ${r.totalSteps} steps", style = MaterialTheme.typography.bodySmall)
+                            }
+                            SectionCard(title = "Sleep", modifier = Modifier.weight(1f), icon = Icons.Filled.Bedtime) {
+                                Text("${"%.1f".format(r.avgSleepHours)}h")
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = { scope.launch { aiText = insightsAnalyzer.aiNarrative(r) } },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("AI narrative") }
                     }
-                    SectionCard(title = "Water", modifier = Modifier.weight(1f), icon = Icons.Filled.WaterDrop) {
-                        Text("${"%.1f".format(r.avgWaterCups)}")
-                        Text("cups/day", style = MaterialTheme.typography.bodySmall)
+                    InsightMode.Migraine -> {
+                        if (r.migraineCount == 0) {
+                            EmptyState("No migraines in range", "Log episodes with the head map.", icon = Icons.Filled.Healing)
+                        } else {
+                            SectionCard(title = "Migraine analysis", icon = Icons.Filled.Healing) {
+                                Text("${r.migraineCount} episodes · avg intensity ${"%.1f".format(r.avgIntensity)}/10")
+                                Text("Head sides: ${r.sideSummary}")
+                                Text(r.summary, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
+                    InsightMode.Food -> {
+                        if (r.foodScanCount == 0) {
+                            EmptyState("No food scans", "Use the Food tab to scan meals.", icon = Icons.Filled.LocalDining)
+                        } else {
+                            SectionCard(title = "Food & triggers", icon = Icons.Filled.LocalDining) {
+                                Text("${r.foodScanCount} scans in period")
+                                if (r.topFoods.isEmpty()) Text("No labeled foods yet")
+                                else r.topFoods.forEach { Text("· $it") }
+                            }
+                        }
+                    }
+                    InsightMode.Water -> {
+                        SectionCard(title = "Hydration", icon = Icons.Filled.WaterDrop) {
+                            if (r.avgWaterCups <= 0f) {
+                                Text("No water logged in this range. Aim for steady cups each day.")
+                            } else {
+                                Text("Average ${"%.1f".format(r.avgWaterCups)} cups/day")
+                                Text(
+                                    if (r.avgWaterCups < 6f) "Below a common 6–8 cup target — dehydration can worsen migraines."
+                                    else "Solid hydration average for this window.",
+                                )
+                            }
+                        }
+                    }
+                    InsightMode.Fitness -> {
+                        if (r.workoutCount == 0 && r.totalSteps == 0) {
+                            EmptyState("No fitness data", "Connect Health Connect or log workouts on the Fitness tab.", icon = Icons.Filled.FitnessCenter)
+                        } else {
+                            SectionCard(title = "Fitness", icon = Icons.Filled.FitnessCenter) {
+                                Text("${r.workoutCount} workouts · ${r.workoutMinutes} minutes")
+                                Text("Steps (latest day snapshot): ${r.totalSteps}")
+                            }
+                        }
+                    }
+                    InsightMode.Sleep -> {
+                        SectionCard(title = "Sleep", icon = Icons.Filled.Bedtime) {
+                            if (r.avgSleepHours <= 0f) {
+                                Text("No sleep data yet. Grant Health Connect sleep permission or wait for sync.")
+                            } else {
+                                Text("Recent sleep ~ ${"%.1f".format(r.avgSleepHours)} hours")
+                                Text(
+                                    when {
+                                        r.avgSleepHours < 6f -> "Short sleep — a frequent migraine amplifier."
+                                        r.avgSleepHours >= 7.5f -> "Restorative range — protect this schedule."
+                                        else -> "Fair sleep window; consistency matters as much as duration."
+                                    },
+                                )
+                            }
+                        }
+                    }
+                    InsightMode.Weather -> {
+                        SectionCard(title = "Weather & pressure", icon = Icons.Filled.Thermostat) {
+                            Text(r.pressureTrend)
+                            Text("Correlate pressure dips with migraine days over time for personal patterns.")
+                        }
                     }
                 }
-                SectionCard(title = "Sleep & pressure") {
-                    Text("Sleep ~ ${"%.1f".format(r.avgSleepHours)}h")
-                    Text(r.pressureTrend)
-                }
-                OutlinedButton(
-                    onClick = {
-                        scope.launch { aiText = insightsAnalyzer.aiNarrative(r) }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("AI summary") }
             }
 
             aiText?.let { text ->

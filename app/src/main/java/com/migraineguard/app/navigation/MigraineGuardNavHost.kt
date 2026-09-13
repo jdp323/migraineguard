@@ -2,10 +2,10 @@ package com.migraineguard.app.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.LocalDining
-import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.outlined.Healing
 import androidx.compose.material3.Icon
@@ -59,11 +59,19 @@ fun MigraineGuardNavHost(container: AppContainer) {
     val bottomItems = listOf(
         BottomNavItem(BottomDest.Home, Icons.Filled.Home),
         BottomNavItem(BottomDest.Migraine, Icons.Outlined.Healing),
-        BottomNavItem(BottomDest.Track, Icons.Filled.MonitorHeart),
+        BottomNavItem(BottomDest.Track, Icons.Filled.FitnessCenter),
         BottomNavItem(BottomDest.Food, Icons.Filled.LocalDining),
         BottomNavItem(BottomDest.Water, Icons.Filled.WaterDrop),
         BottomNavItem(BottomDest.Insights, Icons.Filled.Insights),
     )
+
+    fun goBottom(route: String) {
+        navController.navigate(route) {
+            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -74,15 +82,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
                     bottomItems.forEach { item ->
                         NavigationBarItem(
                             selected = currentRoute == item.dest.route,
-                            onClick = {
-                                navController.navigate(item.dest.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
+                            onClick = { goBottom(item.dest.route) },
                             icon = { Icon(item.icon, contentDescription = item.dest.label) },
                             label = { Text(item.dest.label) },
                         )
@@ -100,27 +100,10 @@ fun MigraineGuardNavHost(container: AppContainer) {
                 HomeScreen(
                     userName = authState.user?.displayName ?: "Friend",
                     onOpenSettings = { navController.navigate(Routes.Settings) },
-                    onLogMigraine = {
-                        navController.navigate(Routes.Migraine) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    onOpenWater = {
-                        navController.navigate(Routes.Water) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    onOpenFood = {
-                        navController.navigate(Routes.Food) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
+                    onLogMigraine = { goBottom(Routes.Migraine) },
+                    onOpenWater = { goBottom(Routes.Water) },
+                    onOpenFood = { goBottom(Routes.Food) },
+                    onOpenFitness = { goBottom(Routes.Track) },
                     weatherRepository = container.weatherRepository,
                     healthDataRepository = container.healthDataRepository,
                     waterIntakeRepository = container.waterIntakeRepository,
@@ -132,7 +115,11 @@ fun MigraineGuardNavHost(container: AppContainer) {
                 MigraineScreen(repository = container.migraineRepository)
             }
             composable(Routes.Track) {
-                TrackScreen(healthDataRepository = container.healthDataRepository)
+                TrackScreen(
+                    healthDataRepository = container.healthDataRepository,
+                    workoutRepository = container.workoutRepository,
+                    preferencesRepository = container.preferencesRepository,
+                )
             }
             composable(Routes.Food) {
                 NutritionScreen(nutritionAnalyzer = container.nutritionAnalyzer)

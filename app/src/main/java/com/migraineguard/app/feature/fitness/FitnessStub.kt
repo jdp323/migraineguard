@@ -1,4 +1,4 @@
 package com.migraineguard.app.feature.fitness
 
-/** Fitness feature marker — UI lives under feature/track. */
+/** Fitness feature — UI primarily under feature/track (Fitness tab). */
 object FitnessFeature

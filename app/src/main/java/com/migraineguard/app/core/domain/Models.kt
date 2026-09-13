@@ -12,6 +12,14 @@ data class UserProfile(
     val photoUrl: String? = null,
 )
 
+enum class HeadView(val label: String) {
+    FRONT("Front"),
+    LEFT("Left"),
+    RIGHT("Right"),
+    BACK("Back"),
+    TOP("Top"),
+}
+
 data class PainMarker(
     val id: String,
     /** Normalized X on head silhouette, 0f..1f */
@@ -20,6 +28,8 @@ data class PainMarker(
     val y: Float,
     /** 1..10 */
     val intensity: Int,
+    /** Which head view this marker belongs to */
+    val viewId: String = HeadView.FRONT.name,
 )
 
 enum class MigraineSymptom(val label: String) {
@@ -45,6 +55,8 @@ data class HealthSnapshot(
     val heartRateBpm: Int?,
     val activeMinutes: Int,
     val sourceLabel: String = "Local",
+    val distanceMeters: Double? = null,
+    val caloriesBurned: Double? = null,
 )
 
 data class SleepSnapshot(
@@ -88,6 +100,12 @@ data class InsightReport(
     val avgWaterCups: Float = 0f,
     val avgSleepHours: Float = 0f,
     val pressureTrend: String = "",
+    val foodScanCount: Int = 0,
+    val topFoods: List<String> = emptyList(),
+    val totalSteps: Int = 0,
+    val workoutCount: Int = 0,
+    val workoutMinutes: Int = 0,
+    val sideSummary: String = "",
 )
 
 enum class ThemeMode {
@@ -100,3 +118,30 @@ enum class WaterUnit {
     CUPS,
     ML,
 }
+
+enum class WorkoutType(val label: String) {
+    WALK("Walk"),
+    RUN("Run"),
+    STRENGTH("Strength"),
+    YOGA("Yoga"),
+    CYCLING("Cycling"),
+    OTHER("Other"),
+}
+
+data class WorkoutEntry(
+    val id: Long = 0,
+    val timestampMillis: Long,
+    val type: WorkoutType,
+    val durationMinutes: Int,
+    val calories: Int? = null,
+    val notes: String = "",
+    val fromExerciseOfDay: Boolean = false,
+)
+
+data class ExerciseSuggestion(
+    val id: String,
+    val title: String,
+    val type: WorkoutType,
+    val durationMinutes: Int,
+    val description: String,
+)

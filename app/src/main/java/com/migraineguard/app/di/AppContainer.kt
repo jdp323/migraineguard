@@ -11,6 +11,7 @@ import com.migraineguard.app.feature.auth.AuthRepository
 import com.migraineguard.app.feature.auth.DefaultAuthRepository
 import com.migraineguard.app.feature.fitness.HealthConnectHealthDataRepository
 import com.migraineguard.app.feature.fitness.HealthDataRepository
+import com.migraineguard.app.feature.fitness.WorkoutRepository
 import com.migraineguard.app.feature.insights.DefaultInsightsAnalyzer
 import com.migraineguard.app.feature.insights.InsightsAnalyzer
 import com.migraineguard.app.feature.migraine.MigraineRepository
@@ -35,6 +36,7 @@ class AppContainer(context: Context) {
     val waterIntakeRepository = WaterIntakeRepository(appContext, db.waterHistoryDao())
     val weatherRepository: WeatherRepository = OpenMeteoWeatherRepository(appContext)
     val healthDataRepository: HealthDataRepository = HealthConnectHealthDataRepository(appContext)
+    val workoutRepository = WorkoutRepository(db.workoutDao())
 
     val aiClient: FallbackAiClient = FallbackAiClient(
         providers = listOf(
@@ -50,6 +52,8 @@ class AppContainer(context: Context) {
         waterIntakeRepository = waterIntakeRepository,
         weatherRepository = weatherRepository,
         healthDataRepository = healthDataRepository,
+        workoutRepository = workoutRepository,
+        nutritionAnalyzer = nutritionAnalyzer,
         aiClient = aiClient,
     )
     val driveSyncRepository: DriveSyncRepository = DriveSyncRepositoryImpl(preferencesRepository)

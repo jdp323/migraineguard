@@ -5,7 +5,8 @@
 # sdk.dir=/Users/YOU/Library/Android/sdk
 
 # Google Sign-In / Credential Manager — Web client ID from Google Cloud Console
-GOOGLE_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
+# Build succeeds without this; Google button falls back to demo mode.
+# GOOGLE_WEB_CLIENT_ID=123456789-xxxx.apps.googleusercontent.com
 
 # AI provider keys (optional free tiers; BuildConfig fields — never commit)
 # GEMINI_API_KEY=

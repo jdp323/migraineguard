@@ -1,9 +1,12 @@
 package com.migraineguard.app.feature.insights
 
 import com.migraineguard.app.core.ai.FallbackAiClient
+import com.migraineguard.app.core.domain.HeadView
 import com.migraineguard.app.core.domain.InsightReport
 import com.migraineguard.app.feature.fitness.HealthDataRepository
+import com.migraineguard.app.feature.fitness.WorkoutRepository
 import com.migraineguard.app.feature.migraine.MigraineRepository
+import com.migraineguard.app.feature.nutrition.NutritionAnalyzer
 import com.migraineguard.app.feature.water.WaterIntakeRepository
 import com.migraineguard.app.feature.weather.WeatherRepository
 import java.time.LocalDate
@@ -20,6 +23,8 @@ class DefaultInsightsAnalyzer(
     private val waterIntakeRepository: WaterIntakeRepository,
     private val weatherRepository: WeatherRepository,
     private val healthDataRepository: HealthDataRepository,
+    private val workoutRepository: WorkoutRepository,
+    private val nutritionAnalyzer: NutritionAnalyzer,
     private val aiClient: FallbackAiClient,
 ) : InsightsAnalyzer {
 
@@ -37,17 +42,37 @@ class DefaultInsightsAnalyzer(
         val avgIntensity = if (episodes.isEmpty()) 0f else episodes.map { it.overallIntensity }.average().toFloat()
         val avgWater = waterIntakeRepository.averageCups(start, end)
         val sleep = healthDataRepository.latestSleep()
+        val fitness = healthDataRepository.latestFitness()
+        val workouts = workoutRepository.inRange(startMs, endMs)
+        val foods = nutritionAnalyzer.inRange(startMs, endMs)
         val weather = weatherRepository.currentWeather()
         val pressureNote = when {
             weather.pressureHpa < 1005 -> "Low pressure now — historically linked to migraine risk"
             weather.pressureHpa > 1020 -> "High pressure — often calmer for many people"
             else -> "Pressure near average"
         }
+        val sideCounts = episodes.flatMap { it.markers }.groupingBy {
+            runCatching { HeadView.valueOf(it.viewId).label }.getOrDefault(it.viewId)
+        }.eachCount()
+        val sideSummary = if (sideCounts.isEmpty()) {
+            "No head-map points yet"
+        } else {
+            sideCounts.entries.sortedByDescending { it.value }
+                .joinToString { "${it.key}: ${it.value}" }
+        }
+        val topFoods = foods.groupingBy { it.result.foodLabel }
+            .eachCount()
+            .entries
+            .sortedByDescending { it.value }
+            .take(5)
+            .map { "${it.key} (${it.value})" }
         val summary = buildString {
             append("Migraines logged: ${episodes.size}. ")
             if (episodes.isNotEmpty()) append("Avg intensity ${"%.1f".format(avgIntensity)}/10. ")
             append("Avg water ${"%.1f".format(avgWater)} cups/day. ")
             append("Recent sleep ${sleep.hours}h (${sleep.qualityLabel}). ")
+            append("${workouts.size} workouts · ${workouts.sumOf { it.durationMinutes }} min. ")
+            append("Steps today ${fitness.steps}. ")
             append(pressureNote)
             append(".")
         }
@@ -60,6 +85,12 @@ class DefaultInsightsAnalyzer(
             avgWaterCups = avgWater,
             avgSleepHours = sleep.hours,
             pressureTrend = pressureNote,
+            foodScanCount = foods.size,
+            topFoods = topFoods,
+            totalSteps = fitness.steps,
+            workoutCount = workouts.size,
+            workoutMinutes = workouts.sumOf { it.durationMinutes },
+            sideSummary = sideSummary,
         )
     }
 
@@ -67,8 +98,11 @@ class DefaultInsightsAnalyzer(
         val blob = """
             Period: ${report.periodLabel}
             Migraines: ${report.migraineCount}, avg intensity ${report.avgIntensity}
+            Head sides: ${report.sideSummary}
             Water avg cups: ${report.avgWaterCups}
             Sleep hours: ${report.avgSleepHours}
+            Food scans: ${report.foodScanCount}, top: ${report.topFoods.joinToString()}
+            Workouts: ${report.workoutCount} (${report.workoutMinutes} min), steps today: ${report.totalSteps}
             Pressure: ${report.pressureTrend}
             Stats summary: ${report.summary}
         """.trimIndent()

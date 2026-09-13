@@ -20,6 +20,7 @@ data class UserPreferences(
     val dynamicColor: Boolean = false,
     val waterGoalCups: Int = 8,
     val waterUnit: WaterUnit = WaterUnit.CUPS,
+    val dailyStepGoal: Int = 8000,
     val notificationsEnabled: Boolean = true,
     val waterReminders: Boolean = true,
     val migraineReminders: Boolean = false,
@@ -35,6 +36,7 @@ class UserPreferencesRepository(context: Context) {
     private val dynamicKey = booleanPreferencesKey("dynamic_color")
     private val waterGoalKey = intPreferencesKey("water_goal_cups")
     private val waterUnitKey = stringPreferencesKey("water_unit")
+    private val stepGoalKey = intPreferencesKey("daily_step_goal")
     private val notifKey = booleanPreferencesKey("notifications")
     private val waterRemindKey = booleanPreferencesKey("water_reminders")
     private val migraineRemindKey = booleanPreferencesKey("migraine_reminders")
@@ -50,6 +52,7 @@ class UserPreferencesRepository(context: Context) {
             waterGoalCups = p[waterGoalKey] ?: 8,
             waterUnit = runCatching { WaterUnit.valueOf(p[waterUnitKey] ?: WaterUnit.CUPS.name) }
                 .getOrDefault(WaterUnit.CUPS),
+            dailyStepGoal = p[stepGoalKey] ?: 8000,
             notificationsEnabled = p[notifKey] ?: true,
             waterReminders = p[waterRemindKey] ?: true,
             migraineReminders = p[migraineRemindKey] ?: false,
@@ -73,6 +76,10 @@ class UserPreferencesRepository(context: Context) {
 
     suspend fun setWaterUnit(unit: WaterUnit) {
         dataStore.edit { it[waterUnitKey] = unit.name }
+    }
+
+    suspend fun setDailyStepGoal(goal: Int) {
+        dataStore.edit { it[stepGoalKey] = goal.coerceIn(1000, 30000) }
     }
 
     suspend fun setNotificationsEnabled(enabled: Boolean) {

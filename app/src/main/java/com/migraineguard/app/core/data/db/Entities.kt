@@ -7,6 +7,8 @@ import com.migraineguard.app.core.domain.MigraineSymptom
 import com.migraineguard.app.core.domain.NutritionScanRecord
 import com.migraineguard.app.core.domain.NutritionScanResult
 import com.migraineguard.app.core.domain.PainMarker
+import com.migraineguard.app.core.domain.WorkoutEntry
+import com.migraineguard.app.core.domain.WorkoutType
 
 @Entity(tableName = "migraine_episodes")
 data class MigraineEpisodeEntity(
@@ -86,3 +88,36 @@ data class WaterDayEntity(
     @PrimaryKey val dateIso: String,
     val cups: Int,
 )
+
+@Entity(tableName = "workouts")
+data class WorkoutEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val timestampMillis: Long,
+    val typeName: String,
+    val durationMinutes: Int,
+    val calories: Int?,
+    val notes: String,
+    val fromExerciseOfDay: Boolean = false,
+) {
+    fun toDomain() = WorkoutEntry(
+        id = id,
+        timestampMillis = timestampMillis,
+        type = runCatching { WorkoutType.valueOf(typeName) }.getOrDefault(WorkoutType.OTHER),
+        durationMinutes = durationMinutes,
+        calories = calories,
+        notes = notes,
+        fromExerciseOfDay = fromExerciseOfDay,
+    )
+
+    companion object {
+        fun fromDomain(e: WorkoutEntry) = WorkoutEntity(
+            id = e.id,
+            timestampMillis = e.timestampMillis,
+            typeName = e.type.name,
+            durationMinutes = e.durationMinutes,
+            calories = e.calories,
+            notes = e.notes,
+            fromExerciseOfDay = e.fromExerciseOfDay,
+        )
+    }
+}

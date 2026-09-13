@@ -31,6 +31,11 @@ interface NutritionDao {
     @Query("SELECT * FROM nutrition_scans ORDER BY timestampMillis DESC LIMIT :limit")
     fun observeRecent(limit: Int = 50): Flow<List<NutritionScanEntity>>
 
+    @Query(
+        "SELECT * FROM nutrition_scans WHERE timestampMillis BETWEEN :start AND :end ORDER BY timestampMillis DESC"
+    )
+    suspend fun inRange(start: Long, end: Long): List<NutritionScanEntity>
+
     @Insert
     suspend fun insert(entity: NutritionScanEntity): Long
 
@@ -51,4 +56,21 @@ interface WaterHistoryDao {
 
     @Query("SELECT * FROM water_history WHERE dateIso BETWEEN :start AND :end ORDER BY dateIso ASC")
     suspend fun inRange(start: String, end: String): List<WaterDayEntity>
+}
+
+@Dao
+interface WorkoutDao {
+    @Query("SELECT * FROM workouts ORDER BY timestampMillis DESC")
+    fun observeAll(): Flow<List<WorkoutEntity>>
+
+    @Query(
+        "SELECT * FROM workouts WHERE timestampMillis BETWEEN :start AND :end ORDER BY timestampMillis DESC"
+    )
+    suspend fun inRange(start: Long, end: Long): List<WorkoutEntity>
+
+    @Insert
+    suspend fun insert(entity: WorkoutEntity): Long
+
+    @Query("DELETE FROM workouts WHERE id = :id")
+    suspend fun delete(id: Long)
 }

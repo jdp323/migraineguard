@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.LocalDining
 import androidx.compose.material.icons.filled.Settings
@@ -62,6 +63,7 @@ fun HomeScreen(
     onLogMigraine: () -> Unit,
     onOpenWater: () -> Unit,
     onOpenFood: () -> Unit,
+    onOpenFitness: () -> Unit,
     weatherRepository: WeatherRepository,
     healthDataRepository: HealthDataRepository,
     waterIntakeRepository: WaterIntakeRepository,
@@ -111,6 +113,8 @@ fun HomeScreen(
         }
     }
     val waterProgress = (cups.toFloat() / prefs.waterGoalCups.coerceAtLeast(1)).coerceAtMost(1f)
+    val stepGoal = prefs.dailyStepGoal.coerceAtLeast(1)
+    val stepProgress = ((health?.steps ?: 0).toFloat() / stepGoal).coerceAtMost(1f)
 
     Scaffold(
         modifier = modifier,
@@ -136,7 +140,7 @@ fun HomeScreen(
             Text("Hello, $userName", style = MaterialTheme.typography.headlineSmall)
             Text(
                 Instant.now().atZone(ZoneId.systemDefault()).toLocalDate()
-                    .let { "Today · $it" },
+                    .let { "Today · $it · MigraineGuard v1.1" },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -148,6 +152,7 @@ fun HomeScreen(
                     AssistChip(onClick = onLogMigraine, label = { Text("Log migraine") })
                     AssistChip(onClick = onOpenWater, label = { Text("Add water") })
                     AssistChip(onClick = onOpenFood, label = { Text("Scan food") })
+                    AssistChip(onClick = onOpenFitness, label = { Text("Fitness") })
                 }
             }
 
@@ -161,6 +166,7 @@ fun HomeScreen(
                 SectionCard(title = "Steps", modifier = Modifier.weight(1f), icon = Icons.Filled.DirectionsWalk) {
                     val h = health
                     Text(if (h != null) "${h.steps}" else "—")
+                    Text("Goal $stepGoal · ${(stepProgress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
                     Text(h?.sourceLabel ?: "", style = MaterialTheme.typography.bodySmall)
                 }
                 SectionCard(title = "Sleep", modifier = Modifier.weight(1f), icon = Icons.Filled.Bedtime) {
@@ -179,8 +185,10 @@ fun HomeScreen(
                 } else Text("Loading…")
             }
 
-            SectionCard(title = "Quick actions", icon = Icons.Filled.LocalDining) {
-                Text("Use the bottom bar for Migraine, Track, Food, Water, and Insights.")
+            SectionCard(title = "Quick actions", icon = Icons.Filled.FitnessCenter) {
+                Text("Use the bottom bar for Migraine, Fitness, Food, Water, and Insights.")
+                Spacer(Modifier.height(8.dp))
+                AssistChip(onClick = onOpenFitness, label = { Text("Open Fitness hub") })
             }
         }
     }

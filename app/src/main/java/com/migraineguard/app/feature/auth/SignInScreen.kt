@@ -15,6 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,8 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.migraineguard.app.R
 import kotlinx.coroutines.launch
 
 @Composable
@@ -54,7 +58,7 @@ fun SignInScreen(
     ) {
         Box(
             modifier = Modifier
-                .size(88.dp)
+                .size(96.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center,
@@ -63,53 +67,62 @@ fun SignInScreen(
                 Icons.Filled.Healing,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(44.dp),
+                modifier = Modifier.size(48.dp),
             )
         }
         Spacer(Modifier.height(20.dp))
         Text(
-            text = "MigraineGuard",
+            text = stringResource(R.string.app_version_label),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
-            text = "Track migraines, hydration, sleep, weather pressure, and food triggers — calmly.",
+            text = stringResource(R.string.sign_in_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 12.dp, bottom = 28.dp),
         )
 
-        Button(
-            onClick = {
-                scope.launch {
-                    loading = true
-                    error = null
-                    val result = authRepository.signInWithGoogle(context)
-                    loading = false
-                    result.onFailure { error = it.message ?: "Google Sign-In failed" }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+            ),
+            elevation = CardDefaults.cardElevation(0.dp),
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            loading = true
+                            error = null
+                            val result = authRepository.signInWithGoogle(context)
+                            loading = false
+                            result.onFailure { error = it.message ?: "Google Sign-In failed" }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = !loading,
+                ) {
+                    if (loading) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    else Text(stringResource(R.string.sign_in_google))
                 }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(16.dp),
-            enabled = !loading,
-        ) {
-            if (loading) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-            else Text("Sign in with Google")
-        }
 
-        Spacer(Modifier.height(12.dp))
-
-        OutlinedButton(
-            onClick = { authRepository.signInDemo() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(16.dp),
-            enabled = !loading,
-        ) {
-            Text("Continue as demo user")
+                OutlinedButton(
+                    onClick = { authRepository.signInDemo() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = !loading,
+                ) {
+                    Text(stringResource(R.string.continue_demo))
+                }
+            }
         }
 
         error?.let {
@@ -124,9 +137,11 @@ fun SignInScreen(
 
         Text(
             text = if (configured) {
-                "Google client ID configured — Credential Manager will be used."
+                "Google Web client ID found — Credential Manager Google ID path is active."
             } else {
-                "No GOOGLE_WEB_CLIENT_ID yet — Google button falls back to demo mode. Copy local.properties.example."
+                "Demo mode always works. For real Google Sign-In, set GOOGLE_WEB_CLIENT_ID in local.properties " +
+                    "(Web client ID from Google Cloud Console) and add an Android OAuth client for com.migraineguard.app + SHA-1. " +
+                    "Build stays green without the ID."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
