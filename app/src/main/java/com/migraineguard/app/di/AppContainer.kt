@@ -4,12 +4,14 @@ import android.content.Context
 import com.migraineguard.app.core.ai.FallbackAiClient
 import com.migraineguard.app.core.ai.GeminiFreeProvider
 import com.migraineguard.app.core.ai.GroqFreeProvider
+import com.migraineguard.app.core.ai.OfflineHealthBrain
 import com.migraineguard.app.core.ai.OpenRouterFreeProvider
 import com.migraineguard.app.core.data.db.AppDatabase
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
 import com.migraineguard.app.feature.auth.AuthRepository
 import com.migraineguard.app.feature.auth.DefaultAuthRepository
 import com.migraineguard.app.feature.body.WeightRepository
+import com.migraineguard.app.feature.coach.AiCoachRepository
 import com.migraineguard.app.feature.fitness.HealthConnectHealthDataRepository
 import com.migraineguard.app.feature.fitness.HealthDataRepository
 import com.migraineguard.app.feature.fitness.WorkoutRepository
@@ -42,12 +44,16 @@ class AppContainer(context: Context) {
     val weightRepository = WeightRepository(db.weightDao())
     val medicationRepository = MedicationRepository(db.medicationDao())
 
+    private val offlineHealthBrain = OfflineHealthBrain()
+
     val aiClient: FallbackAiClient = FallbackAiClient(
         providers = listOf(
-            GeminiFreeProvider(),
-            GroqFreeProvider(),
-            OpenRouterFreeProvider(),
+            GeminiFreeProvider { preferencesRepository.getGeminiApiKey() },
+            GroqFreeProvider { preferencesRepository.getGroqApiKey() },
+            OpenRouterFreeProvider { preferencesRepository.getOpenRouterApiKey() },
+            offlineHealthBrain,
         ),
+        offlineBrain = offlineHealthBrain,
     )
 
     val nutritionAnalyzer: NutritionAnalyzer = AiNutritionAnalyzer(aiClient, db.nutritionDao())
@@ -61,4 +67,17 @@ class AppContainer(context: Context) {
         aiClient = aiClient,
     )
     val driveSyncRepository: DriveSyncRepository = DriveSyncRepositoryImpl(preferencesRepository)
+
+    val aiCoachRepository = AiCoachRepository(
+        aiClient = aiClient,
+        sessionDao = db.aiSessionDao(),
+        preferencesRepository = preferencesRepository,
+        migraineRepository = migraineRepository,
+        waterIntakeRepository = waterIntakeRepository,
+        healthDataRepository = healthDataRepository,
+        workoutRepository = workoutRepository,
+        nutritionAnalyzer = nutritionAnalyzer,
+        weatherRepository = weatherRepository,
+        medicationRepository = medicationRepository,
+    )
 }

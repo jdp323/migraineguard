@@ -178,3 +178,15 @@ data class MedicationEntity(
         )
     }
 }
+
+
+@Entity(tableName = "ai_sessions")
+data class AiSessionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val personaId: String,
+    val summary: String,
+    val fullResponse: String,
+    val userPrompt: String = "",
+    val timestampMillis: Long,
+)

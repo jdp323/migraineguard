@@ -39,6 +39,9 @@ data class UserPreferences(
     val energyLevel: Int = 3,
     val energyDateIso: String = "",
     val bodyProfile: BodyProfile = BodyProfile(),
+    val geminiApiKey: String = "",
+    val groqApiKey: String = "",
+    val openRouterApiKey: String = "",
 )
 
 class UserPreferencesRepository(context: Context) {
@@ -61,6 +64,9 @@ class UserPreferencesRepository(context: Context) {
     private val googleClientKey = stringPreferencesKey("google_web_client_id")
     private val energyKey = intPreferencesKey("energy_level")
     private val energyDateKey = stringPreferencesKey("energy_date_iso")
+    private val geminiKey = stringPreferencesKey("gemini_api_key")
+    private val groqKey = stringPreferencesKey("groq_api_key")
+    private val openRouterKey = stringPreferencesKey("openrouter_api_key")
 
     private val profileNameKey = stringPreferencesKey("profile_display_name")
     private val profileDobKey = stringPreferencesKey("profile_dob")
@@ -92,6 +98,9 @@ class UserPreferencesRepository(context: Context) {
             googleWebClientId = p[googleClientKey] ?: "",
             energyLevel = p[energyKey] ?: 3,
             energyDateIso = p[energyDateKey] ?: "",
+            geminiApiKey = p[geminiKey] ?: "",
+            groqApiKey = p[groqKey] ?: "",
+            openRouterApiKey = p[openRouterKey] ?: "",
             bodyProfile = BodyProfile(
                 displayName = p[profileNameKey] ?: "",
                 dateOfBirthIso = p[profileDobKey] ?: "",
@@ -201,4 +210,20 @@ class UserPreferencesRepository(context: Context) {
             }
         }
     }
+
+    suspend fun setGeminiApiKey(key: String) {
+        dataStore.edit { it[geminiKey] = key.trim() }
+    }
+
+    suspend fun setGroqApiKey(key: String) {
+        dataStore.edit { it[groqKey] = key.trim() }
+    }
+
+    suspend fun setOpenRouterApiKey(key: String) {
+        dataStore.edit { it[openRouterKey] = key.trim() }
+    }
+
+    suspend fun getGeminiApiKey(): String = preferences.first().geminiApiKey
+    suspend fun getGroqApiKey(): String = preferences.first().groqApiKey
+    suspend fun getOpenRouterApiKey(): String = preferences.first().openRouterApiKey
 }

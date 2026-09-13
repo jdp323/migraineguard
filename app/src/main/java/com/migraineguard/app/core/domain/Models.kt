@@ -222,3 +222,14 @@ data class MedicationEntry(
     val takenToday: Boolean = false,
     val lastTakenMillis: Long = 0,
 )
+
+
+data class AiSession(
+    val id: Long = 0,
+    val title: String,
+    val personaId: String,
+    val summary: String,
+    val fullResponse: String,
+    val userPrompt: String = "",
+    val timestampMillis: Long,
+)

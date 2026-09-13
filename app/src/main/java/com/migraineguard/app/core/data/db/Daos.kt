@@ -105,3 +105,22 @@ interface MedicationDao {
     @Query("DELETE FROM medications WHERE id = :id")
     suspend fun delete(id: Long)
 }
+
+
+@Dao
+interface AiSessionDao {
+    @Query("SELECT * FROM ai_sessions ORDER BY timestampMillis DESC")
+    fun observeAll(): Flow<List<AiSessionEntity>>
+
+    @Query("SELECT * FROM ai_sessions WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): AiSessionEntity?
+
+    @Insert
+    suspend fun insert(entity: AiSessionEntity): Long
+
+    @Query("DELETE FROM ai_sessions WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("DELETE FROM ai_sessions")
+    suspend fun clearAll()
+}

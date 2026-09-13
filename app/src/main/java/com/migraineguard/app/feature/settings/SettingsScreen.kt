@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -56,6 +57,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.migraineguard.app.BuildConfig
+import com.migraineguard.app.core.ai.FallbackAiClient
+import com.migraineguard.app.core.ai.resolveApiKey
+import com.migraineguard.app.core.data.Result
 import com.migraineguard.app.core.data.prefs.UserPreferences
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
 import com.migraineguard.app.core.domain.ThemeMode
@@ -72,6 +76,7 @@ fun SettingsScreen(
     preferencesRepository: UserPreferencesRepository,
     driveSyncRepository: DriveSyncRepository,
     healthDataRepository: HealthDataRepository,
+    aiClient: FallbackAiClient? = null,
     onSignOut: () -> Unit,
     onBack: () -> Unit,
     onEditProfile: () -> Unit = {},
@@ -86,6 +91,10 @@ fun SettingsScreen(
     var googleId by remember { mutableStateOf("") }
     var showSha by remember { mutableStateOf(false) }
     var weightGoalText by remember { mutableStateOf("") }
+    var geminiKey by remember { mutableStateOf("") }
+    var groqKey by remember { mutableStateOf("") }
+    var openRouterKey by remember { mutableStateOf("") }
+    var aiTestStatus by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -106,6 +115,11 @@ fun SettingsScreen(
     }
     LaunchedEffect(prefs.googleWebClientId) {
         googleId = prefs.googleWebClientId
+    }
+    LaunchedEffect(prefs.geminiApiKey, prefs.groqApiKey, prefs.openRouterApiKey) {
+        geminiKey = prefs.geminiApiKey
+        groqKey = prefs.groqApiKey
+        openRouterKey = prefs.openRouterApiKey
     }
     LaunchedEffect(prefs.weightGoalKg) {
         weightGoalText = prefs.weightGoalKg?.let { String.format("%.1f", it) } ?: ""
@@ -185,6 +199,99 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
+            }
+
+            SectionCard(title = "AI providers", icon = Icons.Filled.SmartToy) {
+                Text(
+                    "Order: Gemini → Groq → OpenRouter → OfflineHealthBrain. Runtime keys override BuildConfig. Offline always works without keys. Google Sign-In is separate from Gemini access.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                OutlinedTextField(
+                    value = geminiKey,
+                    onValueChange = { geminiKey = it },
+                    label = { Text("Gemini API key") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                )
+                Text(
+                    "Get free Gemini key: aistudio.google.com/apikey",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                OutlinedButton(
+                    onClick = {
+                        runCatching {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/apikey")),
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Open Google AI Studio") }
+                OutlinedTextField(
+                    value = groqKey,
+                    onValueChange = { groqKey = it },
+                    label = { Text("Groq API key") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = openRouterKey,
+                    onValueChange = { openRouterKey = it },
+                    label = { Text("OpenRouter API key") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                )
+                Button(
+                    onClick = {
+                        scope.launch {
+                            preferencesRepository.setGeminiApiKey(geminiKey)
+                            preferencesRepository.setGroqApiKey(groqKey)
+                            preferencesRepository.setOpenRouterApiKey(openRouterKey)
+                            Toast.makeText(context, "AI keys saved", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Save AI keys") }
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            aiTestStatus = "Testing…"
+                            preferencesRepository.setGeminiApiKey(geminiKey)
+                            val client = aiClient
+                            if (client == null) {
+                                aiTestStatus = "AI client unavailable"
+                                return@launch
+                            }
+                            when (val r = client.testGemini { preferencesRepository.getGeminiApiKey() }) {
+                                is Result.Success -> aiTestStatus = "Gemini OK: ${r.data.take(80)}"
+                                is Result.Error -> {
+                                    // Offline still counts as usable
+                                    val offline = client.complete("Say hi offline briefly")
+                                    aiTestStatus = when (offline) {
+                                        is Result.Success -> "Gemini failed (${r.message}); OfflineHealthBrain OK"
+                                        is Result.Error -> "Test failed: ${r.message}"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Test connection") }
+                if (aiTestStatus.isNotBlank()) {
+                    Text(aiTestStatus, style = MaterialTheme.typography.bodySmall)
+                }
+                val gConfigured = resolveApiKey(prefs.geminiApiKey, BuildConfig.GEMINI_API_KEY).isNotBlank()
+                val qConfigured = resolveApiKey(prefs.groqApiKey, BuildConfig.GROQ_API_KEY).isNotBlank()
+                val oConfigured = resolveApiKey(prefs.openRouterApiKey, BuildConfig.OPENROUTER_API_KEY).isNotBlank()
+                Text(
+                    "Configured: Gemini=$gConfigured · Groq=$qConfigured · OpenRouter=$oConfigured · Offline=always",
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
 
             SectionCard(title = "Profile", icon = Icons.Filled.Person) {
@@ -379,7 +486,7 @@ fun SettingsScreen(
             SectionCard(title = "About", icon = Icons.Filled.Info) {
                 Text("MigraineGuard v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
                 Text("Package ${BuildConfig.APPLICATION_ID}")
-                Text("AI keys: Gemini=${BuildConfig.GEMINI_API_KEY.isNotBlank()} · Groq=${BuildConfig.GROQ_API_KEY.isNotBlank()} · OpenRouter=${BuildConfig.OPENROUTER_API_KEY.isNotBlank()}")
+                Text("AI: Gemini/Groq/OpenRouter via Settings or BuildConfig; OfflineHealthBrain always on")
                 OutlinedButton(
                     onClick = {
                         runCatching {
@@ -395,7 +502,7 @@ fun SettingsScreen(
             SectionCard(title = "Privacy", icon = Icons.Filled.PrivacyTip) {
                 Text(
                     "Logs stay on-device (Room + DataStore) unless you enable Drive sync. " +
-                        "Weather uses Open-Meteo without an API key. AI calls only happen when you analyze food or request insight narratives. " +
+                        "Weather uses Open-Meteo without an API key. AI calls happen for food analysis, insights, and Coach/Analyst — keys optional; offline brain always available. " +
                         "Not a medical device — for personal awareness only.",
                     style = MaterialTheme.typography.bodyMedium,
                 )

@@ -26,12 +26,20 @@ abstract class BaseAiProvider(
     override val priority: Int,
 ) : AiProvider
 
-/** Gemini free tier when GEMINI_API_KEY is set; otherwise structured stub. */
-class GeminiFreeProvider : BaseAiProvider("GeminiFree", 0) {
+fun resolveApiKey(runtime: String?, buildConfig: String): String {
+    val r = runtime?.trim().orEmpty()
+    if (r.isNotBlank()) return r
+    return buildConfig.trim()
+}
+
+/** Gemini free tier — runtime DataStore key overrides BuildConfig. */
+class GeminiFreeProvider(
+    private val keyProvider: suspend () -> String = { "" },
+) : BaseAiProvider("GeminiFree", 0) {
     override suspend fun complete(prompt: String): Result<String> = withContext(Dispatchers.IO) {
-        val key = BuildConfig.GEMINI_API_KEY
+        val key = resolveApiKey(keyProvider(), BuildConfig.GEMINI_API_KEY)
         if (key.isBlank()) {
-            return@withContext Result.Success(structuredStub(name, prompt))
+            return@withContext Result.Error("No GEMINI_API_KEY")
         }
         runCatching {
             val body = JSONObject()
@@ -64,12 +72,16 @@ class GeminiFreeProvider : BaseAiProvider("GeminiFree", 0) {
             }
         }.getOrElse { Result.Error(it.message ?: "Gemini failed", it) }
     }
+
+    suspend fun testConnection(): Result<String> = complete("Reply with exactly: ok")
 }
 
 /** Groq free tier when GROQ_API_KEY is set. */
-class GroqFreeProvider : BaseAiProvider("GroqFree", 1) {
+class GroqFreeProvider(
+    private val keyProvider: suspend () -> String = { "" },
+) : BaseAiProvider("GroqFree", 1) {
     override suspend fun complete(prompt: String): Result<String> = withContext(Dispatchers.IO) {
-        val key = BuildConfig.GROQ_API_KEY
+        val key = resolveApiKey(keyProvider(), BuildConfig.GROQ_API_KEY)
         if (key.isBlank()) {
             return@withContext Result.Error("No GROQ_API_KEY")
         }
@@ -83,9 +95,11 @@ class GroqFreeProvider : BaseAiProvider("GroqFree", 1) {
 }
 
 /** OpenRouter free models when OPENROUTER_API_KEY is set. */
-class OpenRouterFreeProvider : BaseAiProvider("OpenRouterFree", 2) {
+class OpenRouterFreeProvider(
+    private val keyProvider: suspend () -> String = { "" },
+) : BaseAiProvider("OpenRouterFree", 2) {
     override suspend fun complete(prompt: String): Result<String> = withContext(Dispatchers.IO) {
-        val key = BuildConfig.OPENROUTER_API_KEY
+        val key = resolveApiKey(keyProvider(), BuildConfig.OPENROUTER_API_KEY)
         if (key.isBlank()) {
             return@withContext Result.Error("No OPENROUTER_API_KEY")
         }
@@ -96,25 +110,6 @@ class OpenRouterFreeProvider : BaseAiProvider("OpenRouterFree", 2) {
             prompt = prompt,
             extraHeaders = mapOf("HTTP-Referer" to "https://migraineguard.app", "X-Title" to "MigraineGuard"),
         )
-    }
-}
-
-private fun structuredStub(provider: String, prompt: String): String {
-    val isFood = prompt.contains("food", ignoreCase = true) || prompt.contains("JSON keys", ignoreCase = true)
-    return if (isFood) {
-        """
-        {
-          "foodLabel": "Balanced bowl",
-          "calories": 320,
-          "proteinG": 18,
-          "carbsG": 42,
-          "fatG": 10,
-          "notes": "[$provider stub] Estimate without API key",
-          "migraineTriggerHint": "Watch sodium and aged cheeses"
-        }
-        """.trimIndent()
-    } else {
-        "[$provider stub] ${prompt.take(120)}${if (prompt.length > 120) "…" else ""}"
     }
 }
 

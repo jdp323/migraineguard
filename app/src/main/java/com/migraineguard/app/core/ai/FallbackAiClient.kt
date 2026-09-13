@@ -2,14 +2,16 @@ package com.migraineguard.app.core.ai
 
 import com.migraineguard.app.core.data.Result
 import com.migraineguard.app.core.domain.NutritionScanResult
+import kotlinx.coroutines.delay
 import org.json.JSONObject
 
 /**
- * Tries providers in priority order. On failure advances to the next.
- * Also exposes structured helpers used by Nutrition / Insights.
+ * Tries providers in priority order: Gemini → Groq → OpenRouter → OfflineHealthBrain.
+ * Runtime DataStore keys override BuildConfig when set on the HTTP providers.
  */
 class FallbackAiClient(
     providers: List<AiProvider>,
+    private val offlineBrain: OfflineHealthBrain? = providers.filterIsInstance<OfflineHealthBrain>().firstOrNull(),
 ) {
     private val ordered = providers.sortedBy { it.priority }
 
@@ -24,7 +26,44 @@ class FallbackAiClient(
         return Result.Error(lastError ?: "No AI providers configured")
     }
 
+    /**
+     * Persona-aware completion with context pack JSON appended.
+     * Optionally fakes progressive chunks via [onChunk].
+     */
+    suspend fun completePersona(
+        persona: AiPersona,
+        userMessage: String,
+        contextJson: String,
+        onChunk: (suspend (String) -> Unit)? = null,
+    ): Result<String> {
+        val prompt = buildString {
+            appendLine("System: ${Personas.systemPrompt(persona)}")
+            appendLine()
+            appendLine("User context (JSON):")
+            appendLine(contextJson)
+            appendLine()
+            appendLine("User: $userMessage")
+        }
+        val result = complete(prompt)
+        if (onChunk != null && result is Result.Success) {
+            streamFake(result.data, onChunk)
+        }
+        return result
+    }
+
+    private suspend fun streamFake(full: String, onChunk: suspend (String) -> Unit) {
+        val parts = full.chunked(48.coerceAtLeast(full.length / 24).coerceAtMost(120))
+        var acc = ""
+        for (p in parts) {
+            acc += p
+            onChunk(acc)
+            delay(18)
+        }
+    }
+
     fun providerNames(): List<String> = ordered.map { it.name }
+
+    fun offline(): OfflineHealthBrain? = offlineBrain
 
     suspend fun analyzeNutrition(description: String, hasImage: Boolean): NutritionScanResult {
         val prompt = buildString {
@@ -44,6 +83,10 @@ class FallbackAiClient(
             is Result.Success -> r.data
             is Result.Error -> "Offline summary: $contextBlob\n(${r.message})"
         }
+    }
+
+    suspend fun testGemini(keyProvider: suspend () -> String): Result<String> {
+        return GeminiFreeProvider(keyProvider).testConnection()
     }
 
     private fun parseNutrition(raw: String, fallbackLabel: String): NutritionScanResult {
@@ -75,8 +118,12 @@ class FallbackAiClient(
             proteinG = 8f + (hash % 25),
             carbsG = 20f + (hash % 55),
             fatG = 5f + (hash % 20),
-            notes = "Structured estimate ($note). Add AI keys in local.properties for live analysis.",
-            migraineTriggerHint = if (hash % 3 == 0) "Possible trigger: aged cheese / caffeine / processed food" else "No strong classic triggers detected",
+            notes = "Structured estimate ($note). Add AI keys in Settings for live analysis.",
+            migraineTriggerHint = if (hash % 3 == 0) {
+                "Possible trigger: aged cheese / caffeine / processed food"
+            } else {
+                "No strong classic triggers detected"
+            },
         )
     }
 }

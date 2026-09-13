@@ -373,15 +373,19 @@ fun TrackScreen(
                     "Google HC installed: ${diag.googleHcInstalled} · Samsung Health: ${diag.samsungHealthInstalled}",
                     style = MaterialTheme.typography.bodySmall,
                 )
-                Text(
-                    "Last error: ${lastError.ifBlank { "none" }}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (lastError.isBlank()) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.error
-                    },
-                )
+                if (lastError.isNotBlank()) {
+                    Text(
+                        "Last error: $lastError",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                } else {
+                    Text(
+                        "No blocking errors",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
             SectionCard(title = stringResource(R.string.steps_today), icon = Icons.Filled.DirectionsWalk) {
@@ -541,9 +545,35 @@ fun TrackScreen(
             SectionCard(title = "Sleep", icon = Icons.Filled.Bedtime) {
                 val s = sleep
                 if (s != null) {
-                    Text("Duration: ${s.hours} hours")
-                    Text("Quality: ${s.qualityLabel}")
-                    Text("Source: ${s.sourceLabel}", style = MaterialTheme.typography.bodySmall)
+                    val soft = s.sourceLabel.contains("permission", ignoreCase = true) ||
+                        s.sourceLabel.contains("unavailable", ignoreCase = true) ||
+                        s.sourceLabel.contains("no sessions", ignoreCase = true)
+                    if (s.hours > 0f) {
+                        Text("Duration: ${"%.1f".format(s.hours)} hours")
+                        Text("Quality: ${s.qualityLabel}")
+                    } else {
+                        Text(
+                            if (soft) s.sourceLabel else "No sleep data yet",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Text(
+                        "Source: ${s.sourceLabel}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (soft) {
+                            MaterialTheme.colorScheme.tertiary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                    if (soft) {
+                        Text(
+                            "Sleep is optional — fitness data still works. Grant Sleep in Health Connect when ready.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 } else Text("Loading…")
             }
 

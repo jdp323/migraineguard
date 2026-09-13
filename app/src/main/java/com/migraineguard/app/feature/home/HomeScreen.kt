@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -25,6 +26,8 @@ import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -70,6 +73,8 @@ fun HomeScreen(
     onOpenFitness: () -> Unit,
     onOpenBody: () -> Unit = {},
     onOpenMeds: () -> Unit = {},
+    onAskCoach: () -> Unit = {},
+    onHealthAnalyst: () -> Unit = {},
     weatherRepository: WeatherRepository,
     healthDataRepository: HealthDataRepository,
     waterIntakeRepository: WaterIntakeRepository,
@@ -262,11 +267,27 @@ fun HomeScreen(
                 } else Text("Loading…")
             }
 
+            SectionCard(title = "AI Coach & Health Analyst", icon = Icons.Filled.AutoAwesome) {
+                Text(
+                    "Motivational coaching or a doctor-style educational review of your logs. Not medical advice — offline brain always works.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = onAskCoach, modifier = Modifier.fillMaxWidth()) {
+                    Text("Ask Coach")
+                }
+                OutlinedButton(onClick = onHealthAnalyst, modifier = Modifier.fillMaxWidth()) {
+                    Text("Health Analyst review")
+                }
+            }
+
             SectionCard(title = "Quick actions", icon = Icons.Filled.FitnessCenter) {
-                Text("Use the bottom bar for Migraine, Fitness, Food, Water, and Insights.")
+                Text("Use the bottom bar for Migraine, Fitness, Coach, Food, and Insights. Water is on Home.")
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AssistChip(onClick = onAskCoach, label = { Text("Coach") })
                     AssistChip(onClick = onOpenFitness, label = { Text("Fitness hub") })
+                    AssistChip(onClick = onOpenWater, label = { Text("Water") })
                     AssistChip(onClick = onOpenBody, label = { Text("Weight log") })
                     AssistChip(onClick = onOpenMeds, label = { Text("Medications") })
                 }

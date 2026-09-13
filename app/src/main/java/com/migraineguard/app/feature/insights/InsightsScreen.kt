@@ -64,6 +64,8 @@ private enum class InsightMode(val label: String) {
 fun InsightsScreen(
     insightsAnalyzer: InsightsAnalyzer,
     aiClient: FallbackAiClient,
+    onOpenCoach: () -> Unit = {},
+    onOpenAnalyst: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var range by remember { mutableStateOf(RangeMode.Week) }
@@ -108,6 +110,14 @@ fun InsightsScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            SectionCard(title = "AI hub", icon = Icons.Filled.AutoAwesome) {
+                Text("Open Coach for habits or Health Analyst for an educational migraine review.")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = onOpenCoach) { Text("Ask Coach") }
+                    OutlinedButton(onClick = onOpenAnalyst) { Text("Health Analyst") }
+                }
+            }
 
             Row(
                 Modifier

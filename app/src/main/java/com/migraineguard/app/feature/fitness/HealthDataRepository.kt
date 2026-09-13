@@ -255,61 +255,146 @@ class HealthConnectHealthDataRepository(
         return out.ifEmpty { candidates.take(1) }
     }
 
-    override suspend fun latestFitness(): HealthSnapshot {
-        if (availabilityStatus() != HealthConnectStatus.AVAILABLE) {
-            return fake.latestFitness().copy(sourceLabel = "Demo (Health Connect unavailable)")
+    private fun sleepReadPermission(): String =
+        HealthPermission.getReadPermission(SleepSessionRecord::class)
+
+    private fun stepsReadPermission(): String =
+        HealthPermission.getReadPermission(StepsRecord::class)
+
+    /** Soft / permission-only messages must not clobber a real fitness error. */
+    private fun recordMeaningfulError(message: String, soft: Boolean = false) {
+        if (soft) return
+        val trimmed = message.trim()
+        if (trimmed.isBlank()) return
+        lastErrorText = trimmed
+    }
+
+    private fun clearErrorIfSleepOnly() {
+        if (lastErrorText.contains("latestSleep", ignoreCase = true) ||
+            lastErrorText.contains("Sleep permission", ignoreCase = true)
+        ) {
+            lastErrorText = ""
         }
-        return runCatching {
+    }
+
+    override suspend fun latestFitness(): HealthSnapshot {
+        return try {
+            if (availabilityStatus() != HealthConnectStatus.AVAILABLE) {
+                return HealthSnapshot(
+                    steps = 0,
+                    heartRateBpm = null,
+                    activeMinutes = 0,
+                    sourceLabel = "Health Connect unavailable",
+                )
+            }
             val client = HealthConnectClient.getOrCreate(context)
+            val granted = runCatching {
+                client.permissionController.getGrantedPermissions()
+            }.getOrDefault(emptySet())
+
+            val stepsPerm = stepsReadPermission()
+            if (stepsPerm.isNotBlank() && stepsPerm !in granted && granted.isNotEmpty()) {
+                // Partial grants: still try reads; missing perms throw SecurityException which we catch.
+            }
+
             val end = Instant.now()
             val start = end.minus(1, ChronoUnit.DAYS)
             val filter = TimeRangeFilter.between(start, end)
 
-            val steps = client.readRecords(
-                ReadRecordsRequest(StepsRecord::class, filter),
-            ).records.sumOf { it.count.toInt() }
-
-            val samples = client.readRecords(
-                ReadRecordsRequest(HeartRateRecord::class, filter),
-            ).records.flatMap { it.samples }
-            val bpm = samples.lastOrNull()?.beatsPerMinute?.toInt()
-
-            val distance = client.readRecords(
-                ReadRecordsRequest(DistanceRecord::class, filter),
-            ).records.sumOf { it.distance.inMeters }
-
-            val calories = client.readRecords(
-                ReadRecordsRequest(TotalCaloriesBurnedRecord::class, filter),
-            ).records.sumOf { it.energy.inKilocalories }
-
-            val exerciseSessions = client.readRecords(
-                ReadRecordsRequest(ExerciseSessionRecord::class, filter),
-            ).records
-            val activeFromExercise = exerciseSessions.sumOf {
-                ChronoUnit.MINUTES.between(it.startTime, it.endTime).toInt().coerceAtLeast(0)
+            val steps = runCatching {
+                client.readRecords(ReadRecordsRequest(StepsRecord::class, filter))
+                    .records.sumOf { it.count.toInt() }
+            }.getOrElse { e ->
+                if (e is SecurityException) 0 else {
+                    recordMeaningfulError("latestFitness steps: ${e.message ?: e}")
+                    0
+                }
             }
 
-            val demo = fake.latestFitness()
+            val bpm = runCatching {
+                client.readRecords(ReadRecordsRequest(HeartRateRecord::class, filter))
+                    .records.flatMap { it.samples }
+                    .lastOrNull()?.beatsPerMinute?.toInt()
+            }.getOrNull()
+
+            val distance = runCatching {
+                client.readRecords(ReadRecordsRequest(DistanceRecord::class, filter))
+                    .records.sumOf { it.distance.inMeters }
+            }.getOrDefault(0.0)
+
+            val calories = runCatching {
+                client.readRecords(ReadRecordsRequest(TotalCaloriesBurnedRecord::class, filter))
+                    .records.sumOf { it.energy.inKilocalories }
+            }.getOrDefault(0.0)
+
+            val activeFromExercise = runCatching {
+                client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, filter))
+                    .records.sumOf {
+                        ChronoUnit.MINUTES.between(it.startTime, it.endTime).toInt().coerceAtLeast(0)
+                    }
+            }.getOrDefault(0)
+
+            clearErrorIfSleepOnly()
+            val label = when {
+                stepsPerm.isNotBlank() && stepsPerm !in granted && steps == 0 && bpm == null ->
+                    "Fitness permission needed"
+                steps == 0 && bpm == null && activeFromExercise == 0 ->
+                    "Health Connect (no fitness data)"
+                else -> "Health Connect"
+            }
             HealthSnapshot(
-                steps = if (steps > 0) steps else demo.steps,
-                heartRateBpm = bpm ?: demo.heartRateBpm,
-                activeMinutes = if (activeFromExercise > 0) activeFromExercise else (steps / 100).coerceAtMost(180),
-                sourceLabel = "Health Connect",
+                steps = steps,
+                heartRateBpm = bpm,
+                activeMinutes = if (activeFromExercise > 0) {
+                    activeFromExercise
+                } else {
+                    (steps / 100).coerceAtMost(180)
+                },
+                sourceLabel = label,
                 distanceMeters = distance.takeIf { it > 0 },
                 caloriesBurned = calories.takeIf { it > 0 },
             )
-        }.getOrElse {
-            recordError("latestFitness: ${it.message ?: it}")
-            fake.latestFitness().copy(sourceLabel = "Demo (read failed)")
+        } catch (e: SecurityException) {
+            HealthSnapshot(
+                steps = 0,
+                heartRateBpm = null,
+                activeMinutes = 0,
+                sourceLabel = "Fitness permission needed",
+            )
+        } catch (e: Exception) {
+            recordMeaningfulError("latestFitness: ${e.message ?: e.javaClass.simpleName}")
+            HealthSnapshot(
+                steps = 0,
+                heartRateBpm = null,
+                activeMinutes = 0,
+                sourceLabel = "Fitness read unavailable",
+            )
         }
     }
 
     override suspend fun latestSleep(): SleepSnapshot {
-        if (availabilityStatus() != HealthConnectStatus.AVAILABLE) {
-            return fake.latestSleep().copy(sourceLabel = "Demo (Health Connect unavailable)")
-        }
-        return runCatching {
+        return try {
+            if (availabilityStatus() != HealthConnectStatus.AVAILABLE) {
+                return SleepSnapshot(
+                    hours = 0f,
+                    qualityLabel = "—",
+                    sourceLabel = "Health Connect unavailable",
+                )
+            }
             val client = HealthConnectClient.getOrCreate(context)
+            val granted = runCatching {
+                client.permissionController.getGrantedPermissions()
+            }.getOrDefault(emptySet())
+            val sleepPerm = sleepReadPermission()
+            if (sleepPerm.isNotBlank() && sleepPerm !in granted) {
+                // Soft: do not set lastError — sleep must not block fitness UI.
+                return SleepSnapshot(
+                    hours = 0f,
+                    qualityLabel = "—",
+                    sourceLabel = "Sleep permission needed",
+                )
+            }
+
             val end = Instant.now()
             val start = end.minus(2, ChronoUnit.DAYS)
             val sessions = client.readRecords(
@@ -318,20 +403,42 @@ class HealthConnectHealthDataRepository(
                     TimeRangeFilter.between(start, end),
                 ),
             ).records
-            val latest = sessions.maxByOrNull { it.startTime }
+
+            val latest = sessions.maxByOrNull { it.endTime }
             if (latest == null) {
-                return@runCatching fake.latestSleep().copy(sourceLabel = "Health Connect (no sessions)")
+                return SleepSnapshot(
+                    hours = 0f,
+                    qualityLabel = "No data",
+                    sourceLabel = "Health Connect (no sessions)",
+                )
             }
-            val hours = ChronoUnit.MINUTES.between(latest.startTime, latest.endTime) / 60f
+            val minutes = ChronoUnit.MINUTES.between(latest.startTime, latest.endTime)
+                .toInt().coerceAtLeast(0)
+            val hours = minutes / 60f
             val quality = when {
                 hours >= 7.5f -> "Restorative"
                 hours >= 6f -> "Fair"
-                else -> "Short"
+                hours > 0f -> "Short"
+                else -> "—"
             }
             SleepSnapshot(hours = hours, qualityLabel = quality, sourceLabel = "Health Connect")
-        }.getOrElse {
-            recordError("latestSleep: ${it.message ?: it}")
-            fake.latestSleep().copy(sourceLabel = "Demo (read failed)")
+        } catch (e: SecurityException) {
+            SleepSnapshot(
+                hours = 0f,
+                qualityLabel = "—",
+                sourceLabel = "Sleep permission needed",
+            )
+        } catch (e: Exception) {
+            // Soft failure — never crash UI; do not overwrite fitness lastError.
+            recordMeaningfulError(
+                "latestSleep: ${e.message ?: e.javaClass.simpleName}",
+                soft = true,
+            )
+            SleepSnapshot(
+                hours = 0f,
+                qualityLabel = "—",
+                sourceLabel = "Sleep read unavailable",
+            )
         }
     }
 }

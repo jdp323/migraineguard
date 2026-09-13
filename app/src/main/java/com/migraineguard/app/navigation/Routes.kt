@@ -10,6 +10,7 @@ object Routes {
     const val Food = "food"
     const val Water = "water"
     const val Insights = "insights"
+    const val Coach = "coach"
     const val Settings = "settings"
     const val BodyMetrics = "body_metrics"
     const val Medications = "medications"
@@ -22,7 +23,7 @@ enum class BottomDest(
     Home(Routes.Home, "Home"),
     Migraine(Routes.Migraine, "Migraine"),
     Track(Routes.Track, "Fitness"),
+    Coach(Routes.Coach, "Coach"),
     Food(Routes.Food, "Food"),
-    Water(Routes.Water, "Water"),
     Insights(Routes.Insights, "Insights"),
 }

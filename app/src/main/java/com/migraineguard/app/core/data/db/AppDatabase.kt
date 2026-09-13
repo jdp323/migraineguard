@@ -14,8 +14,9 @@ import androidx.room.TypeConverters
         WorkoutEntity::class,
         WeightEntryEntity::class,
         MedicationEntity::class,
+        AiSessionEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -26,6 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
     abstract fun weightDao(): WeightDao
     abstract fun medicationDao(): MedicationDao
+    abstract fun aiSessionDao(): AiSessionDao
 
     companion object {
         @Volatile private var instance: AppDatabase? = null

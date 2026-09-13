@@ -2,11 +2,11 @@ package com.migraineguard.app.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.LocalDining
-import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.outlined.Healing
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -27,10 +27,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.migraineguard.app.core.ai.AiPersona
 import com.migraineguard.app.core.data.prefs.UserPreferences
 import com.migraineguard.app.di.AppContainer
 import com.migraineguard.app.feature.auth.SignInScreen
 import com.migraineguard.app.feature.body.BodyMetricsScreen
+import com.migraineguard.app.feature.coach.CoachScreen
 import com.migraineguard.app.feature.home.HomeScreen
 import com.migraineguard.app.feature.insights.InsightsScreen
 import com.migraineguard.app.feature.meds.MedicationsScreen
@@ -50,6 +52,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
     val scope = rememberCoroutineScope()
     var forceProfileEdit by remember { mutableStateOf(false) }
     var pendingGoogleFocus by remember { mutableStateOf(false) }
+    var coachPersona by remember { mutableStateOf(AiPersona.COACH) }
 
     if (!prefs.onboardingDone) {
         OnboardingScreen(
@@ -59,12 +62,12 @@ fun MigraineGuardNavHost(container: AppContainer) {
     }
 
     if (!authState.isSignedIn) {
-        // Allow configuring Google ID before sign-in via a lightweight settings gate
         if (pendingGoogleFocus) {
             SettingsScreen(
                 preferencesRepository = container.preferencesRepository,
                 driveSyncRepository = container.driveSyncRepository,
                 healthDataRepository = container.healthDataRepository,
+                aiClient = container.aiClient,
                 onSignOut = {},
                 onBack = { pendingGoogleFocus = false },
                 focusGoogle = true,
@@ -93,8 +96,8 @@ fun MigraineGuardNavHost(container: AppContainer) {
         BottomNavItem(BottomDest.Home, Icons.Filled.Home),
         BottomNavItem(BottomDest.Migraine, Icons.Outlined.Healing),
         BottomNavItem(BottomDest.Track, Icons.Filled.FitnessCenter),
+        BottomNavItem(BottomDest.Coach, Icons.Filled.AutoAwesome),
         BottomNavItem(BottomDest.Food, Icons.Filled.LocalDining),
-        BottomNavItem(BottomDest.Water, Icons.Filled.WaterDrop),
         BottomNavItem(BottomDest.Insights, Icons.Filled.Insights),
     )
 
@@ -106,7 +109,12 @@ fun MigraineGuardNavHost(container: AppContainer) {
         }
     }
 
-    val hideBottom = setOf(Routes.Settings, Routes.BodyMetrics, Routes.Medications, Routes.ProfileSetup)
+    fun openCoach(persona: AiPersona) {
+        coachPersona = persona
+        goBottom(Routes.Coach)
+    }
+
+    val hideBottom = setOf(Routes.Settings, Routes.BodyMetrics, Routes.Medications, Routes.ProfileSetup, Routes.Water)
 
     Scaffold(
         bottomBar = {
@@ -136,11 +144,13 @@ fun MigraineGuardNavHost(container: AppContainer) {
                     userName = authState.user?.displayName ?: "Friend",
                     onOpenSettings = { navController.navigate(Routes.Settings) },
                     onLogMigraine = { goBottom(Routes.Migraine) },
-                    onOpenWater = { goBottom(Routes.Water) },
+                    onOpenWater = { navController.navigate(Routes.Water) },
                     onOpenFood = { goBottom(Routes.Food) },
                     onOpenFitness = { goBottom(Routes.Track) },
                     onOpenBody = { navController.navigate(Routes.BodyMetrics) },
                     onOpenMeds = { navController.navigate(Routes.Medications) },
+                    onAskCoach = { openCoach(AiPersona.COACH) },
+                    onHealthAnalyst = { openCoach(AiPersona.ANALYST) },
                     weatherRepository = container.weatherRepository,
                     healthDataRepository = container.healthDataRepository,
                     waterIntakeRepository = container.waterIntakeRepository,
@@ -171,6 +181,14 @@ fun MigraineGuardNavHost(container: AppContainer) {
                 InsightsScreen(
                     insightsAnalyzer = container.insightsAnalyzer,
                     aiClient = container.aiClient,
+                    onOpenCoach = { openCoach(AiPersona.COACH) },
+                    onOpenAnalyst = { openCoach(AiPersona.ANALYST) },
+                )
+            }
+            composable(Routes.Coach) {
+                CoachScreen(
+                    coachRepository = container.aiCoachRepository,
+                    initialPersona = coachPersona,
                 )
             }
             composable(Routes.Settings) {
@@ -178,6 +196,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
                     preferencesRepository = container.preferencesRepository,
                     driveSyncRepository = container.driveSyncRepository,
                     healthDataRepository = container.healthDataRepository,
+                    aiClient = container.aiClient,
                     onSignOut = { container.authRepository.signOut() },
                     onBack = { navController.popBackStack() },
                     onEditProfile = { forceProfileEdit = true },
