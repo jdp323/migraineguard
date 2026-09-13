@@ -3,9 +3,19 @@
 Kotlin + Jetpack Compose + Material 3 app for tracking migraines, hydration, fitness/sleep (via **Health Connect** / Samsung Health), nutrition, weather pressure, body metrics, medications, and AI-assisted insights.
 
 **Package:** `com.migraineguard.app`  
-**Version:** 1.2.0 (versionCode 3)  
+**Version:** 1.3.0 (versionCode 4)  
 **Min SDK:** 26 · **Target / Compile SDK:** 35  
-**Auth:** Google Sign-In (Credential Manager) + demo mode · Profile setup after first sign-in
+**Auth:** Google Sign-In (Credential Manager) is still **demo/optional** until a Web Client ID is baked later. Demo mode works without one.
+
+---
+
+## What’s new in v1.3
+
+| Area | Upgrade |
+|------|---------|
+| Health Connect | Provider-aware permission contract (`com.google.android.apps.healthdata`) + fallback contract; Connect never feels dead (Toast + Snackbar “Checking Health Connect…”); `getSdkStatus`; Play Store + Samsung Health when provider update required; manage-permissions / settings fallbacks; visible status card (raw SDK int, provider package, last error) |
+| Migraine head | Real 3D mannequin images (front / left / mirrored-right / back / top placeholder); Canvas overlay only for glowing cool→hot pain markers + tap; rotate chevrons + swipe |
+| Auth | Google Sign-In remains demo/optional — Client ID is **not** baked in this build |
 
 ---
 
@@ -13,13 +23,11 @@ Kotlin + Jetpack Compose + Material 3 app for tracking migraines, hydration, fit
 
 | Area | Upgrade |
 |------|---------|
-| Health Connect | Connect button checks availability, Snackbars, multi-intent fallbacks, Samsung Health shortcut, never silent no-op |
-| Google Sign-In | No auto-demo on Google button; runtime Web Client ID in Settings (DataStore wins over BuildConfig); clear errors |
+| Health Connect | Connect button checks availability, Snackbars, multi-intent fallbacks, Samsung Health shortcut |
+| Google Sign-In | Runtime Web Client ID in Settings (DataStore wins over BuildConfig) |
 | Profile | Blocking ProfileSetup (name, DOB, sex, height/weight, activity) → BMI on Home |
 | Home | Time-based greeting, daily summary, streak, energy 1–5 check-in, BMI card |
-| Goals | Steps, water, sleep hours, optional weight goal |
-| Body / Meds | Weight log + sparkline; medication/supplement log with taken-today |
-| Migraine | Cooler 3D-ish head (gradients, shadow, specular, depth rings, glowing cool→hot orbs, parallax); trigger tags |
+| Goals / Body / Meds | Steps, water, sleep hours, optional weight goal; weight log; medications |
 | Reminders | WorkManager periodic stubs + POST_NOTIFICATIONS |
 
 ---
@@ -36,7 +44,7 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 
 ---
 
-## Google Sign-In setup (required for real Google button)
+## Google Sign-In (optional until Client ID is baked)
 
 1. Google Cloud Console → APIs & Services → Credentials.
 2. Create OAuth **Web** client → copy client ID (`….apps.googleusercontent.com`).
@@ -48,7 +56,7 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 4. Either:
    - Paste Web client ID in **Settings → Google** (saved to DataStore, no rebuild), or
    - Set `GOOGLE_WEB_CLIENT_ID=…` in `local.properties` and rebuild.
-5. Demo mode still works without a client ID. The Google button **does not** silently fall through to demo.
+5. Demo mode still works without a client ID. This v1.3.0 build does **not** bake a production Client ID.
 
 ---
 
@@ -56,12 +64,13 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 
 1. Install **Health Connect** (Play Store / system app).
 2. Open MigraineGuard → **Fitness** → **Connect Samsung / Health Connect**.
-3. You should see Snackbar “Opening Health Connect permissions…” then the system permission sheet.
-4. After grant, MigraineGuard appears under Health Connect → **Connected apps**.  
-   **Sideloaded debug APKs appear after the first successful permission request.**
-5. If HC is missing: Snackbar + Play Store / HC settings intents (multiple fallbacks).
-6. Samsung: open Samsung Health → enable Health Connect sharing; use **Open Samsung Health** when the package is present.
-7. Manifest includes health permissions (incl. `READ_HEALTH_DATA_HISTORY`), exported rationale activity with both actions, and `START_VIEW_PERMISSION_USAGE` activity-alias.
+3. You should immediately see Toast + Snackbar **“Checking Health Connect…”**.
+4. If SDK status is `SDK_AVAILABLE`, the provider-aware permission sheet opens (full permission set). If that launch fails, a fallback contract and then HC settings / `ACTION_MANAGE_HEALTH_PERMISSIONS` are tried.
+5. If status is `SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED`, Play Store opens for `com.google.android.apps.healthdata` and Samsung Health is opened when present.
+6. The **Health Connect status** card shows raw SDK int, provider package, and last error so a tap is never silent.
+7. After grant, MigraineGuard appears under Health Connect → **Connected apps**. Sideloaded debug APKs appear after the first successful permission request.
+8. Samsung: enable Health Connect sharing in Samsung Health; use **Open Samsung Health** when the package is present.
+9. Manifest keeps the exported rationale activity, `VIEW_PERMISSION_USAGE` alias, queries for Health Connect + Samsung Health, and manage-permissions intents.
 
 ---
 

@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.migraineguard.app.BuildConfig
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
 import com.migraineguard.app.core.domain.HealthSnapshot
 import com.migraineguard.app.core.domain.SleepSnapshot
@@ -176,7 +177,7 @@ fun HomeScreen(
         ) {
             Text("$greeting, $displayName", style = MaterialTheme.typography.headlineSmall)
             Text(
-                "Today · $today · MigraineGuard v1.2 · streak $streak day${if (streak == 1) "" else "s"}",
+                "Today · $today · MigraineGuard v${BuildConfig.VERSION_NAME} · streak $streak day${if (streak == 1) "" else "s"}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

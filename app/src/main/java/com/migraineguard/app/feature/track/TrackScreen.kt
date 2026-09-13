@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.track
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +23,7 @@ import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.Button
@@ -37,6 +40,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -47,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.migraineguard.app.R
@@ -58,9 +63,13 @@ import com.migraineguard.app.core.domain.WorkoutEntry
 import com.migraineguard.app.core.domain.WorkoutType
 import com.migraineguard.app.core.ui.ProgressRing
 import com.migraineguard.app.core.ui.SectionCard
+import com.migraineguard.app.feature.fitness.HealthConnectDiagnostics
+import com.migraineguard.app.feature.fitness.HealthConnectPackages
 import com.migraineguard.app.feature.fitness.HealthConnectStatus
 import com.migraineguard.app.feature.fitness.HealthDataRepository
 import com.migraineguard.app.feature.fitness.WorkoutRepository
+import com.migraineguard.app.feature.fitness.findActivity
+import com.migraineguard.app.feature.fitness.startHealthActivity
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -79,6 +88,21 @@ fun TrackScreen(
     var sleep by remember { mutableStateOf<SleepSnapshot?>(null) }
     var status by remember { mutableStateOf(HealthConnectStatus.USING_FALLBACK) }
     var permitted by remember { mutableStateOf(false) }
+    var sdkRaw by remember { mutableIntStateOf(-1) }
+    var lastError by remember { mutableStateOf("") }
+    var providerPkg by remember { mutableStateOf(HealthConnectPackages.GOOGLE) }
+    var diag by remember {
+        mutableStateOf(
+            HealthConnectDiagnostics(
+                sdkStatusRaw = -1,
+                sdkStatusName = "—",
+                providerPackage = HealthConnectPackages.GOOGLE,
+                lastError = "",
+                googleHcInstalled = false,
+                samsungHealthInstalled = false,
+            ),
+        )
+    }
     val workouts by workoutRepository.observeWorkouts().collectAsStateWithLifecycle(emptyList())
     val prefs by preferencesRepository.preferences.collectAsStateWithLifecycle(UserPreferences())
     val eod = remember { workoutRepository.exerciseOfTheDay() }
@@ -92,72 +116,180 @@ fun TrackScreen(
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val activity = context.findActivity()
+    val launchContext = activity ?: context
     val snackbar = remember { SnackbarHostState() }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = PermissionController.createRequestPermissionResultContract(),
-    ) { granted ->
+    fun applyDiag() {
+        val d = healthDataRepository.diagnostics(launchContext)
+        diag = d
+        sdkRaw = d.sdkStatusRaw
+        providerPkg = d.providerPackage
+        lastError = d.lastError
+    }
+
+    fun handleGranted(granted: Set<String>) {
         scope.launch {
             refresh(healthDataRepository) { s, f, sl, p ->
                 status = s; fitness = f; sleep = sl; permitted = p
             }
+            applyDiag()
             if (granted.isNotEmpty() && healthDataRepository.hasAllPermissions()) {
-                Toast.makeText(context, "Health Connect connected ✓", Toast.LENGTH_SHORT).show()
+                Toast.makeText(launchContext, "Health Connect connected ✓", Toast.LENGTH_SHORT).show()
+                snackbar.currentSnackbarData?.dismiss()
                 snackbar.showSnackbar("Permissions granted — MigraineGuard should appear in Health Connect Connected apps.")
             } else if (granted.isNotEmpty()) {
+                snackbar.currentSnackbarData?.dismiss()
                 snackbar.showSnackbar("Some permissions granted. You can grant the rest anytime.")
             } else {
+                snackbar.currentSnackbarData?.dismiss()
                 snackbar.showSnackbar("No permissions granted. Sideloaded debug apps appear after the first successful request.")
             }
         }
     }
 
-    fun openHcFallback() {
-        val intents = healthDataRepository.openHealthConnectInstallOrSettingsIntents()
+    val providerLauncher = rememberLauncherForActivityResult(
+        contract = PermissionController.createRequestPermissionResultContract(
+            providerPackageName = HealthConnectPackages.GOOGLE,
+        ),
+    ) { granted -> handleGranted(granted) }
+
+    val fallbackLauncher = rememberLauncherForActivityResult(
+        contract = PermissionController.createRequestPermissionResultContract(),
+    ) { granted -> handleGranted(granted) }
+
+    fun startIntents(intents: List<Intent>, alsoSamsung: Boolean = false) {
         var opened = false
         for (intent in intents) {
             try {
-                context.startActivity(intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+                launchContext.startHealthActivity(intent)
                 opened = true
                 break
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                healthDataRepository.recordError("${e::class.simpleName}: ${e.message ?: e}")
+            }
+        }
+        if (alsoSamsung) {
+            healthDataRepository.openSamsungHealthSettingsIntent()?.let { samsung ->
+                runCatching { launchContext.startHealthActivity(samsung) }
+                    .onFailure { healthDataRepository.recordError("Samsung Health: ${it.message ?: it}") }
             }
         }
         if (!opened) {
             scope.launch { snackbar.showSnackbar("Could not open Health Connect / Play Store") }
         }
-        healthDataRepository.openSamsungHealthSettingsIntent()?.let {
-            runCatching { context.startActivity(it) }
+        applyDiag()
+    }
+
+    fun openHcFallback() {
+        startIntents(
+            healthDataRepository.openHealthConnectInstallOrSettingsIntents() +
+                healthDataRepository.manageHealthPermissionsIntents(launchContext.packageName),
+            alsoSamsung = true,
+        )
+    }
+
+    fun launchPermissions(perms: Set<String>) {
+        try {
+            providerLauncher.launch(perms)
+        } catch (e: ActivityNotFoundException) {
+            val msg = "ActivityNotFoundException: ${e.message ?: e}"
+            healthDataRepository.recordError(msg)
+            lastError = msg
+            try {
+                fallbackLauncher.launch(perms)
+            } catch (e2: Exception) {
+                val msg2 = "${e2::class.simpleName}: ${e2.message ?: e2}"
+                healthDataRepository.recordError(msg2)
+                lastError = msg2
+                Toast.makeText(launchContext, msg2, Toast.LENGTH_LONG).show()
+                scope.launch {
+                    snackbar.currentSnackbarData?.dismiss()
+                    snackbar.showSnackbar(msg2)
+                }
+                startIntents(healthDataRepository.manageHealthPermissionsIntents(launchContext.packageName))
+            }
+        } catch (e: IllegalStateException) {
+            val msg = "IllegalStateException: ${e.message ?: e}"
+            healthDataRepository.recordError(msg)
+            lastError = msg
+            Toast.makeText(launchContext, msg, Toast.LENGTH_LONG).show()
+            scope.launch {
+                snackbar.currentSnackbarData?.dismiss()
+                snackbar.showSnackbar(msg)
+            }
+            startIntents(healthDataRepository.manageHealthPermissionsIntents(launchContext.packageName))
+        } catch (e: Exception) {
+            val msg = "${e::class.simpleName}: ${e.message ?: e}"
+            healthDataRepository.recordError(msg)
+            lastError = msg
+            Toast.makeText(launchContext, msg, Toast.LENGTH_LONG).show()
+            scope.launch {
+                snackbar.currentSnackbarData?.dismiss()
+                snackbar.showSnackbar(msg)
+            }
+            startIntents(healthDataRepository.manageHealthPermissionsIntents(launchContext.packageName))
         }
     }
 
     fun connectHealth() {
+        // Immediate feedback — never a dead button.
+        Toast.makeText(launchContext, "Checking Health Connect…", Toast.LENGTH_SHORT).show()
         scope.launch {
-            val avail = healthDataRepository.availabilityStatus()
-            status = avail
-            when (avail) {
-                HealthConnectStatus.NOT_INSTALLED -> {
-                    snackbar.showSnackbar("Health Connect not installed — opening Play Store / settings…")
-                    openHcFallback()
-                }
-                HealthConnectStatus.UNSUPPORTED -> {
-                    snackbar.showSnackbar("Health Connect unsupported on this device — opening settings…")
-                    openHcFallback()
-                }
-                HealthConnectStatus.AVAILABLE, HealthConnectStatus.USING_FALLBACK -> {
-                    var perms = healthDataRepository.requiredPermissions()
-                    if (perms.isEmpty()) {
-                        perms = healthDataRepository.requiredPermissions()
+            snackbar.currentSnackbarData?.dismiss()
+            snackbar.showSnackbar("Checking Health Connect…")
+        }
+        scope.launch {
+            val raw = healthDataRepository.sdkStatusRaw(launchContext)
+            sdkRaw = raw
+            providerPkg = healthDataRepository.providerPackage()
+            status = healthDataRepository.availabilityStatus()
+            applyDiag()
+            when (raw) {
+                HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> {
+                    val msg = "Health Connect needs install/update — opening Play Store…"
+                    healthDataRepository.recordError("SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED")
+                    lastError = healthDataRepository.lastError()
+                    Toast.makeText(launchContext, msg, Toast.LENGTH_LONG).show()
+                    scope.launch {
+                        snackbar.currentSnackbarData?.dismiss()
+                        snackbar.showSnackbar(msg)
                     }
+                    startIntents(healthDataRepository.playStoreUpdateIntents(), alsoSamsung = true)
+                }
+                HealthConnectClient.SDK_AVAILABLE -> {
+                    val perms = healthDataRepository.requiredPermissions()
                     if (perms.isEmpty()) {
-                        snackbar.showSnackbar("Could not build permission set — opening Health Connect settings…")
-                        openHcFallback()
+                        val msg = "Could not build permission set — opening Health Connect settings…"
+                        healthDataRepository.recordError(msg)
+                        lastError = msg
+                        Toast.makeText(launchContext, msg, Toast.LENGTH_LONG).show()
+                        scope.launch {
+                            snackbar.currentSnackbarData?.dismiss()
+                            snackbar.showSnackbar(msg)
+                        }
+                        startIntents(healthDataRepository.manageHealthPermissionsIntents(launchContext.packageName))
                     } else {
-                        snackbar.showSnackbar("Opening Health Connect permissions…")
-                        permissionLauncher.launch(perms)
+                        scope.launch {
+                            snackbar.currentSnackbarData?.dismiss()
+                            snackbar.showSnackbar("Opening Health Connect permissions…")
+                        }
+                        launchPermissions(perms)
                     }
+                }
+                else -> {
+                    val msg = "Health Connect ${healthDataRepository.sdkStatusName(raw)} ($raw)"
+                    healthDataRepository.recordError(msg)
+                    lastError = msg
+                    Toast.makeText(launchContext, msg, Toast.LENGTH_LONG).show()
+                    scope.launch {
+                        snackbar.currentSnackbarData?.dismiss()
+                        snackbar.showSnackbar(msg)
+                    }
+                    openHcFallback()
                 }
             }
+            applyDiag()
         }
     }
 
@@ -166,6 +298,7 @@ fun TrackScreen(
             refresh(healthDataRepository) { s, f, sl, p ->
                 status = s; fitness = f; sleep = sl; permitted = p
             }
+            applyDiag()
             val todayStart = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
             eodDoneToday = workouts.any { it.fromExerciseOfDay && it.timestampMillis >= todayStart && it.type == eod.type }
         }
@@ -221,10 +354,34 @@ fun TrackScreen(
                 ) { Text(stringResource(R.string.open_health_connect_settings)) }
                 healthDataRepository.openSamsungHealthSettingsIntent()?.let {
                     OutlinedButton(
-                        onClick = { runCatching { context.startActivity(it) } },
+                        onClick = {
+                            runCatching { launchContext.startHealthActivity(it) }
+                                .onFailure { e ->
+                                    healthDataRepository.recordError("Samsung Health: ${e.message ?: e}")
+                                    applyDiag()
+                                }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text("Open Samsung Health") }
                 }
+            }
+
+            SectionCard(title = "Health Connect status", icon = Icons.Filled.Info) {
+                Text("SDK status: ${diag.sdkStatusName}  (raw $sdkRaw)", style = MaterialTheme.typography.bodyMedium)
+                Text("Provider package: $providerPkg", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "Google HC installed: ${diag.googleHcInstalled} · Samsung Health: ${diag.samsungHealthInstalled}",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    "Last error: ${lastError.ifBlank { "none" }}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (lastError.isBlank()) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
+                )
             }
 
             SectionCard(title = stringResource(R.string.steps_today), icon = Icons.Filled.DirectionsWalk) {

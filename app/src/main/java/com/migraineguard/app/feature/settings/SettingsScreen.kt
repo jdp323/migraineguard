@@ -152,7 +152,7 @@ fun SettingsScreen(
         ) {
             SectionCard(title = "Google Sign-In", icon = Icons.Filled.Key) {
                 Text(
-                    "Paste the OAuth Web client ID (…apps.googleusercontent.com). Runtime value overrides BuildConfig. Also create an Android OAuth client for package com.migraineguard.app.",
+                    "Google Sign-In is still demo/optional until a Web Client ID is baked later. Paste one here (…apps.googleusercontent.com) to try real sign-in — runtime value overrides BuildConfig. Also create an Android OAuth client for package com.migraineguard.app.",
                     style = MaterialTheme.typography.bodySmall,
                 )
                 OutlinedTextField(
