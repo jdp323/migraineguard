@@ -1,7 +1,7 @@
 name: Android test APK
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, codex/github-build-and-takeover]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -13,6 +13,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      stable-signing: ${{ steps.signing.outputs.stable }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v4
@@ -20,15 +22,37 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@017a9effdb900e5b5b2fddfb590a105619dca3c3
+      - name: Restore persistent test signing key
+        id: signing
+        env:
+          MG_DEBUG_KEYSTORE_BASE64: ${{ github.event_name != 'pull_request' && secrets.MG_DEBUG_KEYSTORE_BASE64 || '' }}
+        run: |
+          if [ -z "$MG_DEBUG_KEYSTORE_BASE64" ]; then
+            echo "stable=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Checks will run, but no release will be published until MG_DEBUG_KEYSTORE_BASE64 is configured."
+          else
+            mkdir -p "$HOME/.android"
+            printf '%s' "$MG_DEBUG_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
+            chmod 600 "$HOME/.android/debug.keystore"
+            echo "stable=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Build and verify
         run: |
           chmod +x gradlew
           ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --no-daemon --console=plain
+      - name: Verify stable APK certificate
+        if: steps.signing.outputs.stable == 'true'
+        run: |
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          "$APKSIGNER" verify --print-certs app/build/outputs/apk/debug/app-debug.apk > app/build/outputs/apk/debug/SIGNING-CERTIFICATE.txt
+          grep -qi 'certificate SHA-1 digest: fb670d1d96c28b9e270d36f8d65753e36b308de8' app/build/outputs/apk/debug/SIGNING-CERTIFICATE.txt
       - name: Upload phone testing APK
         uses: actions/upload-artifact@v4
         with:
           name: MigraineGuard-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/debug/SIGNING-CERTIFICATE.txt
           if-no-files-found: error
           retention-days: 14
       - name: Upload lint report
@@ -38,7 +62,6 @@ jobs:
           name: Android-lint-report
           path: app/build/reports/lint-results-debug.html
           if-no-files-found: ignore
-
       - name: Upload unit test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -46,3 +69,39 @@ jobs:
           name: Android-unit-test-results
           path: app/build/test-results/testDebugUnitTest/*.xml
           if-no-files-found: ignore
+  publish:
+    needs: build
+    if: github.event_name == 'push' && needs.build.outputs.stable-signing == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: MigraineGuard-debug-apk
+          path: phone-build
+      - name: Publish verified APK to Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts)"
+          test -n "$VERSION"
+          TAG="v$VERSION-debug"
+          APK="phone-build/MigraineGuard-v$VERSION-debug.apk"
+          mv phone-build/app-debug.apk "$APK"
+          sha256sum "$APK" > phone-build/SHA256SUMS.txt
+          cat > phone-build/notes.md <<'NOTES'
+          Google sign-in now uses the explicit account-picker flow and shows the installed APK's actual certificate. The app owner must register that certificate with Google before sign-in works.
+
+          Steps show the Health Connect total, Samsung's separately shared count, source packages and read time, with sync/priority guidance. Home and Fitness refresh while visible.
+
+          This release starts persistent test signing. Earlier APKs used temporary runner keys and may not accept this APK as an update. Keep the existing app installed if it contains records you need; do not uninstall it to force an update.
+
+          Cloud AI uses your own API keys. Google sign-in is optional for local use.
+          NOTES
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; it will not be overwritten."
+          else
+            gh release create "$TAG" "$APK" phone-build/SIGNING-CERTIFICATE.txt phone-build/SHA256SUMS.txt --target "$GITHUB_SHA" --title "MigraineGuard v$VERSION — Android test APK" --notes-file phone-build/notes.md --latest
+          fi

@@ -67,6 +67,7 @@ import com.migraineguard.app.feature.fitness.HealthConnectDiagnostics
 import com.migraineguard.app.feature.fitness.HealthConnectPackages
 import com.migraineguard.app.feature.fitness.HealthConnectStatus
 import com.migraineguard.app.feature.fitness.HealthDataRepository
+import com.migraineguard.app.feature.fitness.HealthAutoRefresh
 import com.migraineguard.app.feature.fitness.HealthRefreshCoordinator
 import com.migraineguard.app.feature.fitness.WorkoutRepository
 import com.migraineguard.app.feature.fitness.findActivity
@@ -124,6 +125,7 @@ fun TrackScreen(
 
     var autoRefreshLabel by remember { mutableStateOf<String?>(null) }
     var autoRefreshError by remember { mutableStateOf<String?>(null) }
+    HealthAutoRefresh(healthRefreshCoordinator)
     val coordinator = healthRefreshCoordinator
     if (coordinator != null) {
         val rs by coordinator.state.collectAsStateWithLifecycle()
@@ -132,7 +134,8 @@ fun TrackScreen(
             rs.sleep?.let { sleep = it }
             permitted = rs.permitted
             status = rs.status
-            if (!rs.lastError.isNullOrBlank()) lastError = rs.lastError.orEmpty()
+            lastError = rs.lastError.orEmpty()
+            diag = healthDataRepository.diagnostics(launchContext)
             autoRefreshError = rs.lastError
             autoRefreshLabel = rs.lastRefreshed?.let { ts ->
                 DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault()).format(ts)
@@ -149,9 +152,12 @@ fun TrackScreen(
     }
 
     fun handleGranted(granted: Set<String>) {
+        healthRefreshCoordinator?.refresh(force = true)
         scope.launch {
-            refresh(healthDataRepository) { s, f, sl, p ->
-                status = s; fitness = f; sleep = sl; permitted = p
+            if (healthRefreshCoordinator == null) {
+                refresh(healthDataRepository) { s, f, sl, p ->
+                    status = s; fitness = f; sleep = sl; permitted = p
+                }
             }
             applyDiag()
             if (granted.isNotEmpty() && healthDataRepository.hasAllPermissions()) {
@@ -316,8 +322,10 @@ fun TrackScreen(
     fun reload() {
         healthRefreshCoordinator?.refresh(force = true)
         scope.launch {
-            refresh(healthDataRepository) { s, f, sl, p ->
-                status = s; fitness = f; sleep = sl; permitted = p
+            if (healthRefreshCoordinator == null) {
+                refresh(healthDataRepository) { s, f, sl, p ->
+                    status = s; fitness = f; sleep = sl; permitted = p
+                }
             }
             applyDiag()
             val todayStart = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -417,7 +425,7 @@ fun TrackScreen(
                 ) {
                     ProgressRing(
                         progress = stepProgress,
-                        label = "$steps",
+                        label = if (fitness?.stepSync?.total == null && fitness?.stepSync != null) "—" else "$steps",
                         size = 120.dp,
                         stroke = 12.dp,
                     )
@@ -434,6 +442,23 @@ fun TrackScreen(
                             Text("%.0f kcal".format(it), style = MaterialTheme.typography.bodyMedium)
                         }
                     }
+                }
+
+                fitness?.stepSync?.let { sync ->
+                    Spacer(Modifier.height(12.dp))
+                    Text("Health Connect total: ${sync.total ?: "Unavailable"}")
+                    Text("Samsung Health shared today: ${sync.samsungTotal ?: "No count received"}")
+                    Text(
+                        "Read at ${formatTs(sync.readAtMillis)} · ${ZoneId.systemDefault().id}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Text(sync.message, style = MaterialTheme.typography.bodySmall)
+                    if (sync.sourcePackages.isNotEmpty()) {
+                        Text("Sources: ${sync.sourcePackages.joinToString()}", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                OutlinedButton(onClick = { reload() }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Refresh steps now")
                 }
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -560,7 +585,7 @@ fun TrackScreen(
             SectionCard(title = "This week", icon = Icons.Filled.FitnessCenter) {
                 Text("${weekWorkouts.size} workouts · $weekMinutes minutes")
                 Text("Steps today: $steps / $stepGoal")
-                Text("Active minutes (est.): ${fitness?.activeMinutes ?: 0}")
+                Text("Exercise minutes: ${fitness?.activeMinutes ?: 0}")
             }
 
             SectionCard(title = "Sleep", icon = Icons.Filled.Bedtime) {
@@ -601,7 +626,7 @@ fun TrackScreen(
             SectionCard(title = "Heart", icon = Icons.Filled.Favorite) {
                 Text("Latest BPM: ${fitness?.heartRateBpm ?: "—"}")
                 Text(
-                    "From Health Connect when permitted; otherwise a calm demo value keeps the UI usable offline.",
+                    "Latest recorded measurement shared with Health Connect; unavailable when no measurement is received.",
                     style = MaterialTheme.typography.bodySmall,
                 )
             }

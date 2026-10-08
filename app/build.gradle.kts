@@ -19,7 +19,7 @@ fun localOrDefault(key: String, default: String = ""): String =
         .replace("\"", "\\\"")
 
 // Baked Web OAuth client (client_type 3) for Google Sign-In via Credential Manager.
-// Friends get Sign-In out of the box; Settings can still override at runtime.
+// The installed APK certificate must also be registered with an Android OAuth client.
 val bakedGoogleWebClientId =
     "555526836064-aria393bjpcgr17j6fatl0nbeqtvqri6.apps.googleusercontent.com"
 
@@ -31,8 +31,8 @@ android {
         applicationId = "com.migraineguard.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.6.1"
+        versionCode = 9
+        versionName = "1.6.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

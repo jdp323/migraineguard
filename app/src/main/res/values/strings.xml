@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MigraineGuard</string>
-    <string name="app_version_label">MigraineGuard v1.6.1</string>
+    <string name="app_version_label">MigraineGuard v1.6.2</string>
     <string name="nav_fitness">Fitness</string>
     <string name="health_connect_rationale_title">Why MigraineGuard needs health data</string>
     <string name="health_connect_rationale">MigraineGuard reads steps, sleep, heart rate, exercise, distance, and calories from Health Connect to correlate lifestyle with migraine patterns. Optionally we can write exercise sessions you log here. Journals are stored on your device. If you configure cloud AI keys and request analysis, relevant health summaries are sent to those providers in priority order (Gemini, Groq, OpenRouter). Without keys, coaching uses local rules. Photos are local references and are not sent for analysis. Automatic Android backup and device transfer are disabled. Drive backup is not implemented.\n\nAlso enable sharing in Samsung Health → Health Connect so Galaxy Watch data appears.\n\nSideloaded debug builds appear under Connected apps after the first successful permission request.</string>
@@ -11,6 +11,6 @@
     <string name="steps_today">Steps today</string>
     <string name="workout_log">Workout log</string>
     <string name="sign_in_subtitle">Track migraines, hydration, fitness, sleep, weather pressure, and food triggers — calmly.</string>
-    <string name="continue_demo">Continue as demo user</string>
+    <string name="continue_demo">Continue locally</string>
     <string name="sign_in_google">Sign in with Google</string>
 </resources>

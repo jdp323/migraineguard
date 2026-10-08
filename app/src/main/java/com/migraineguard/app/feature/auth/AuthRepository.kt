@@ -7,7 +7,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.migraineguard.app.BuildConfig
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
+import kotlinx.coroutines.CancellationException
+import com.migraineguard.app.core.security.installedSigningSha1
 
 data class AuthState(
     val isSignedIn: Boolean = false,
@@ -75,10 +77,7 @@ class DefaultAuthRepository(
             )
         return try {
             val credentialManager = CredentialManager.create(activityContext)
-            val googleIdOption = GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(clientId)
-                .setAutoSelectEnabled(false)
+            val googleIdOption = GetSignInWithGoogleOption.Builder(clientId)
                 .build()
             val request = GetCredentialRequest.Builder()
                 .addCredentialOption(googleIdOption)
@@ -107,29 +106,21 @@ class DefaultAuthRepository(
         } catch (e: GetCredentialCancellationException) {
             Result.failure(IllegalStateException("Sign-In cancelled"))
         } catch (e: NoCredentialException) {
-            Result.failure(
-                IllegalStateException(
-                    "No Google account available, or this APK’s signing certificate (SHA-1) " +
-                        "is not registered for package ${BuildConfig.APPLICATION_ID}. " +
-                        "Add SHA-1 FD:56:20:0E:83:57:C4:97:47:E4:32:10:D8:60:3F:DE:0C:64:70:14 " +
-                        "to the Android OAuth client in Firebase project migraineguard-66229 " +
-                        "(or your Google Cloud Console), then try again.",
-                ),
-            )
+            Result.failure(IllegalStateException(
+                "Google could not offer an account. Check that a Google account is on this phone. " +
+                    "The app owner must also register this installed APK's certificate with the Android OAuth client. " +
+                    "Package: ${BuildConfig.APPLICATION_ID}. SHA-1: ${installedSigningSha1(activityContext)}. " +
+                    "Google sign-in and Gemini API access are separate; you can continue locally.",
+            ))
         } catch (e: GetCredentialException) {
-            val msg = e.message.orEmpty()
-            val lower = msg.lowercase()
-            val hint = when {
-                "sha" in lower || "fingerprint" in lower || "certificate" in lower ||
-                    "developer_error" in lower || "10:" in lower || "12500" in msg ->
-                    "Likely SHA-1 mismatch: this APK’s signing cert is not on the Android OAuth client " +
-                        "for ${BuildConfig.APPLICATION_ID}. Register SHA-1 " +
-                        "FD:56:20:0E:83:57:C4:97:47:E4:32:10:D8:60:3F:DE:0C:64:70:14 " +
-                        "in Firebase / Google Cloud (project migraineguard-66229). Details: $msg"
-                else -> "Google Sign-In failed: ${msg.ifBlank { e::class.java.simpleName }}. " +
-                    "If this persists, check that the APK SHA-1 matches the Android OAuth client."
-            }
-            Result.failure(IllegalStateException(hint))
+            Result.failure(IllegalStateException(
+                "Google sign-in failed (${e::class.java.simpleName}). " +
+                    "Check the Android OAuth client for package ${BuildConfig.APPLICATION_ID} and " +
+                    "this installed APK's SHA-1: ${installedSigningSha1(activityContext)}. " +
+                    "It must be in the same Google project as the Web client ID.",
+            ))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(
                 IllegalStateException(

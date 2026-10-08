@@ -54,6 +54,7 @@ import com.migraineguard.app.core.domain.SleepSnapshot
 import com.migraineguard.app.core.domain.WeatherSnapshot
 import com.migraineguard.app.core.ui.SectionCard
 import com.migraineguard.app.feature.fitness.HealthDataRepository
+import com.migraineguard.app.feature.fitness.HealthAutoRefresh
 import com.migraineguard.app.feature.fitness.HealthRefreshCoordinator
 import com.migraineguard.app.feature.migraine.MigraineRepository
 import com.migraineguard.app.feature.water.WaterIntakeRepository
@@ -120,6 +121,7 @@ fun HomeScreen(
         }
     }
 
+    HealthAutoRefresh(healthRefreshCoordinator)
     val coordinator = healthRefreshCoordinator
     if (coordinator != null) {
         val rs by coordinator.state.collectAsStateWithLifecycle()
@@ -211,7 +213,11 @@ fun HomeScreen(
             )
 
             SectionCard(title = "Daily summary", icon = Icons.Filled.LocalFireDepartment) {
-                Text("Steps ${(health?.steps ?: 0)} / $stepGoal")
+                Text("Steps ${health?.stepSync?.let { it.total?.toString() ?: "—" } ?: (health?.steps ?: 0).toString()} / $stepGoal")
+                health?.stepSync?.let { sync ->
+                    Text(sync.message, style = MaterialTheme.typography.bodySmall)
+                    sync.samsungTotal?.let { Text("Samsung shared: $it", style = MaterialTheme.typography.labelSmall) }
+                }
                 LinearProgressIndicator(progress = { stepProgress }, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(8.dp))
                 Text("Water $cups / ${prefs.waterGoalCups} cups")

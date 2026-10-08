@@ -57,6 +57,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.migraineguard.app.BuildConfig
+import com.migraineguard.app.core.security.installedSigningSha1
 import com.migraineguard.app.core.ai.FallbackAiClient
 import com.migraineguard.app.core.data.Result
 import com.migraineguard.app.core.data.prefs.UserPreferences
@@ -166,7 +167,7 @@ fun SettingsScreen(
         ) {
             SectionCard(title = "Google Sign-In", icon = Icons.Filled.Key) {
                 Text(
-                    "Web Client ID is baked for Firebase project migraineguard-66229 — friends can Sign in with Google out of the box (Credential Manager). " +
+                    "A default Google Web client ID is included. The app owner must register the installed APK certificate in the same Google project. " +
                         "Optional override below. Google Sign-In is not Gemini access. " +
                         "If Sign-In fails with SHA-1 / certificate errors, register this APK SHA-1 on the Android OAuth client.",
                     style = MaterialTheme.typography.bodySmall,
@@ -199,10 +200,10 @@ fun SettingsScreen(
                 ) { Text(if (showSha) "Hide SHA-1 instructions" else "Show SHA-1 (fix mismatch)") }
                 if (showSha) {
                     Text(
-                        "Release / box APK SHA-1:\nFD:56:20:0E:83:57:C4:97:47:E4:32:10:D8:60:3F:DE:0C:64:70:14\n\n" +
-                            "Package: com.migraineguard.app · Firebase: migraineguard-66229\n\n" +
-                            "Add this SHA-1 to the Android OAuth client. Local Studio builds may use another debug keystore:\n" +
-                            "keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android",
+                        "Installed APK SHA-1:\n${installedSigningSha1(context)}\n\n" +
+                            "Package: ${BuildConfig.APPLICATION_ID}\n\n" +
+                            "Register this certificate with an Android OAuth client in the same Google project " +
+                            "as the Web client ID. Changing signing keys requires another registration.",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }

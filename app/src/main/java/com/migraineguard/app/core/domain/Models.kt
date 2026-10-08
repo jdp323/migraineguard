@@ -118,6 +118,15 @@ data class HealthSnapshot(
     val sourceLabel: String = "Local",
     val distanceMeters: Double? = null,
     val caloriesBurned: Double? = null,
+    val stepSync: StepSyncSnapshot? = null,
+)
+
+data class StepSyncSnapshot(
+    val total: Int?,
+    val samsungTotal: Int?,
+    val sourcePackages: List<String>,
+    val readAtMillis: Long,
+    val message: String,
 )
 
 data class SleepSnapshot(

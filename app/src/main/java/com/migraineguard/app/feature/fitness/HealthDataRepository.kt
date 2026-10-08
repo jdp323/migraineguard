@@ -12,6 +12,8 @@ import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.records.metadata.DataOrigin
+import com.migraineguard.app.core.domain.StepSyncSnapshot
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -279,6 +281,7 @@ class HealthConnectHealthDataRepository(
     }
 
     override suspend fun latestFitness(): HealthSnapshot {
+        lastErrorText = ""
         return try {
             if (availabilityStatus() != HealthConnectStatus.AVAILABLE) {
                 return HealthSnapshot(
@@ -286,6 +289,7 @@ class HealthConnectHealthDataRepository(
                     heartRateBpm = null,
                     activeMinutes = 0,
                     sourceLabel = "Health Connect unavailable",
+                    stepSync = StepSyncSnapshot(null, null, emptyList(), System.currentTimeMillis(), "Health Connect unavailable"),
                 )
             }
             val client = HealthConnectClient.getOrCreate(context)
@@ -302,18 +306,38 @@ class HealthConnectHealthDataRepository(
             val start = healthDayStart(end)
             val filter = TimeRangeFilter.between(start, end)
 
-            val steps = healthRead {
-                val response = client.aggregate(
+            val stepRead = healthRead {
+                client.aggregate(
                     AggregateRequest(metrics = setOf(StepsRecord.COUNT_TOTAL), timeRangeFilter = filter),
                 )
-                response[StepsRecord.COUNT_TOTAL]?.coerceIn(0L, Int.MAX_VALUE.toLong())?.toInt() ?: 0
-            }.getOrElse { e ->
-                if (e is CancellationException) throw e
-                if (e is SecurityException) 0 else {
-                    recordMeaningfulError("latestFitness steps: ${e.message ?: e}")
-                    0
-                }
             }
+            val stepTotal = stepRead.getOrNull()?.let { response ->
+                (response[StepsRecord.COUNT_TOTAL] ?: 0L).coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
+            }
+            stepRead.exceptionOrNull()?.let { e ->
+                recordMeaningfulError(
+                    if (e is SecurityException) "Steps permission needed"
+                    else "Steps read unavailable (${e.javaClass.simpleName})",
+                )
+            }
+            // This is a comparison only: never sum a source total with the combined aggregate.
+            val samsungRead = if (stepRead.isSuccess) healthRead {
+                client.aggregate(
+                    AggregateRequest(
+                        metrics = setOf(StepsRecord.COUNT_TOTAL),
+                        timeRangeFilter = filter,
+                        dataOriginFilter = setOf(DataOrigin(HealthConnectPackages.SAMSUNG_HEALTH)),
+                    ),
+                )[StepsRecord.COUNT_TOTAL]?.coerceIn(0L, Int.MAX_VALUE.toLong())?.toInt()
+            } else kotlin.Result.success(null)
+            val steps = stepTotal ?: 0
+            val stepSync = StepSyncSnapshot(
+                total = stepTotal,
+                samsungTotal = samsungRead.getOrNull(),
+                sourcePackages = stepRead.getOrNull()?.dataOrigins?.map { it.packageName }?.sorted().orEmpty(),
+                readAtMillis = end.toEpochMilli(),
+                message = stepSyncMessage(stepTotal, samsungRead.getOrNull(), samsungRead.isFailure),
+            )
 
             val bpm = healthRead {
                 client.readRecords(ReadRecordsRequest(HeartRateRecord::class, filter))
@@ -353,6 +377,7 @@ class HealthConnectHealthDataRepository(
                 sourceLabel = label,
                 distanceMeters = distance.takeIf { it > 0 },
                 caloriesBurned = calories.takeIf { it > 0 },
+                stepSync = stepSync,
             )
         } catch (e: SecurityException) {
             HealthSnapshot(
@@ -360,6 +385,7 @@ class HealthConnectHealthDataRepository(
                 heartRateBpm = null,
                 activeMinutes = 0,
                 sourceLabel = "Fitness permission needed",
+                    stepSync = StepSyncSnapshot(null, null, emptyList(), System.currentTimeMillis(), "Fitness permission needed"),
             )
         } catch (e: CancellationException) {
             throw e
@@ -370,6 +396,7 @@ class HealthConnectHealthDataRepository(
                 heartRateBpm = null,
                 activeMinutes = 0,
                 sourceLabel = "Fitness read unavailable",
+                    stepSync = StepSyncSnapshot(null, null, emptyList(), System.currentTimeMillis(), "Fitness read unavailable"),
             )
         }
     }

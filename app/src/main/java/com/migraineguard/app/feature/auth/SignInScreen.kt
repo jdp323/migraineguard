@@ -110,8 +110,11 @@ fun SignInScreen(
                                 onNeedGoogleSetup()
                                 return@launch
                             }
-                            val result = authRepository.signInWithGoogle(context)
-                            loading = false
+                            val result = try {
+                                authRepository.signInWithGoogle(context)
+                            } finally {
+                                loading = false
+                            }
                             result.onFailure {
                                 error = it.message ?: "Google Sign-In failed"
                             }
@@ -152,10 +155,10 @@ fun SignInScreen(
 
         Text(
             text = if (configured) {
-                "Google Sign-In is ready (Web Client ID baked for friends). " +
-                    "Demo continues work offline. Google Sign-In ≠ Gemini API access."
+                "Google sign-in requires the app certificate to be registered. " +
+                    "Continue locally to use health data and your Gemini key without Google sign-in."
             } else {
-                "Web Client ID not found — unusual for this build. Demo mode still works."
+                "Google sign-in is not configured. You can continue locally."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

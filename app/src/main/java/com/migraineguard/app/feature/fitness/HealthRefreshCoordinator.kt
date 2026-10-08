@@ -47,7 +47,7 @@ class HealthRefreshCoordinator(
     /** Kick a refresh; debounced unless [force]. */
     fun refresh(force: Boolean = false) {
         val now = System.currentTimeMillis()
-        if (!force && now - lastKickAtMs < DEBOUNCE_MS) return
+        if (!force && (runningJob?.isActive == true || now - lastKickAtMs < DEBOUNCE_MS)) return
         lastKickAtMs = now
         runningJob?.cancel()
         runningJob = scope.launch(Dispatchers.IO) {
