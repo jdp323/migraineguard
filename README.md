@@ -1,13 +1,22 @@
 # MigraineGuard
 
-Kotlin + Jetpack Compose + Material 3 app for tracking migraines, hydration, fitness/sleep (via **Health Connect** / Samsung Health), nutrition, weather pressure, body metrics, medications, and **AI Coach / Health Analyst** insights.
+Android app for migraine journaling, hydration, Health Connect fitness/sleep, meals, weight, medications, weather and AI coaching.
 
-**Package:** `com.migraineguard.app`
-**Version:** 1.6.1 (versionCode 8)
-**Min SDK:** 26 · **Target / Compile SDK:** 35
-**Auth:** Google Sign-In via Credential Manager with **baked Web Client ID** (Firebase project `migraineguard-66229`). Demo mode remains for offline testing.
+**Version:** 1.6.3 (code 10) · Android 8+ · target SDK 35.
 
----
+Download builds from [GitHub Releases](https://github.com/jdp323/migraineguard/releases). Use **MigraineGuard Preview** to test alongside an older install without removing its records. Standard APK updates retain the package `com.migraineguard.app`; Preview uses `com.migraineguard.app.preview`. Both use the persistent test signing certificate.
+
+## Current improvements
+
+- Today’s cumulative steps, distance and calories query the full local calendar day, including Samsung daily buckets. Health Connect still deduplicates steps. Source comparisons and refresh timestamps explain what was received.
+- Encrypted journal export/restore, preservation migrations, Android Keystore protection for AI keys, and consistent hydration history.
+- Optional Gemini photo analysis with metadata removed; cloud health-summary sharing is an explicit choice. Unknown nutrition and health readings stay unknown.
+- Real optional weather, profile unit conversion, offline coaching and a separate Preview install.
+- CI checks compilation, unit tests, lint, APK certificates and Android emulator migration/backup/key-storage/startup tests before publishing.
+
+Google sign-in still requires access to the configured Google Cloud project and registration of the installed package/certificate. **Continue locally** works without Google. Watch/Fitbit data depends on what its companion app exports to Health Connect; real-device sync and cloud AI responses require phone testing.
+
+See [feature status](docs/FEATURE_STATUS.md), [phone testing](docs/PHONE_TESTING.md) and [source audit](docs/PROJECT_AUDIT.md).
 
 ## What’s new in v1.6.1
 

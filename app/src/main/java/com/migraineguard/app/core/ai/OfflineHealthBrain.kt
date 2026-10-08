@@ -76,7 +76,7 @@ class OfflineHealthBrain : BaseAiProvider("OfflineHealthBrain", priority = 99) {
                 .put("sleepGoalHours", pack.prefs.sleepGoalHours))
             .put("migrainesRecent", migraines)
             .put("waterAdherence", waterAdherence(pack))
-            .put("steps", pack.fitness?.steps)
+            .put("steps", pack.fitness?.let { if (it.stepSync != null) it.stepSync.total else it.steps })
             .put("stepsGoal", pack.prefs.dailyStepGoal)
             .put("sleepHours", pack.sleep?.hours)
             .put("sleepSource", pack.sleep?.sourceLabel)
@@ -114,21 +114,23 @@ class OfflineHealthBrain : BaseAiProvider("OfflineHealthBrain", priority = 99) {
     }
 
     private fun coachReport(pack: ContextPack, prompt: String): String {
-        val steps = pack.fitness?.steps ?: 0
+        val steps = pack.fitness?.let { fitness ->
+            if (fitness.stepSync != null) fitness.stepSync.total else fitness.steps
+        }
         val goal = pack.prefs.dailyStepGoal
         val cupsToday = pack.waterByDay[LocalDate.now().toString()] ?: 0
         val sleepH = pack.sleep?.hours ?: 0f
         val workouts = pack.workouts.size
-        val stepPct = ((steps.toFloat() / goal.coerceAtLeast(1)) * 100).toInt().coerceAtMost(200)
+        val stepPct = steps?.let { ((it.toFloat() / goal.coerceAtLeast(1)) * 100).toInt().coerceAtMost(200) }
         val waterPct = ((cupsToday.toFloat() / pack.waterGoal.coerceAtLeast(1)) * 100).toInt()
         val wins = buildList {
-            if (stepPct >= 80) add("Steps are on track ($steps / $goal).")
+            if (stepPct != null && stepPct >= 80) add("Steps are on track ($steps / $goal).")
             if (waterPct >= 70) add("Hydration looks solid ($cupsToday cups).")
             if (sleepH >= pack.prefs.sleepGoalHours - 0.5f && sleepH > 0) add("Sleep near your goal (${"%.1f".format(sleepH)}h).")
             if (workouts > 0) add("You logged $workouts workout(s) recently — nice consistency.")
         }
         val nudges = buildList {
-            if (stepPct < 50) add("A 10–15 min walk would close the gap on steps.")
+            if (stepPct != null && stepPct < 50) add("A 10–15 min walk would close the gap on steps.")
             if (waterPct < 50) add("Sip water now — dehydration is a common migraine trigger.")
             if (sleepH in 0.1f..5.9f) add("Prioritize an earlier wind-down tonight.")
             if (workouts == 0) add("Try today's Exercise of the Day when you have a free slot.")
@@ -142,7 +144,7 @@ class OfflineHealthBrain : BaseAiProvider("OfflineHealthBrain", priority = 99) {
             appendLine(Personas.SAFETY_DISCLAIMER)
             appendLine()
             appendLine("**Quick pulse**")
-            appendLine("- Steps: $steps / $goal (${stepPct}%)")
+            appendLine(if (steps != null) "- Steps: $steps / $goal (${stepPct}%)" else "- Steps: no current reading available")
             appendLine("- Water: $cupsToday / ${pack.waterGoal} cups")
             appendLine("- Sleep: ${if (sleepH > 0) "%.1fh".format(sleepH) else pack.sleep?.sourceLabel ?: "—"}")
             appendLine("- Workouts (7d): $workouts")

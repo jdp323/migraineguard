@@ -34,3 +34,9 @@ Sources:
 The Preview APK uses package `com.migraineguard.app.preview` and separate local storage so an old installation can be kept intact. It uses the same FB:67 test certificate. Google sign-in for Preview requires an additional Android OAuth client for that package in the same project as the Web client. The available account currently lacks access to the older migraineguard-66229 project.
 
 See [FEATURE_STATUS.md](FEATURE_STATUS.md) for implemented workflows and verification limits.
+
+## Full-day step correction
+
+Today’s cumulative queries now end at the next local midnight. Health Connect rescales interval counts when a query clips a record; a Samsung daily bucket can otherwise show only an early-morning fraction. The reported 12–14 versus 180 is consistent with that effect, but the actual Samsung record has not been inspected. After installing, refresh and compare both the combined and Samsung-only totals. No raw source totals are added together. DST boundaries are covered by unit tests.
+
+Reference: https://android.googlesource.com/platform/packages/modules/HealthFitness/+/8d79b9403cee11fdd9d2bea173adff0edb6bec13/tests/cts/src/android/healthconnect/cts/StepsRecordTest.java (rescaled-count aggregation tests).

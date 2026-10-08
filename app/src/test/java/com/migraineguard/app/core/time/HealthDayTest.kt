@@ -19,4 +19,19 @@ class HealthDayTest {
         val next = healthDayStart(Instant.parse("2026-11-02T18:00:00Z"), newYork)
         assertEquals(25L, Duration.between(start, next).toHours())
     }
+    @Test fun earlyMorningQueryIncludesTheWholeCurrentCalendarDay() {
+        val now = Instant.parse("2026-10-08T05:41:00Z")
+        assertEquals(Instant.parse("2026-10-09T04:00:00Z"), healthDayEnd(now, newYork))
+        assertEquals(24L, Duration.between(healthDayStart(now, newYork), healthDayEnd(now, newYork)).toHours())
+    }
+
+    @Test fun springForwardDayEndsAfterTwentyThreeHours() {
+        val now = Instant.parse("2026-03-08T18:00:00Z")
+        assertEquals(23L, Duration.between(healthDayStart(now, newYork), healthDayEnd(now, newYork)).toHours())
+    }
+
+    @Test fun fallBackDayEndsAfterTwentyFiveHours() {
+        val now = Instant.parse("2026-11-01T18:00:00Z")
+        assertEquals(25L, Duration.between(healthDayStart(now, newYork), healthDayEnd(now, newYork)).toHours())
+    }
 }

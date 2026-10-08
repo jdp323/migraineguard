@@ -19,6 +19,7 @@ import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.migraineguard.app.core.domain.HealthSnapshot
 import com.migraineguard.app.core.domain.SleepSnapshot
+import com.migraineguard.app.core.time.healthDayEnd
 import com.migraineguard.app.core.time.healthDayStart
 import kotlinx.coroutines.CancellationException
 import java.time.Instant
@@ -305,14 +306,17 @@ class HealthConnectHealthDataRepository(
             val end = Instant.now()
             val start = healthDayStart(end)
             val filter = TimeRangeFilter.between(start, end)
+            // Health Connect rescales interval counts to the requested window. Cover the
+            // whole day to include updated daily buckets whose end time is tonight.
+            val dayFilter = TimeRangeFilter.between(start, healthDayEnd(end))
 
             val stepRead = healthRead {
                 client.aggregate(
-                    AggregateRequest(metrics = setOf(StepsRecord.COUNT_TOTAL), timeRangeFilter = filter),
+                    AggregateRequest(metrics = setOf(StepsRecord.COUNT_TOTAL), timeRangeFilter = dayFilter),
                 )
             }
             val stepTotal = stepRead.getOrNull()?.let { response ->
-                (response[StepsRecord.COUNT_TOTAL] ?: 0L).coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
+                response[StepsRecord.COUNT_TOTAL]?.coerceIn(0L, Int.MAX_VALUE.toLong())?.toInt()
             }
             stepRead.exceptionOrNull()?.let { e ->
                 recordMeaningfulError(
@@ -325,7 +329,7 @@ class HealthConnectHealthDataRepository(
                 client.aggregate(
                     AggregateRequest(
                         metrics = setOf(StepsRecord.COUNT_TOTAL),
-                        timeRangeFilter = filter,
+                        timeRangeFilter = dayFilter,
                         dataOriginFilter = setOf(DataOrigin(HealthConnectPackages.SAMSUNG_HEALTH)),
                     ),
                 )[StepsRecord.COUNT_TOTAL]?.coerceIn(0L, Int.MAX_VALUE.toLong())?.toInt()
@@ -346,11 +350,11 @@ class HealthConnectHealthDataRepository(
             }.getOrNull()
 
             val distance = healthRead {
-                client.aggregate(AggregateRequest(setOf(DistanceRecord.DISTANCE_TOTAL), filter))[DistanceRecord.DISTANCE_TOTAL]?.inMeters
+                client.aggregate(AggregateRequest(setOf(DistanceRecord.DISTANCE_TOTAL), dayFilter))[DistanceRecord.DISTANCE_TOTAL]?.inMeters
             }.getOrNull()
 
             val calorieRead = healthRead {
-                val combined = client.aggregate(AggregateRequest(setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), filter))
+                val combined = client.aggregate(AggregateRequest(setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), dayFilter))
                 val origins = combined.dataOrigins
                 if (origins.size > 1) {
                     // Calorie aggregates do not reliably deduplicate multiple writers.
