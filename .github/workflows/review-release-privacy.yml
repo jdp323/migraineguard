@@ -1,0 +1,72 @@
+name: Review release APKs for embedded credentials
+
+on:
+  push:
+    branches: [codex/privacy-audit]
+    paths: [.github/workflows/review-release-privacy.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Inspect APK strings without logging values
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, re, subprocess, zipfile
+          repo = os.environ["GH_REPO"]
+          response = subprocess.run(["gh", "api", f"repos/{repo}/releases?per_page=100"], capture_output=True, text=True, check=True)
+          releases = json.loads(response.stdout)
+          patterns = {
+              "google_api_key": rb"AIza[0-9A-Za-z_-]{35}",
+              "github_token": rb"(?:gh[pousr]_[0-9A-Za-z]{30,}|github_pat_[0-9A-Za-z_]{35,})",
+              "ai_provider_key": rb"\b(?:sk-(?:proj-|or-v1-)?[A-Za-z0-9_-]{24,}|gsk_[A-Za-z0-9]{25,})",
+              "aws_access_key": rb"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b",
+              "private_key": rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----",
+          }
+          results = []
+          for number, release in enumerate(releases):
+              if not any(asset["name"].endswith(".apk") for asset in release["assets"]):
+                  continue
+              directory = pathlib.Path("apk-review") / str(number)
+              directory.mkdir(parents=True, exist_ok=True)
+              subprocess.run(["gh", "release", "download", release["tag_name"], "--repo", repo, "--pattern", "*.apk", "--dir", str(directory)], capture_output=True, text=True, check=True)
+              for apk_path in sorted(directory.glob("*.apk")):
+                  hits = {name: set() for name in patterns}
+                  flagged_entries = []
+                  with zipfile.ZipFile(apk_path) as apk:
+                      for entry in apk.infolist():
+                          if re.search(r"(user_settings|\.sqlite$|\.db$|\.keystore$|\.jks$)", entry.filename, re.I):
+                              flagged_entries.append(entry.filename)
+                          if not (entry.filename.endswith((".dex", ".json", ".xml", ".arsc", ".properties", ".txt")) or entry.filename.startswith("assets/")):
+                              continue
+                          content = apk.read(entry)
+                          for name, pattern in patterns.items():
+                              for match in re.findall(pattern, content):
+                                  hits[name].add(hashlib.sha256(match).hexdigest()[:16])
+                  results.append({
+                      "tag": release["tag_name"],
+                      "asset": apk_path.name,
+                      "apk_sha256": hashlib.sha256(apk_path.read_bytes()).hexdigest(),
+                      "pattern_counts": {name: len(values) for name, values in hits.items()},
+                      "match_fingerprints": {name: sorted(values) for name, values in hits.items() if values},
+                      "unexpected_data_entry_count": len(flagged_entries),
+                  })
+          pathlib.Path("release-privacy-review.json").write_text(json.dumps({"release_apks_reviewed": len(results), "results": results, "limits": "String-pattern scan only; no credential values are logged and no APK is executed."}, indent=2))
+          print(json.dumps({"release_apks_reviewed": len(results), "apks_with_credential_patterns": sum(any(r["pattern_counts"].values()) for r in results)}))
+          PY
+      - name: Save redacted review results
+        uses: actions/upload-artifact@v4
+        with:
+          name: Release-privacy-review
+          path: release-privacy-review.json
+          if-no-files-found: error
+          retention-days: 14
