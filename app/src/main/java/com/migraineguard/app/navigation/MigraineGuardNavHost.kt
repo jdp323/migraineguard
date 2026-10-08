@@ -212,7 +212,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
             composable(Routes.Settings) {
                 SettingsScreen(
                     preferencesRepository = container.preferencesRepository,
-                    driveSyncRepository = container.driveSyncRepository,
+                    backupRepository = container.backupRepository,
                     healthDataRepository = container.healthDataRepository,
                     aiClient = container.aiClient,
                     onSignOut = { container.authRepository.signOut() },

@@ -56,6 +56,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.migraineguard.app.feature.backup.BackupRepository
+import com.migraineguard.app.feature.backup.BackupCard
 import com.migraineguard.app.BuildConfig
 import com.migraineguard.app.core.security.installedSigningSha1
 import com.migraineguard.app.core.ai.FallbackAiClient
@@ -74,7 +76,7 @@ import kotlin.math.roundToInt
 @Composable
 fun SettingsScreen(
     preferencesRepository: UserPreferencesRepository,
-    driveSyncRepository: DriveSyncRepository,
+    backupRepository: BackupRepository,
     healthDataRepository: HealthDataRepository,
     aiClient: FallbackAiClient? = null,
     onSignOut: () -> Unit,
@@ -87,8 +89,6 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val prefs by preferencesRepository.preferences.collectAsStateWithLifecycle(UserPreferences())
-    var lastSync by remember { mutableStateOf("—") }
-    var driveStatus by remember { mutableStateOf("") }
     var googleId by remember { mutableStateOf("") }
     var showSha by remember { mutableStateOf(false) }
     var weightGoalText by remember { mutableStateOf("") }
@@ -110,10 +110,6 @@ fun SettingsScreen(
         }
     }
 
-    LaunchedEffect(prefs.driveSyncEnabled) {
-        lastSync = driveSyncRepository.lastSyncLabel()
-        driveStatus = driveSyncRepository.statusMessage()
-    }
     LaunchedEffect(prefs.googleWebClientId) {
         googleId = prefs.googleWebClientId
     }
@@ -484,28 +480,12 @@ fun SettingsScreen(
                 }
             }
 
-            SectionCard(title = "Google Drive sync", icon = Icons.Filled.Cloud) {
-                Text(driveStatus, style = MaterialTheme.typography.bodyMedium)
-                Text("Last sync: $lastSync", modifier = Modifier.padding(top = 8.dp))
-                PrefSwitch(
-                    label = "Enable Drive sync",
-                    checked = prefs.driveSyncEnabled,
-                    onCheckedChange = { checked ->
-                        scope.launch {
-                            driveSyncRepository.setSyncEnabled(checked)
-                            lastSync = driveSyncRepository.lastSyncLabel()
-                            driveStatus = driveSyncRepository.statusMessage()
-                        }
-                    },
-                )
-                OutlinedButton(
-                    onClick = {
-                        scope.launch {
-                            lastSync = driveSyncRepository.requestSyncNow()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Sync now (queued)") }
+            BackupCard(backupRepository)
+
+            SectionCard(title = "Cloud backup", icon = Icons.Filled.Cloud) {
+                Text("Use Export encrypted backup above and choose a Google Drive folder in Android's file picker. Import that file to restore it on another installation.")
+                Text("This is a manual encrypted backup. Automatic background Drive synchronization is not enabled.",
+                    style = MaterialTheme.typography.bodySmall)
             }
 
             SectionCard(title = "About", icon = Icons.Filled.Info) {
@@ -526,8 +506,8 @@ fun SettingsScreen(
 
             SectionCard(title = "Privacy", icon = Icons.Filled.PrivacyTip) {
                 Text(
-                    "Logs stay on-device (Room + DataStore) unless you enable Drive sync. " +
-                        "Weather uses Open-Meteo without an API key. Cloud AI uses only YOUR stored keys — never developer or Firebase api_key. " +
+                    "Logs stay on this device unless you export a backup or choose to share a health summary with cloud AI. " +
+                        "Weather shares approximate coordinates with Open-Meteo. Cloud AI uses your encrypted stored keys; food photos are sent to Gemini only when you select that option. " +
                         "OfflineHealthBrain always available. Not a medical device — for personal awareness only.",
                     style = MaterialTheme.typography.bodyMedium,
                 )

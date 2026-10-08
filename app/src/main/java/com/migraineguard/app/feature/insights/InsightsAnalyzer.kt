@@ -46,8 +46,8 @@ class DefaultInsightsAnalyzer(
         val workouts = workoutRepository.inRange(startMs, endMs)
         val foods = nutritionAnalyzer.inRange(startMs, endMs)
         val weather = weatherRepository.currentWeather()
-        val pressureNote = if (weather.isCachedOrFake) {
-            "Current weather unavailable; demonstration readings excluded. No pressure history collected."
+        val pressureNote = if (weather == null || weather.isCachedOrFake) {
+            "Current weather unavailable or stale. No pressure history collected."
         } else {
             "Current pressure ${weather.pressureHpa} hPa. No pressure history or personal correlation calculated."
         }

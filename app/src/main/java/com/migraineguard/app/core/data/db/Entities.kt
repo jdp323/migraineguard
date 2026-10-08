@@ -1,5 +1,6 @@
 package com.migraineguard.app.core.data.db
 
+import kotlinx.serialization.Serializable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.migraineguard.app.core.domain.MedicationEntry
@@ -13,6 +14,7 @@ import com.migraineguard.app.core.domain.WeightEntry
 import com.migraineguard.app.core.domain.WorkoutEntry
 import com.migraineguard.app.core.domain.WorkoutType
 
+@Serializable
 @Entity(tableName = "migraine_episodes")
 data class MigraineEpisodeEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -46,6 +48,7 @@ data class MigraineEpisodeEntity(
     }
 }
 
+@Serializable
 @Entity(tableName = "nutrition_scans")
 data class NutritionScanEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -91,12 +94,14 @@ data class NutritionScanEntity(
     }
 }
 
+@Serializable
 @Entity(tableName = "water_history")
 data class WaterDayEntity(
     @PrimaryKey val dateIso: String,
     val cups: Int,
 )
 
+@Serializable
 @Entity(tableName = "workouts")
 data class WorkoutEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -130,6 +135,7 @@ data class WorkoutEntity(
     }
 }
 
+@Serializable
 @Entity(tableName = "weight_entries")
 data class WeightEntryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -149,6 +155,7 @@ data class WeightEntryEntity(
     }
 }
 
+@Serializable
 @Entity(tableName = "medications")
 data class MedicationEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -182,6 +189,7 @@ data class MedicationEntity(
 }
 
 
+@Serializable
 @Entity(tableName = "ai_sessions")
 data class AiSessionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

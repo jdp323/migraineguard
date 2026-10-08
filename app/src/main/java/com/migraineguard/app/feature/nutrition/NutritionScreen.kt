@@ -1,5 +1,6 @@
 package com.migraineguard.app.feature.nutrition
 
+import android.content.Intent
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,6 +31,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +64,8 @@ fun NutritionScreen(
 ) {
     var foodText by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var sendPhoto by remember { mutableStateOf(false) }
+    LaunchedEffect(imageUri) { sendPhoto = false }
     var result by remember { mutableStateOf<NutritionScanResult?>(null) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -71,15 +76,19 @@ fun NutritionScreen(
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
 
     fun createCameraUri(): Uri {
-        val file = File(context.cacheDir, "food_${System.currentTimeMillis()}.jpg")
+        val folder = File(context.filesDir, "food_photos").apply { mkdirs() }
+        val file = File(folder, "food_${System.currentTimeMillis()}.jpg")
         return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
     }
 
     val takePicture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
         if (ok) imageUri = cameraUri
     }
-    val pickGallery = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) imageUri = uri
+    val pickGallery = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            imageUri = uri
+        }
     }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
@@ -114,8 +123,8 @@ fun NutritionScreen(
         ) {
             item {
                 Text(
-                    "Describe your meal for an optional AI estimate. Photos are local references; " +
-                        "photo recognition is not connected. Without a usable AI response, nutrition values remain unavailable.",
+                    "Describe your meal for an optional AI estimate. Photos stay local unless you choose to send one to Gemini. " +
+                        "Photo estimates can miss ingredients and portion sizes. Without a usable AI response, nutrition values remain unavailable.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -127,7 +136,7 @@ fun NutritionScreen(
                         Spacer(Modifier.size(6.dp))
                         Text("Camera")
                     }
-                    OutlinedButton(onClick = { pickGallery.launch("image/*") }, enabled = !loading, modifier = Modifier.weight(1f)) {
+                    OutlinedButton(onClick = { pickGallery.launch(arrayOf("image/*")) }, enabled = !loading, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Filled.PhotoLibrary, contentDescription = null)
                         Spacer(Modifier.size(6.dp))
                         Text("Gallery")
@@ -157,6 +166,12 @@ fun NutritionScreen(
                     shape = RoundedCornerShape(16.dp),
                 )
             }
+            if (imageUri != null) item {
+                Row {
+                    Checkbox(checked = sendPhoto, onCheckedChange = { sendPhoto = it }, enabled = !loading)
+                    Text("Send this photo and description to Google Gemini using my key. Your configured provider may charge for requests.")
+                }
+            }
             item {
                 Button(
                     onClick = {
@@ -166,7 +181,7 @@ fun NutritionScreen(
                             loading = true
                             error = null
                             try {
-                                val analyzed = nutritionAnalyzer.analyzeFoodLabel(description, photo)
+                                val analyzed = nutritionAnalyzer.analyzeFoodLabel(description, photo, sendPhoto)
                                 nutritionAnalyzer.persist(analyzed)
                                 result = analyzed
                             } catch (e: CancellationException) {
@@ -179,12 +194,12 @@ fun NutritionScreen(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !loading && foodText.isNotBlank(),
+                    enabled = !loading && (foodText.isNotBlank() || (sendPhoto && imageUri != null)),
                 ) {
                     if (loading) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                     } else {
-                        Text("Analyze description")
+                        Text(if (sendPhoto && imageUri != null) "Send photo to Gemini" else "Analyze description")
                     }
                 }
             }

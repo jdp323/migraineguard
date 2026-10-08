@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -46,6 +47,21 @@ interface NutritionDao {
 
 @Dao
 interface WaterHistoryDao {
+    @Query("SELECT * FROM water_history WHERE dateIso = :dateIso LIMIT 1")
+    fun observeDay(dateIso: String): Flow<WaterDayEntity?>
+
+    @Transaction
+    suspend fun changeCups(dateIso: String, delta: Int) {
+        val current = get(dateIso)?.cups ?: 0
+        upsert(WaterDayEntity(dateIso, (current + delta).coerceIn(0, 1000)))
+    }
+
+    @Transaction
+    suspend fun keepMaximum(day: WaterDayEntity) {
+        val existing = get(day.dateIso)
+        if (existing == null || day.cups > existing.cups) upsert(day)
+    }
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(day: WaterDayEntity)
 

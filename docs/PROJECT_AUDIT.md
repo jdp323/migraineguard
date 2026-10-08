@@ -1,3 +1,5 @@
+> Baseline audit: this document records the v1.6.1 takeover findings. Later resolutions and remaining test limits are tracked in [FEATURE_STATUS.md](FEATURE_STATUS.md) and [PHONE_TESTING.md](PHONE_TESTING.md).
+
 # MigraineGuard source review and development priorities
 
 Reviewed 8 October 2026. Baseline: GitHub main fe1fb1672f835ef82fd5691e002934753340110d (v1.6.0). The older Desktop starter was preserved separately. This report describes the current GitHub app and the v1.6.1 fixes on codex/github-build-and-takeover.

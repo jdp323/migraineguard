@@ -16,6 +16,7 @@ import com.migraineguard.app.feature.migraine.MigraineRepository
 import com.migraineguard.app.feature.nutrition.NutritionAnalyzer
 import com.migraineguard.app.feature.water.WaterIntakeRepository
 import com.migraineguard.app.feature.weather.WeatherRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -60,10 +61,10 @@ class AiCoachRepository(
             migraines = migraineRepository.inRange(startMs, endMs),
             waterByDay = waterWithToday,
             waterGoal = prefs.waterGoalCups,
-            fitness = runCatching { healthDataRepository.latestFitness() }.getOrNull(),
-            sleep = runCatching { healthDataRepository.latestSleep() }.getOrNull(),
-            weather = runCatching { weatherRepository.currentWeather() }.getOrNull(),
-            workouts = workoutRepository.inRange(startMs, endMs),
+            fitness = contextRead { healthDataRepository.latestFitness() },
+            sleep = contextRead { healthDataRepository.latestSleep() },
+            weather = contextRead { weatherRepository.currentWeather() }?.takeUnless { it.isCachedOrFake },
+            workouts = workoutRepository.inRange(end.minusDays(6).atStartOfDay(zone).toInstant().toEpochMilli(), endMs),
             foods = nutritionAnalyzer.inRange(startMs, endMs),
             meds = meds,
             energyLevel = energy,
@@ -75,13 +76,14 @@ class AiCoachRepository(
     suspend fun ask(
         persona: AiPersona,
         userMessage: String,
+        shareHealthContext: Boolean = false,
         onChunk: (suspend (String) -> Unit)? = null,
     ): Result<AiSession> {
         val pack = buildContextPack()
         val brain = aiClient.offline()
         val contextJson = brain?.buildContextJson(pack)
             ?: """{"note":"offline brain missing"}"""
-        val result = aiClient.completePersona(persona, userMessage, contextJson, onChunk)
+        val result = aiClient.completePersona(persona, userMessage, contextJson, shareHealthContext, onChunk)
         return when (result) {
             is Result.Success -> {
                 val full = result.data
@@ -126,3 +128,7 @@ class AiCoachRepository(
         timestampMillis = timestampMillis,
     )
 }
+
+private suspend fun <T> contextRead(block: suspend () -> T): T? = try { block() }
+catch (e: CancellationException) { throw e }
+catch (_: Exception) { null }

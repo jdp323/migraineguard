@@ -440,6 +440,9 @@ fun TrackScreen(
                         }
                         fitness?.caloriesBurned?.let {
                             Text("%.0f kcal".format(it), style = MaterialTheme.typography.bodyMedium)
+                            fitness?.caloriesSourceLabel?.takeIf { label -> label.isNotBlank() }?.let { label ->
+                                Text("Calories source: $label", style = MaterialTheme.typography.bodySmall)
+                            }
                         }
                     }
                 }
@@ -596,7 +599,7 @@ fun TrackScreen(
                         s.sourceLabel.contains("no sessions", ignoreCase = true)
                     if (s.hours > 0f) {
                         Text("Duration: ${"%.1f".format(s.hours)} hours")
-                        Text("Quality: ${s.qualityLabel}")
+                        Text(s.qualityLabel)
                     } else {
                         Text(
                             if (soft) s.sourceLabel else "No sleep data yet",

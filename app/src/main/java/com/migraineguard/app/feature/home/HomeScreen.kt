@@ -86,6 +86,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     var weather by remember { mutableStateOf<WeatherSnapshot?>(null) }
+    var weatherLoading by remember { mutableStateOf(true) }
     var health by remember { mutableStateOf<HealthSnapshot?>(null) }
     var sleep by remember { mutableStateOf<SleepSnapshot?>(null) }
     var lastRefreshedLabel by remember { mutableStateOf<String?>(null) }
@@ -102,17 +103,12 @@ fun HomeScreen(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) {
         scope.launch {
-            weather = weatherRepository.currentWeather(forceRefresh = true)
+            weatherLoading = true
+            try { weather = weatherRepository.currentWeather(forceRefresh = true) } finally { weatherLoading = false }
         }
     }
     LaunchedEffect(Unit) {
-        locationLauncher.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-            ),
-        )
-        weather = weatherRepository.currentWeather(forceRefresh = true)
+        try { weather = weatherRepository.currentWeather() } finally { weatherLoading = false }
         if (healthRefreshCoordinator == null) {
             health = healthDataRepository.latestFitness()
             sleep = healthDataRepository.latestSleep()
@@ -154,7 +150,7 @@ fun HomeScreen(
         val w = weather
         when {
             todayMigraines > 0 -> append("You already logged a migraine today — rest & hydrate.")
-            w != null && w.pressureHpa < 1005 -> append("Low pressure (${w.pressureHpa} hPa) — elevated migraine risk hint.")
+            !weatherLoading && w != null && !w.isCachedOrFake && w.pressureHpa < 1005 -> append("Low pressure (${w.pressureHpa} hPa) — elevated migraine risk hint.")
             cups < prefs.waterGoalCups / 2 -> append("Hydration is low so far — a common migraine trigger.")
             sleep != null && sleep!!.hours < 6f -> append("Short sleep last night — watch for tension headaches.")
             else -> append("Conditions look steady. Keep logging habits for better insights.")
@@ -284,7 +280,7 @@ fun HomeScreen(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 SectionCard(title = "Steps", modifier = Modifier.weight(1f), icon = Icons.Filled.DirectionsWalk) {
                     val h = health
-                    Text(if (h != null) "${h.steps}" else "—")
+                    Text(h?.stepSync?.let { it.total?.toString() ?: "—" } ?: h?.steps?.toString() ?: "—")
                     Text("Goal $stepGoal · ${(stepProgress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
                     Text(h?.sourceLabel ?: "", style = MaterialTheme.typography.bodySmall)
                 }
@@ -301,7 +297,18 @@ fun HomeScreen(
                     Text("${w.condition} · ${w.temperatureC}°C")
                     Text("${w.pressureHpa} hPa · ${w.humidityPercent}% humidity")
                     Text(w.locationLabel, style = MaterialTheme.typography.bodySmall)
-                } else Text("Loading…")
+                } else Text(if (weatherLoading) "Loading weather…" else "Weather unavailable. Enable location or refresh when online.")
+                if (w?.isCachedOrFake == true) Text("Last available reading; excluded from current risk hints.")
+                Text("Local weather shares approximate coordinates with Open-Meteo.", style = MaterialTheme.typography.bodySmall)
+                OutlinedButton(onClick = {
+                    locationLauncher.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION))
+                }, enabled = !weatherLoading) { Text("Use location for weather") }
+                OutlinedButton(onClick = {
+                    scope.launch {
+                        weatherLoading = true
+                        try { weather = weatherRepository.currentWeather(forceRefresh = true) } finally { weatherLoading = false }
+                    }
+                }, enabled = !weatherLoading) { Text("Refresh weather") }
             }
 
             SectionCard(title = "AI Coach & Health Analyst", icon = Icons.Filled.AutoAwesome) {

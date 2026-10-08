@@ -28,3 +28,9 @@ Sources:
 - https://codelabs.developers.google.com/sign-in-with-google-android
 - https://developer.android.com/health-and-fitness/health-connect/aggregate-data
 - https://developer.samsung.com/health/health-connect-faq.html
+
+## Preview installation
+
+The Preview APK uses package `com.migraineguard.app.preview` and separate local storage so an old installation can be kept intact. It uses the same FB:67 test certificate. Google sign-in for Preview requires an additional Android OAuth client for that package in the same project as the Web client. The available account currently lacks access to the older migraineguard-66229 project.
+
+See [FEATURE_STATUS.md](FEATURE_STATUS.md) for implemented workflows and verification limits.

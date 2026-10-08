@@ -4,99 +4,82 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Location
 import android.location.LocationManager
+import android.os.Build
+import android.os.CancellationSignal
 import androidx.core.content.ContextCompat
+import com.migraineguard.app.core.ai.executeRequest
 import com.migraineguard.app.core.domain.WeatherSnapshot
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.Request
 import org.json.JSONObject
-import java.time.LocalDate
-import java.util.concurrent.TimeUnit
+import kotlin.coroutines.resume
+import kotlin.math.round
 
 interface WeatherRepository {
-    suspend fun currentWeather(forceRefresh: Boolean = false): WeatherSnapshot
+    suspend fun currentWeather(forceRefresh: Boolean = false): WeatherSnapshot?
 }
 
 class OpenMeteoWeatherRepository(private val context: Context) : WeatherRepository {
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
-        .build()
+    @Volatile private var cache: WeatherSnapshot? = null
 
-    @Volatile private var cache: Pair<LocalDate, WeatherSnapshot>? = null
-
-    override suspend fun currentWeather(forceRefresh: Boolean): WeatherSnapshot {
-        val today = LocalDate.now()
-        if (!forceRefresh) {
-            cache?.let { if (it.first == today) return it.second }
-        }
-        val coords = lastKnownCoords()
-        val snapshot = if (coords != null) {
-            fetchOpenMeteo(coords.first, coords.second)
-                ?: fakeWeather(offline = true)
-        } else {
-            fakeWeather(offline = false).copy(
-                locationLabel = "Default · enable location for local weather",
-                isCachedOrFake = true,
-            )
-        }
-        cache = today to snapshot
-        return snapshot
+    override suspend fun currentWeather(forceRefresh: Boolean): WeatherSnapshot? {
+        val now = System.currentTimeMillis()
+        val previous = cache
+        if (!forceRefresh && previous != null && now - previous.observedAtMillis < 30 * 60_000L) return previous
+        val coords = coordinates()
+        val fresh = coords?.let { fetch(it.first, it.second) }
+        if (fresh != null) { cache = fresh; return fresh }
+        return previous?.copy(isCachedOrFake = true, locationLabel = "Last available weather · Open-Meteo")
     }
 
     @SuppressLint("MissingPermission")
-    private fun lastKnownCoords(): Pair<Double, Double>? {
-        val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
-            PackageManager.PERMISSION_GRANTED
-        val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-            PackageManager.PERMISSION_GRANTED
-        if (!fine && !coarse) return null
-        val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val providers = listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)
-        for (p in providers) {
-            runCatching {
-                val loc = lm.getLastKnownLocation(p) ?: return@runCatching
-                return loc.latitude to loc.longitude
+    private suspend fun coordinates(): Pair<Double, Double>? {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) !=
+            PackageManager.PERMISSION_GRANTED) return null
+        return try {
+            val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val provider = listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)
+                .firstOrNull { manager.isProviderEnabled(it) } ?: return null
+            val last = manager.getLastKnownLocation(provider)?.takeIf {
+                System.currentTimeMillis() - it.time <= 6 * 60 * 60_000L
             }
-        }
-        return null
+            val location = last ?: if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                withTimeoutOrNull(10_000) {
+                    suspendCancellableCoroutine<Location?> { continuation ->
+                        val signal = CancellationSignal()
+                        continuation.invokeOnCancellation { signal.cancel() }
+                        manager.getCurrentLocation(provider, signal, ContextCompat.getMainExecutor(context)) {
+                            if (continuation.isActive) continuation.resume(it)
+                        }
+                    }
+                }
+            } else null
+            location?.let { round(it.latitude * 100) / 100 to round(it.longitude * 100) / 100 }
+        } catch (e: CancellationException) { throw e }
+        catch (_: Exception) { null }
     }
 
-    private suspend fun fetchOpenMeteo(lat: Double, lon: Double): WeatherSnapshot? =
-        withContext(Dispatchers.IO) {
-            runCatching {
-                val url =
-                    "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon" +
-                        "&current=temperature_2m,relative_humidity_2m,surface_pressure,weather_code" +
-                        "&timezone=auto"
-                val req = Request.Builder().url(url).get().build()
-                client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) return@use null
-                    val root = JSONObject(resp.body?.string().orEmpty())
-                    val current = root.getJSONObject("current")
-                    val code = current.optInt("weather_code", 0)
-                    WeatherSnapshot(
-                        temperatureC = current.getDouble("temperature_2m").toFloat(),
-                        pressureHpa = current.getDouble("surface_pressure").toFloat(),
-                        humidityPercent = current.optInt("relative_humidity_2m", 50),
-                        condition = weatherCodeLabel(code),
-                        locationLabel = "Lat ${"%.2f".format(lat)}, Lon ${"%.2f".format(lon)} · Open-Meteo",
-                        isCachedOrFake = false,
-                    )
-                }
-            }.getOrNull()
+    private suspend fun fetch(lat: Double, lon: Double): WeatherSnapshot? = try {
+        val url = "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon" +
+            "&current=temperature_2m,relative_humidity_2m,surface_pressure,weather_code&timezone=auto"
+        val response = executeRequest(Request.Builder().url(url).get().build())
+        if (response.code !in 200..299) null else {
+            val current = JSONObject(response.body).getJSONObject("current")
+            WeatherSnapshot(
+                temperatureC = current.getDouble("temperature_2m").toFloat(),
+                pressureHpa = current.getDouble("surface_pressure").toFloat(),
+                humidityPercent = current.getInt("relative_humidity_2m"),
+                condition = weatherCodeLabel(current.getInt("weather_code")),
+                locationLabel = "Local weather · Open-Meteo",
+                observedAtMillis = System.currentTimeMillis(),
+            )
         }
-
-    private fun fakeWeather(offline: Boolean) = WeatherSnapshot(
-        temperatureC = 21.5f,
-        pressureHpa = 1013.2f,
-        humidityPercent = 55,
-        condition = if (offline) "Partly cloudy (offline cache)" else "Partly cloudy (demo)",
-        locationLabel = if (offline) "Cached / offline" else "Demo City",
-        isCachedOrFake = true,
-    )
+    } catch (e: CancellationException) { throw e }
+    catch (_: Exception) { null }
 
     private fun weatherCodeLabel(code: Int): String = when (code) {
         0 -> "Clear sky"

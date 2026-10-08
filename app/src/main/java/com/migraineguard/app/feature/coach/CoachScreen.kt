@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Checkbox
+import kotlinx.coroutines.CancellationException
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -60,6 +62,7 @@ fun CoachScreen(
     var question by remember { mutableStateOf("") }
     var streaming by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
+    var shareHealthContext by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val sessions by coachRepository.observeSessions().collectAsStateWithLifecycle(emptyList())
     var selectedId by remember { mutableStateOf<Long?>(null) }
@@ -74,11 +77,14 @@ fun CoachScreen(
         streaming = ""
         selectedId = null
         scope.launch {
-            val result = coachRepository.ask(p, prompt) { chunk ->
-                streaming = chunk
-                scroll.animateScrollTo(scroll.maxValue)
-            }
-            busy = false
+            val result = try {
+                coachRepository.ask(p, prompt, shareHealthContext) { chunk ->
+                    streaming = chunk
+                    scroll.animateScrollTo(scroll.maxValue)
+                }
+            } catch (e: CancellationException) { throw e }
+            catch (_: Exception) { Result.Error("Could not complete or save this request. Try again.") }
+            finally { busy = false }
             when (result) {
                 is Result.Success -> {
                     streaming = result.data.fullResponse
@@ -193,6 +199,10 @@ fun CoachScreen(
             }
 
             SectionCard(title = "Ask anything", icon = Icons.Filled.MedicalServices) {
+                Row {
+                    Checkbox(checked = shareHealthContext, onCheckedChange = { shareHealthContext = it }, enabled = !busy)
+                    Text("Include my health summary in this request. Cloud requests send it to my configured AI providers; offline reviews stay on this device.")
+                }
                 OutlinedTextField(
                     value = question,
                     onValueChange = { question = it },

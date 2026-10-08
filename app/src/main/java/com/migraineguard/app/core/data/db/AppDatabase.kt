@@ -17,10 +17,11 @@ import androidx.room.TypeConverters
         AiSessionEntity::class,
     ],
     version = 4,
-    exportSchema = false,
+    exportSchema = true,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun backupDao(): BackupDao
     abstract fun migraineDao(): MigraineDao
     abstract fun nutritionDao(): NutritionDao
     abstract fun waterHistoryDao(): WaterHistoryDao
@@ -38,7 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "migraineguard.db",
-                ).fallbackToDestructiveMigration().build().also { instance = it }
+                ).addMigrations(*PreservingMigrations.ALL).build().also { instance = it }
             }
     }
 }

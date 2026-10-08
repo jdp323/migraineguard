@@ -23,12 +23,12 @@ class FallbackAiClient(
 
     init { require(providerTimeoutMillis > 0) }
 
-    suspend fun complete(prompt: String): Result<String> {
+    suspend fun complete(prompt: String, cloudPrompt: String? = null): Result<String> {
         var lastError: String? = null
         for (provider in ordered) {
             currentCoroutineContext().ensureActive()
             val result = try {
-                withTimeout(providerTimeoutMillis) { provider.complete(prompt) }
+                withTimeout(providerTimeoutMillis) { provider.complete(if (provider is OfflineHealthBrain) prompt else cloudPrompt ?: prompt) }
             } catch (e: TimeoutCancellationException) {
                 // A parent's timeout must stop the request, not trigger another provider.
                 currentCoroutineContext().ensureActive()
@@ -56,6 +56,7 @@ class FallbackAiClient(
         persona: AiPersona,
         userMessage: String,
         contextJson: String,
+        shareHealthContext: Boolean = false,
         onChunk: (suspend (String) -> Unit)? = null,
     ): Result<String> {
         val prompt = buildString {
@@ -66,7 +67,9 @@ class FallbackAiClient(
             appendLine()
             appendLine("User: $userMessage")
         }
-        val result = complete(prompt)
+        val cloudPrompt = if (shareHealthContext) prompt else
+            "System: ${Personas.systemPrompt(persona)}\nNo health history was shared for this request. Do not invent personal readings.\nUser: $userMessage"
+        val result = complete(prompt, cloudPrompt)
         if (onChunk != null && result is Result.Success) {
             streamFake(result.data, onChunk)
         }
@@ -101,9 +104,11 @@ class FallbackAiClient(
     }
 
     suspend fun summarizeInsights(contextBlob: String): String {
-        return when (val r = complete("Summarize migraine trends for the user:\n$contextBlob")) {
-            is Result.Success -> r.data
-            is Result.Error -> "Offline summary: $contextBlob\n(${r.message})"
+        // Insights are built automatically on screen open. Keep their health context on-device.
+        val prompt = "Summarize migraine trends for the user:\n$contextBlob"
+        return when (val result = offlineBrain?.complete(prompt)) {
+            is Result.Success -> result.data
+            else -> contextBlob
         }
     }
 
@@ -111,7 +116,7 @@ class FallbackAiClient(
         return GeminiFreeProvider(keyProvider).testConnection()
     }
 
-    private fun parseNutrition(raw: String, fallbackLabel: String): NutritionScanResult {
+    internal fun parseNutrition(raw: String, fallbackLabel: String): NutritionScanResult {
         val jsonStart = raw.indexOf('{')
         val jsonEnd = raw.lastIndexOf('}')
         if (jsonStart >= 0 && jsonEnd > jsonStart) {

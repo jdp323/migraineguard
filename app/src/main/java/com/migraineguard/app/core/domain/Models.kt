@@ -1,5 +1,7 @@
 package com.migraineguard.app.core.domain
 
+import kotlinx.serialization.Serializable
+
 /**
  * Shared domain models used across features.
  * Keep these free of Android / Compose dependencies.
@@ -27,6 +29,7 @@ enum class ActivityLevel(val label: String) {
     VERY_ACTIVE("Very active"),
 }
 
+@Serializable
 data class BodyProfile(
     val displayName: String = "",
     val dateOfBirthIso: String = "",
@@ -69,6 +72,7 @@ enum class HeadView(val label: String) {
     TOP("Top"),
 }
 
+@Serializable
 data class PainMarker(
     val id: String,
     /** Normalized X on head silhouette, 0f..1f */
@@ -118,6 +122,7 @@ data class HealthSnapshot(
     val sourceLabel: String = "Local",
     val distanceMeters: Double? = null,
     val caloriesBurned: Double? = null,
+    val caloriesSourceLabel: String? = null,
     val stepSync: StepSyncSnapshot? = null,
 )
 
@@ -142,6 +147,7 @@ data class WeatherSnapshot(
     val condition: String,
     val locationLabel: String,
     val isCachedOrFake: Boolean = false,
+    val observedAtMillis: Long = 0L,
 )
 
 data class NutritionScanResult(

@@ -1,6 +1,7 @@
 package com.migraineguard.app.di
 
 import android.content.Context
+import com.migraineguard.app.feature.backup.BackupRepository
 import com.migraineguard.app.core.ai.FallbackAiClient
 import com.migraineguard.app.core.ai.GeminiFreeProvider
 import com.migraineguard.app.core.ai.GroqFreeProvider
@@ -22,8 +23,6 @@ import com.migraineguard.app.feature.meds.MedicationRepository
 import com.migraineguard.app.feature.migraine.MigraineRepository
 import com.migraineguard.app.feature.nutrition.AiNutritionAnalyzer
 import com.migraineguard.app.feature.nutrition.NutritionAnalyzer
-import com.migraineguard.app.feature.settings.DriveSyncRepository
-import com.migraineguard.app.feature.settings.DriveSyncRepositoryImpl
 import com.migraineguard.app.feature.water.WaterIntakeRepository
 import com.migraineguard.app.feature.weather.OpenMeteoWeatherRepository
 import com.migraineguard.app.feature.weather.WeatherRepository
@@ -40,6 +39,7 @@ class AppContainer(context: Context) {
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val preferencesRepository = UserPreferencesRepository(appContext)
+    val backupRepository = BackupRepository(appContext, db, preferencesRepository)
     val authRepository: AuthRepository = DefaultAuthRepository(preferencesRepository)
     val migraineRepository = MigraineRepository(db.migraineDao())
     val waterIntakeRepository = WaterIntakeRepository(appContext, db.waterHistoryDao())
@@ -62,7 +62,7 @@ class AppContainer(context: Context) {
         offlineBrain = offlineHealthBrain,
     )
 
-    val nutritionAnalyzer: NutritionAnalyzer = AiNutritionAnalyzer(aiClient, db.nutritionDao())
+    val nutritionAnalyzer: NutritionAnalyzer = AiNutritionAnalyzer(aiClient, db.nutritionDao(), appContext, GeminiFreeProvider { preferencesRepository.getGeminiApiKey() })
     val insightsAnalyzer: InsightsAnalyzer = DefaultInsightsAnalyzer(
         migraineRepository = migraineRepository,
         waterIntakeRepository = waterIntakeRepository,
@@ -72,7 +72,6 @@ class AppContainer(context: Context) {
         nutritionAnalyzer = nutritionAnalyzer,
         aiClient = aiClient,
     )
-    val driveSyncRepository: DriveSyncRepository = DriveSyncRepositoryImpl(preferencesRepository)
 
     val aiCoachRepository = AiCoachRepository(
         aiClient = aiClient,

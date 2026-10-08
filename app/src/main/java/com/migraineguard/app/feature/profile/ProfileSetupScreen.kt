@@ -55,14 +55,14 @@ fun ProfileSetupScreen(
     var heightCm by remember {
         mutableStateOf(initial.heightCm?.toInt()?.toString() ?: "170")
     }
-    var heightFt by remember { mutableStateOf("5") }
-    var heightIn by remember { mutableStateOf("7") }
+    var heightFt by remember { mutableStateOf(imperialHeight(initial.heightCm ?: 170f).first.toString()) }
+    var heightIn by remember { mutableStateOf(imperialHeight(initial.heightCm ?: 170f).second.toString()) }
     var weight by remember {
         mutableStateOf(
             when {
                 initial.weightKg != null && !useMetric ->
-                    String.format("%.0f", initial.weightKg * 2.20462f)
-                initial.weightKg != null -> String.format("%.0f", initial.weightKg)
+                    String.format(java.util.Locale.US, "%.1f", initial.weightKg * 2.20462f)
+                initial.weightKg != null -> String.format(java.util.Locale.US, "%.1f", initial.weightKg)
                 else -> if (useMetric) "70" else "154"
             },
         )
@@ -70,6 +70,24 @@ fun ProfileSetupScreen(
     var activity by remember { mutableStateOf(initial.activityLevel ?: ActivityLevel.MODERATE) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+
+    fun changeUnits(metric: Boolean) {
+        if (metric == useMetric) return
+        weight.toFloatOrNull()?.takeIf { it.isFinite() }?.let {
+            weight = String.format(java.util.Locale.US, "%.1f", convertedWeight(it, useMetric, metric))
+        }
+        if (metric) {
+            val ft = heightFt.toIntOrNull()
+            val inch = heightIn.toIntOrNull()
+            if (ft != null && inch != null && inch in 0..11) heightCm = ((ft * 12 + inch) * 2.54f).toInt().toString()
+        } else {
+            heightCm.toFloatOrNull()?.takeIf { it.isFinite() }?.let {
+                val (ft, inch) = imperialHeight(it)
+                heightFt = ft.toString(); heightIn = inch.toString()
+            }
+        }
+        useMetric = metric
+    }
 
     Scaffold(
         modifier = modifier,
@@ -118,12 +136,12 @@ fun ProfileSetupScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = useMetric,
-                        onClick = { useMetric = true },
+                        onClick = { changeUnits(true) },
                         label = { Text("Metric (cm / kg)") },
                     )
                     FilterChip(
                         selected = !useMetric,
-                        onClick = { useMetric = false },
+                        onClick = { changeUnits(false) },
                         label = { Text("Imperial (ft/in · lb)") },
                     )
                 }
@@ -204,6 +222,8 @@ fun ProfileSetupScreen(
                         name.isBlank() -> error = "Please enter a display name"
                         dob.isBlank() || runCatching { java.time.LocalDate.parse(dob) }.isFailure ->
                             error = "Please pick a valid date of birth"
+                        java.time.LocalDate.parse(dob).isAfter(java.time.LocalDate.now()) -> error = "Date of birth cannot be in the future"
+                        !useMetric && (heightIn.toIntOrNull() ?: -1) !in 0..11 -> error = "Height inches must be between 0 and 11"
                         hCm == null || hCm < 100f || hCm > 250f -> error = "Enter a valid height"
                         wKg == null || wKg < 30f || wKg > 300f -> error = "Enter a valid weight"
                         else -> {

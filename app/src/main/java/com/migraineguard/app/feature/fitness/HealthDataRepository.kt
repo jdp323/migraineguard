@@ -340,26 +340,35 @@ class HealthConnectHealthDataRepository(
             )
 
             val bpm = healthRead {
-                client.readRecords(ReadRecordsRequest(HeartRateRecord::class, filter))
+                client.readRecords(ReadRecordsRequest(HeartRateRecord::class, filter, ascendingOrder = false, pageSize = 1))
                     .records.flatMap { it.samples }
-                    .lastOrNull()?.beatsPerMinute?.toInt()
+                    .maxByOrNull { it.time }?.beatsPerMinute?.toInt()
             }.getOrNull()
 
             val distance = healthRead {
-                client.readRecords(ReadRecordsRequest(DistanceRecord::class, filter))
-                    .records.sumOf { it.distance.inMeters }
-            }.getOrDefault(0.0)
+                client.aggregate(AggregateRequest(setOf(DistanceRecord.DISTANCE_TOTAL), filter))[DistanceRecord.DISTANCE_TOTAL]?.inMeters
+            }.getOrNull()
 
-            val calories = healthRead {
-                client.readRecords(ReadRecordsRequest(TotalCaloriesBurnedRecord::class, filter))
-                    .records.sumOf { it.energy.inKilocalories }
-            }.getOrDefault(0.0)
+            val calorieRead = healthRead {
+                val combined = client.aggregate(AggregateRequest(setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), filter))
+                val origins = combined.dataOrigins
+                if (origins.size > 1) {
+                    // Calorie aggregates do not reliably deduplicate multiple writers.
+                    val samsung = origins.firstOrNull { it.packageName == HealthConnectPackages.SAMSUNG_HEALTH }
+                    if (samsung == null) null else {
+                        val value = client.aggregate(AggregateRequest(
+                            setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), filter, setOf(samsung),
+                        ))[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
+                        value?.let { it to "Samsung Health" }
+                    }
+                } else combined[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.let {
+                    it to origins.firstOrNull()?.packageName.orEmpty()
+                }
+            }.getOrNull()
+            val calories = calorieRead?.first
 
             val activeFromExercise = healthRead {
-                client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, filter))
-                    .records.sumOf {
-                        ChronoUnit.MINUTES.between(it.startTime, it.endTime).toInt().coerceAtLeast(0)
-                    }
+                client.aggregate(AggregateRequest(setOf(ExerciseSessionRecord.EXERCISE_DURATION_TOTAL), filter))[ExerciseSessionRecord.EXERCISE_DURATION_TOTAL]?.toMinutes()?.coerceIn(0L, 1440L)?.toInt() ?: 0
             }.getOrDefault(0)
 
             clearErrorIfSleepOnly()
@@ -375,8 +384,9 @@ class HealthConnectHealthDataRepository(
                 heartRateBpm = bpm,
                 activeMinutes = activeFromExercise,
                 sourceLabel = label,
-                distanceMeters = distance.takeIf { it > 0 },
-                caloriesBurned = calories.takeIf { it > 0 },
+                distanceMeters = distance?.takeIf { it > 0 },
+                caloriesBurned = calories?.takeIf { it > 0 },
+                caloriesSourceLabel = calorieRead?.second,
                 stepSync = stepSync,
             )
         } catch (e: SecurityException) {
@@ -444,12 +454,7 @@ class HealthConnectHealthDataRepository(
             val minutes = ChronoUnit.MINUTES.between(latest.startTime, latest.endTime)
                 .toInt().coerceAtLeast(0)
             val hours = minutes / 60f
-            val quality = when {
-                hours >= 7.5f -> "Restorative"
-                hours >= 6f -> "Fair"
-                hours > 0f -> "Short"
-                else -> "—"
-            }
+            val quality = "Recorded session duration"
             SleepSnapshot(hours = hours, qualityLabel = quality, sourceLabel = "Health Connect")
         } catch (e: SecurityException) {
             SleepSnapshot(

@@ -17,6 +17,8 @@ import com.migraineguard.app.core.domain.WaterUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.transform
+import com.migraineguard.app.core.security.ApiKeyVault
 
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore("user_settings")
 
@@ -48,6 +50,7 @@ data class UserPreferences(
 
 class UserPreferencesRepository(context: Context) {
     private val dataStore = context.applicationContext.settingsDataStore
+    private val apiKeyVault = ApiKeyVault()
 
     private val themeKey = stringPreferencesKey("theme_mode")
     private val dynamicKey = booleanPreferencesKey("dynamic_color")
@@ -81,8 +84,20 @@ class UserPreferencesRepository(context: Context) {
     private val profileMetricKey = booleanPreferencesKey("profile_use_metric")
     private val profileCompleteKey = booleanPreferencesKey("profile_complete")
 
-    val preferences: Flow<UserPreferences> = dataStore.data.map { p ->
-        UserPreferences(
+    val preferences: Flow<UserPreferences> = dataStore.data.transform { p ->
+        val apiKeys = listOf(geminiKey, groqKey, openRouterKey)
+        if (apiKeys.any { !p[it].isNullOrBlank() && !p[it]!!.startsWith(ApiKeyVault.PREFIX) }) {
+            dataStore.edit { values ->
+                apiKeys.forEach { key ->
+                    val value = values[key].orEmpty()
+                    if (value.isNotBlank() && !value.startsWith(ApiKeyVault.PREFIX)) {
+                        values[key] = apiKeyVault.encrypt(value)
+                    }
+                }
+            }
+            return@transform
+        }
+        emit(UserPreferences(
             themeMode = runCatching { ThemeMode.valueOf(p[themeKey] ?: ThemeMode.SYSTEM.name) }
                 .getOrDefault(ThemeMode.SYSTEM),
             dynamicColor = p[dynamicKey] ?: false,
@@ -102,9 +117,9 @@ class UserPreferencesRepository(context: Context) {
             googleWebClientId = p[googleClientKey] ?: "",
             energyLevel = p[energyKey] ?: 3,
             energyDateIso = p[energyDateKey] ?: "",
-            geminiApiKey = p[geminiKey] ?: "",
-            groqApiKey = p[groqKey] ?: "",
-            openRouterApiKey = p[openRouterKey] ?: "",
+            geminiApiKey = apiKeyVault.decrypt(p[geminiKey].orEmpty()),
+            groqApiKey = apiKeyVault.decrypt(p[groqKey].orEmpty()),
+            openRouterApiKey = apiKeyVault.decrypt(p[openRouterKey].orEmpty()),
             // Migrate v1.5 users who already finished onboarding+profile
             setupComplete = p[setupCompleteKey]
                 ?: ((p[onboardingKey] == true) && (p[profileCompleteKey] == true)),
@@ -121,7 +136,7 @@ class UserPreferencesRepository(context: Context) {
                 useMetric = p[profileMetricKey] ?: true,
                 profileComplete = p[profileCompleteKey] ?: false,
             ),
-        )
+        ))
     }
 
     suspend fun getGoogleWebClientId(): String =
@@ -220,7 +235,7 @@ class UserPreferencesRepository(context: Context) {
     }
 
     suspend fun setGeminiApiKey(key: String) {
-        dataStore.edit { it[geminiKey] = key.trim() }
+        dataStore.edit { it[geminiKey] = apiKeyVault.encrypt(key.trim()) }
     }
 
     suspend fun clearGeminiApiKey() {
@@ -228,7 +243,7 @@ class UserPreferencesRepository(context: Context) {
     }
 
     suspend fun setGroqApiKey(key: String) {
-        dataStore.edit { it[groqKey] = key.trim() }
+        dataStore.edit { it[groqKey] = apiKeyVault.encrypt(key.trim()) }
     }
 
     suspend fun clearGroqApiKey() {
@@ -236,7 +251,7 @@ class UserPreferencesRepository(context: Context) {
     }
 
     suspend fun setOpenRouterApiKey(key: String) {
-        dataStore.edit { it[openRouterKey] = key.trim() }
+        dataStore.edit { it[openRouterKey] = apiKeyVault.encrypt(key.trim()) }
     }
 
     suspend fun clearOpenRouterApiKey() {

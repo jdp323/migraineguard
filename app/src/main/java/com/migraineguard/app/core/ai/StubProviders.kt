@@ -45,38 +45,34 @@ class GeminiFreeProvider(
     private val keyProvider: suspend () -> String = { "" },
 ) : BaseAiProvider("GeminiFree", 0) {
     private val model = "gemini-3.5-flash-lite"
-    override suspend fun complete(prompt: String): Result<String> = withContext(Dispatchers.IO) {
-        // Per-user keys only — never developer BuildConfig / Firebase api_key
+
+    override suspend fun complete(prompt: String): Result<String> =
+        completeParts(JSONArray().put(JSONObject().put("text", prompt)))
+
+    suspend fun completeWithImage(prompt: String, base64: String, mimeType: String): Result<String> {
+        require(mimeType in setOf("image/jpeg", "image/png", "image/webp"))
+        return completeParts(JSONArray()
+            .put(JSONObject().put("text", prompt))
+            .put(JSONObject().put("inline_data", JSONObject().put("mime_type", mimeType).put("data", base64))))
+    }
+
+    private suspend fun completeParts(parts: JSONArray): Result<String> = withContext(Dispatchers.IO) {
         val key = keyProvider().trim()
-        if (key.isBlank()) {
-            return@withContext Result.Error("No user Gemini key — connect yours in Settings or Connect Gemini")
-        }
-        runCatching {
-            val body = JSONObject()
-                .put(
-                    "contents",
-                    JSONArray().put(
-                        JSONObject().put(
-                            "parts",
-                            JSONArray().put(JSONObject().put("text", prompt)),
-                        ),
-                    ),
-                )
-                .toString()
-                .toRequestBody(JSON_MEDIA)
-            val req = Request.Builder()
+        if (key.isBlank()) return@withContext Result.Error("Connect your Gemini key in Settings to analyze photos.")
+        try {
+            val payload = JSONObject().put("contents",
+                JSONArray().put(JSONObject().put("parts", parts))).toString().toRequestBody(JSON_MEDIA)
+            val request = Request.Builder()
                 .url("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent")
-                .addHeader("x-goog-api-key", key)
-                .post(body)
-                .build()
-            val response = executeRequest(req)
-            if (response.code !in 200..299) return@withContext Result.Error("HTTP ${response.code}")
-            val root = JSONObject(response.body)
-            val parts = root.getJSONArray("candidates").getJSONObject(0)
+                .addHeader("x-goog-api-key", key).post(payload).build()
+            val response = executeRequest(request)
+            if (response.code !in 200..299) return@withContext Result.Error("Gemini HTTP ${response.code}")
+            val output = JSONObject(response.body).getJSONArray("candidates").getJSONObject(0)
                 .getJSONObject("content").getJSONArray("parts")
-            val out = (0 until parts.length()).joinToString("\n") { parts.getJSONObject(it).optString("text") }
-            Result.Success(out)
-        }.getOrElse { if (it is CancellationException) throw it; Result.Error("Gemini request failed", it) }
+            val text = (0 until output.length()).joinToString("\n") { output.getJSONObject(it).optString("text") }
+            if (text.isBlank()) Result.Error("Gemini returned no usable response.") else Result.Success(text)
+        } catch (e: CancellationException) { throw e }
+        catch (e: Exception) { Result.Error("Gemini request failed", e) }
     }
 
     suspend fun testConnection(): Result<String> = complete("Reply with exactly: ok")
@@ -149,10 +145,10 @@ private suspend fun chatCompletions(
     Result.Success(content)
 }.getOrElse { if (it is CancellationException) throw it; Result.Error("Provider request failed", it) }
 
-private data class HttpResponse(val code: Int, val body: String)
+internal data class HttpResponse(val code: Int, val body: String)
 
 /** Cancel the actual network call when its coroutine is cancelled or times out. */
-private suspend fun executeRequest(request: Request): HttpResponse = suspendCancellableCoroutine { continuation ->
+internal suspend fun executeRequest(request: Request): HttpResponse = suspendCancellableCoroutine { continuation ->
     val call = httpClient.newCall(request)
     continuation.invokeOnCancellation { call.cancel() }
     call.enqueue(object : Callback {
