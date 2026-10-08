@@ -119,3 +119,11 @@ Remote: https://github.com/jdp323/migraineguard
 ## Development takeover and GitHub APKs
 
 See [TAKEOVER.md](docs/TAKEOVER.md) for the verified GitHub baseline, local snapshot/backup commands, CI APK downloads, signing continuity and remaining device checks.
+
+## Complete documentation
+
+- [Project guide](docs/PROJECT_GUIDE.md): architecture, every workflow, storage/network boundaries, security, build/release operations and actual verification limits.
+- [File and function reference](docs/FILE_REFERENCE.md): 114 files, 75 Kotlin files and 385 named function declarations, with source links, constructor fields, SQL and per-function behavior.
+- [Feature status](docs/FEATURE_STATUS.md) and [phone testing](docs/PHONE_TESTING.md): what works, external setup and real-device checks.
+
+Documentation baseline is v1.6.3 source commit 61cc34b3a7c9614fe6ee20944a0ab0de058b0dfa; later documentation commits do not replace the verified APKs.
