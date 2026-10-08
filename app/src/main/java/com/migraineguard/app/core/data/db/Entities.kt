@@ -59,18 +59,20 @@ data class NutritionScanEntity(
     val imageUri: String?,
     val migraineTriggerHint: String?,
 ) {
+    private fun wasPlaceholder(): Boolean = notes.startsWith("Structured estimate (")
+
     fun toDomain() = NutritionScanRecord(
         id = id,
         timestampMillis = timestampMillis,
         result = NutritionScanResult(
             foodLabel = foodLabel,
-            caloriesEstimate = caloriesEstimate,
-            proteinG = proteinG,
-            carbsG = carbsG,
-            fatG = fatG,
-            notes = notes,
+            caloriesEstimate = caloriesEstimate.takeUnless { wasPlaceholder() },
+            proteinG = proteinG.takeUnless { wasPlaceholder() },
+            carbsG = carbsG.takeUnless { wasPlaceholder() },
+            fatG = fatG.takeUnless { wasPlaceholder() },
+            notes = if (wasPlaceholder()) "Legacy placeholder: nutrition and trigger estimates were not analyzed. Description preserved." else notes,
             imageUri = imageUri,
-            migraineTriggerHint = migraineTriggerHint,
+            migraineTriggerHint = migraineTriggerHint.takeUnless { wasPlaceholder() },
         ),
     )
 

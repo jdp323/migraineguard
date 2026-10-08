@@ -12,10 +12,13 @@ import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.migraineguard.app.core.domain.HealthSnapshot
 import com.migraineguard.app.core.domain.SleepSnapshot
+import com.migraineguard.app.core.time.healthDayStart
+import kotlinx.coroutines.CancellationException
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -67,8 +70,6 @@ class HealthConnectHealthDataRepository(
     private val context: Context,
 ) : HealthDataRepository {
 
-    private val fake = FakeHealthDataRepository()
-
     @Volatile
     private var lastErrorText: String = ""
 
@@ -99,11 +100,11 @@ class HealthConnectHealthDataRepository(
 
     override fun sdkStatusRaw(uiContext: Context?): Int {
         val ctx = uiContext ?: context
-        return runCatching {
+        return healthRead {
             HealthConnectClient.getSdkStatus(ctx, providerPackage())
         }.getOrElse { first ->
             recordError("getSdkStatus(provider): ${first.message ?: first}")
-            runCatching { HealthConnectClient.getSdkStatus(ctx) }.getOrElse { second ->
+            healthRead { HealthConnectClient.getSdkStatus(ctx) }.getOrElse { second ->
                 recordError("getSdkStatus: ${second.message ?: second}")
                 -1
             }
@@ -159,7 +160,7 @@ class HealthConnectHealthDataRepository(
 
     override suspend fun hasAllPermissions(): Boolean {
         if (availabilityStatus() != HealthConnectStatus.AVAILABLE) return false
-        return runCatching {
+        return healthRead {
             val client = HealthConnectClient.getOrCreate(context)
             val granted = client.permissionController.getGrantedPermissions()
             requiredPermissions().all { it in granted }
@@ -174,7 +175,7 @@ class HealthConnectHealthDataRepository(
 
     override fun manageHealthPermissionsIntents(appPackage: String): List<Intent> {
         val candidates = buildList {
-            runCatching { add(HealthConnectClient.getHealthConnectManageDataIntent(context)) }
+            healthRead { add(HealthConnectClient.getHealthConnectManageDataIntent(context)) }
             add(
                 Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS).apply {
                     putExtra(Intent.EXTRA_PACKAGE_NAME, appPackage)
@@ -288,7 +289,7 @@ class HealthConnectHealthDataRepository(
                 )
             }
             val client = HealthConnectClient.getOrCreate(context)
-            val granted = runCatching {
+            val granted = healthRead {
                 client.permissionController.getGrantedPermissions()
             }.getOrDefault(emptySet())
 
@@ -298,36 +299,39 @@ class HealthConnectHealthDataRepository(
             }
 
             val end = Instant.now()
-            val start = end.minus(1, ChronoUnit.DAYS)
+            val start = healthDayStart(end)
             val filter = TimeRangeFilter.between(start, end)
 
-            val steps = runCatching {
-                client.readRecords(ReadRecordsRequest(StepsRecord::class, filter))
-                    .records.sumOf { it.count.toInt() }
+            val steps = healthRead {
+                val response = client.aggregate(
+                    AggregateRequest(metrics = setOf(StepsRecord.COUNT_TOTAL), timeRangeFilter = filter),
+                )
+                response[StepsRecord.COUNT_TOTAL]?.coerceIn(0L, Int.MAX_VALUE.toLong())?.toInt() ?: 0
             }.getOrElse { e ->
+                if (e is CancellationException) throw e
                 if (e is SecurityException) 0 else {
                     recordMeaningfulError("latestFitness steps: ${e.message ?: e}")
                     0
                 }
             }
 
-            val bpm = runCatching {
+            val bpm = healthRead {
                 client.readRecords(ReadRecordsRequest(HeartRateRecord::class, filter))
                     .records.flatMap { it.samples }
                     .lastOrNull()?.beatsPerMinute?.toInt()
             }.getOrNull()
 
-            val distance = runCatching {
+            val distance = healthRead {
                 client.readRecords(ReadRecordsRequest(DistanceRecord::class, filter))
                     .records.sumOf { it.distance.inMeters }
             }.getOrDefault(0.0)
 
-            val calories = runCatching {
+            val calories = healthRead {
                 client.readRecords(ReadRecordsRequest(TotalCaloriesBurnedRecord::class, filter))
                     .records.sumOf { it.energy.inKilocalories }
             }.getOrDefault(0.0)
 
-            val activeFromExercise = runCatching {
+            val activeFromExercise = healthRead {
                 client.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, filter))
                     .records.sumOf {
                         ChronoUnit.MINUTES.between(it.startTime, it.endTime).toInt().coerceAtLeast(0)
@@ -345,11 +349,7 @@ class HealthConnectHealthDataRepository(
             HealthSnapshot(
                 steps = steps,
                 heartRateBpm = bpm,
-                activeMinutes = if (activeFromExercise > 0) {
-                    activeFromExercise
-                } else {
-                    (steps / 100).coerceAtMost(180)
-                },
+                activeMinutes = activeFromExercise,
                 sourceLabel = label,
                 distanceMeters = distance.takeIf { it > 0 },
                 caloriesBurned = calories.takeIf { it > 0 },
@@ -361,6 +361,8 @@ class HealthConnectHealthDataRepository(
                 activeMinutes = 0,
                 sourceLabel = "Fitness permission needed",
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             recordMeaningfulError("latestFitness: ${e.message ?: e.javaClass.simpleName}")
             HealthSnapshot(
@@ -382,7 +384,7 @@ class HealthConnectHealthDataRepository(
                 )
             }
             val client = HealthConnectClient.getOrCreate(context)
-            val granted = runCatching {
+            val granted = healthRead {
                 client.permissionController.getGrantedPermissions()
             }.getOrDefault(emptySet())
             val sleepPerm = sleepReadPermission()
@@ -428,6 +430,8 @@ class HealthConnectHealthDataRepository(
                 qualityLabel = "—",
                 sourceLabel = "Sleep permission needed",
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // Soft failure — never crash UI; do not overwrite fitness lastError.
             recordMeaningfulError(
@@ -521,4 +525,13 @@ fun Context.startHealthActivity(intent: Intent) {
         toLaunch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
     startActivity(toLaunch)
+}
+
+/** Expected read failures may degrade gracefully; cancellation must always propagate. */
+private inline fun <T> healthRead(block: () -> T): kotlin.Result<T> = try {
+    kotlin.Result.success(block())
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    kotlin.Result.failure(e)
 }

@@ -43,7 +43,12 @@ class ReminderWorker(
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
                 .build()
-            runCatching { nm.notify(1000 + index, notification) }
+            try {
+                nm.notify(1000 + index, notification)
+            } catch (_: SecurityException) {
+                // Permission can be revoked between the check and notification delivery.
+                return Result.success()
+            }
         }
         return Result.success()
     }

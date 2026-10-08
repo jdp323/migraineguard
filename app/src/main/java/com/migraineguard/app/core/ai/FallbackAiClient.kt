@@ -2,7 +2,12 @@ package com.migraineguard.app.core.ai
 
 import com.migraineguard.app.core.data.Result
 import com.migraineguard.app.core.domain.NutritionScanResult
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
 
 /**
@@ -12,14 +17,31 @@ import org.json.JSONObject
 class FallbackAiClient(
     providers: List<AiProvider>,
     private val offlineBrain: OfflineHealthBrain? = providers.filterIsInstance<OfflineHealthBrain>().firstOrNull(),
+    private val providerTimeoutMillis: Long = 60_000L,
 ) {
     private val ordered = providers.sortedBy { it.priority }
+
+    init { require(providerTimeoutMillis > 0) }
 
     suspend fun complete(prompt: String): Result<String> {
         var lastError: String? = null
         for (provider in ordered) {
-            when (val result = provider.complete(prompt)) {
-                is Result.Success -> return result
+            currentCoroutineContext().ensureActive()
+            val result = try {
+                withTimeout(providerTimeoutMillis) { provider.complete(prompt) }
+            } catch (e: TimeoutCancellationException) {
+                // A parent's timeout must stop the request, not trigger another provider.
+                currentCoroutineContext().ensureActive()
+                Result.Error("Provider timed out", e)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Result.Error("Provider request failed", e)
+            }
+            currentCoroutineContext().ensureActive()
+            when (result) {
+                is Result.Success -> if (result.data.isNotBlank()) return result
+                    else lastError = "${provider.name}: empty response"
                 is Result.Error -> lastError = "${provider.name}: ${result.message}"
             }
         }
@@ -68,13 +90,13 @@ class FallbackAiClient(
     suspend fun analyzeNutrition(description: String, hasImage: Boolean): NutritionScanResult {
         val prompt = buildString {
             append("Analyze this food for a migraine tracking app. ")
-            if (hasImage) append("User provided a photo. ")
+            if (hasImage) append("The photo is not included; analyze only the description. ")
             append("Food: $description. ")
             append("Reply ONLY with JSON keys: foodLabel, calories, proteinG, carbsG, fatG, notes, migraineTriggerHint.")
         }
         return when (val r = complete(prompt)) {
             is Result.Success -> parseNutrition(r.data, description)
-            is Result.Error -> fakeNutrition(description, r.message)
+            is Result.Error -> unavailableNutrition(description)
         }
     }
 
@@ -95,35 +117,27 @@ class FallbackAiClient(
         if (jsonStart >= 0 && jsonEnd > jsonStart) {
             runCatching {
                 val obj = JSONObject(raw.substring(jsonStart, jsonEnd + 1))
+                if (!listOf("calories", "proteinG", "carbsG", "fatG").any { obj.has(it) }) {
+                    return unavailableNutrition(fallbackLabel)
+                }
                 return NutritionScanResult(
                     foodLabel = obj.optString("foodLabel", fallbackLabel.ifBlank { "Meal" }),
-                    caloriesEstimate = obj.optInt("calories").takeIf { it > 0 },
-                    proteinG = obj.optDouble("proteinG").toFloat().takeIf { it > 0 },
-                    carbsG = obj.optDouble("carbsG").toFloat().takeIf { it > 0 },
-                    fatG = obj.optDouble("fatG").toFloat().takeIf { it > 0 },
+                    caloriesEstimate = obj.optDouble("calories").takeIf { it.isFinite() && it >= 0 && it <= Int.MAX_VALUE }?.toInt(),
+                    proteinG = obj.optDouble("proteinG").toFloat().takeIf { it.isFinite() && it >= 0 },
+                    carbsG = obj.optDouble("carbsG").toFloat().takeIf { it.isFinite() && it >= 0 },
+                    fatG = obj.optDouble("fatG").toFloat().takeIf { it.isFinite() && it >= 0 },
                     notes = obj.optString("notes", "AI nutrition estimate"),
                     migraineTriggerHint = obj.optString("migraineTriggerHint").ifBlank { null },
                 )
             }
         }
-        return fakeNutrition(fallbackLabel, "Parsed stub from AI text")
+        return unavailableNutrition(fallbackLabel)
     }
 
-    private fun fakeNutrition(description: String, note: String): NutritionScanResult {
-        val label = description.ifBlank { "Mixed meal" }
-        val hash = label.hashCode().and(0x7fffffff)
-        return NutritionScanResult(
-            foodLabel = label,
-            caloriesEstimate = 180 + (hash % 420),
-            proteinG = 8f + (hash % 25),
-            carbsG = 20f + (hash % 55),
-            fatG = 5f + (hash % 20),
-            notes = "Structured estimate ($note). Add AI keys in Settings for live analysis.",
-            migraineTriggerHint = if (hash % 3 == 0) {
-                "Possible trigger: aged cheese / caffeine / processed food"
-            } else {
-                "No strong classic triggers detected"
-            },
-        )
-    }
+    private fun unavailableNutrition(description: String) = NutritionScanResult(
+        foodLabel = description.ifBlank { "Meal" },
+        caloriesEstimate = null,
+        notes = "Nutrition estimate unavailable. This description is saved without calorie, macro or trigger estimates.",
+        migraineTriggerHint = null,
+    )
 }

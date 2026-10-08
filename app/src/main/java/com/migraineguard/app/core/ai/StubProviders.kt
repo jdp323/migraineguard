@@ -1,8 +1,13 @@
 package com.migraineguard.app.core.ai
 
 import com.migraineguard.app.core.data.Result
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Response
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -10,11 +15,15 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
+import java.io.IOException
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 private val httpClient: OkHttpClient by lazy {
     OkHttpClient.Builder()
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(45, TimeUnit.SECONDS)
+        .callTimeout(50, TimeUnit.SECONDS)
         .build()
 }
 
@@ -35,6 +44,7 @@ fun resolveApiKey(runtime: String?, buildConfig: String): String {
 class GeminiFreeProvider(
     private val keyProvider: suspend () -> String = { "" },
 ) : BaseAiProvider("GeminiFree", 0) {
+    private val model = "gemini-3.5-flash-lite"
     override suspend fun complete(prompt: String): Result<String> = withContext(Dispatchers.IO) {
         // Per-user keys only — never developer BuildConfig / Firebase api_key
         val key = keyProvider().trim()
@@ -55,22 +65,18 @@ class GeminiFreeProvider(
                 .toString()
                 .toRequestBody(JSON_MEDIA)
             val req = Request.Builder()
-                .url("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$key")
+                .url("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent")
+                .addHeader("x-goog-api-key", key)
                 .post(body)
                 .build()
-            httpClient.newCall(req).execute().use { resp ->
-                val text = resp.body?.string().orEmpty()
-                if (!resp.isSuccessful) return@withContext Result.Error("HTTP ${resp.code}")
-                val root = JSONObject(text)
-                val out = root.getJSONArray("candidates")
-                    .getJSONObject(0)
-                    .getJSONObject("content")
-                    .getJSONArray("parts")
-                    .getJSONObject(0)
-                    .getString("text")
-                Result.Success(out)
-            }
-        }.getOrElse { Result.Error(it.message ?: "Gemini failed", it) }
+            val response = executeRequest(req)
+            if (response.code !in 200..299) return@withContext Result.Error("HTTP ${response.code}")
+            val root = JSONObject(response.body)
+            val parts = root.getJSONArray("candidates").getJSONObject(0)
+                .getJSONObject("content").getJSONArray("parts")
+            val out = (0 until parts.length()).joinToString("\n") { parts.getJSONObject(it).optString("text") }
+            Result.Success(out)
+        }.getOrElse { if (it is CancellationException) throw it; Result.Error("Gemini request failed", it) }
     }
 
     suspend fun testConnection(): Result<String> = complete("Reply with exactly: ok")
@@ -113,7 +119,7 @@ class OpenRouterFreeProvider(
     }
 }
 
-private fun chatCompletions(
+private suspend fun chatCompletions(
     url: String,
     apiKey: String,
     model: String,
@@ -136,14 +142,31 @@ private fun chatCompletions(
         .addHeader("Content-Type", "application/json")
         .post(payload)
     extraHeaders.forEach { (k, v) -> builder.addHeader(k, v) }
-    httpClient.newCall(builder.build()).execute().use { resp ->
-        val text = resp.body?.string().orEmpty()
-        if (!resp.isSuccessful) return Result.Error("HTTP ${resp.code}: ${text.take(120)}")
-        val content = JSONObject(text)
-            .getJSONArray("choices")
-            .getJSONObject(0)
-            .getJSONObject("message")
-            .getString("content")
-        Result.Success(content)
-    }
-}.getOrElse { Result.Error(it.message ?: "HTTP failed", it) }
+    val response = executeRequest(builder.build())
+    if (response.code !in 200..299) return Result.Error("HTTP ${response.code}")
+    val content = JSONObject(response.body).getJSONArray("choices")
+        .getJSONObject(0).getJSONObject("message").getString("content")
+    Result.Success(content)
+}.getOrElse { if (it is CancellationException) throw it; Result.Error("Provider request failed", it) }
+
+private data class HttpResponse(val code: Int, val body: String)
+
+/** Cancel the actual network call when its coroutine is cancelled or times out. */
+private suspend fun executeRequest(request: Request): HttpResponse = suspendCancellableCoroutine { continuation ->
+    val call = httpClient.newCall(request)
+    continuation.invokeOnCancellation { call.cancel() }
+    call.enqueue(object : Callback {
+        override fun onFailure(call: Call, e: IOException) {
+            if (continuation.isActive) continuation.resumeWithException(e)
+        }
+
+        override fun onResponse(call: Call, response: Response) {
+            try {
+                val result = response.use { HttpResponse(it.code, it.body?.string().orEmpty()) }
+                if (continuation.isActive) continuation.resume(result)
+            } catch (e: Exception) {
+                if (continuation.isActive) continuation.resumeWithException(e)
+            }
+        }
+    })
+}

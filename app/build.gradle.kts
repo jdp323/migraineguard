@@ -31,8 +31,8 @@ android {
         applicationId = "com.migraineguard.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.6.0"
+        versionCode = 8
+        versionName = "1.6.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -42,9 +42,9 @@ android {
             "\"${localOrDefault("GOOGLE_WEB_CLIENT_ID", bakedGoogleWebClientId)}\""
         )
         // NEVER ship developer AI tokens — empty defaults only. Users paste their own keys.
-        buildConfigField("String", "GEMINI_API_KEY", "\"${localOrDefault("GEMINI_API_KEY", "")}\"")
-        buildConfigField("String", "GROQ_API_KEY", "\"${localOrDefault("GROQ_API_KEY", "")}\"")
-        buildConfigField("String", "OPENROUTER_API_KEY", "\"${localOrDefault("OPENROUTER_API_KEY", "")}\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"\"")
+        buildConfigField("String", "GROQ_API_KEY", "\"\"")
+        buildConfigField("String", "OPENROUTER_API_KEY", "\"\"")
     }
 
     buildTypes {
@@ -109,6 +109,10 @@ dependencies {
     implementation(libs.androidx.health.connect)
     implementation(libs.coil.compose)
     implementation(libs.androidx.work.runtime.ktx)
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("org.json:json:20240303")
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

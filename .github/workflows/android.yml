@@ -38,3 +38,11 @@ jobs:
           name: Android-lint-report
           path: app/build/reports/lint-results-debug.html
           if-no-files-found: ignore
+
+      - name: Upload unit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-unit-test-results
+          path: app/build/test-results/testDebugUnitTest/*.xml
+          if-no-files-found: ignore

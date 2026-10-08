@@ -2,6 +2,7 @@ package com.migraineguard.app.feature.fitness
 
 import com.migraineguard.app.core.domain.HealthSnapshot
 import com.migraineguard.app.core.domain.SleepSnapshot
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -67,12 +68,16 @@ class HealthRefreshCoordinator(
                         permitted = permitted,
                         status = status,
                     )
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     _state.value = _state.value.copy(
                         isRefreshing = false,
                         lastError = e.message ?: e.javaClass.simpleName,
                         lastRefreshed = Instant.now(),
                     )
+                } finally {
+                    _state.value = _state.value.copy(isRefreshing = false)
                 }
             }
         }

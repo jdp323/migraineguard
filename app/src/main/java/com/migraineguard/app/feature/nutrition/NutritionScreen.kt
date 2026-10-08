@@ -46,6 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.migraineguard.app.core.domain.NutritionScanResult
 import com.migraineguard.app.core.ui.SectionCard
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.io.File
 import java.time.Instant
@@ -62,6 +63,7 @@ fun NutritionScreen(
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var result by remember { mutableStateOf<NutritionScanResult?>(null) }
     var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
     val recent by nutritionAnalyzer.observeRecent().collectAsStateWithLifecycle(emptyList())
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -112,20 +114,20 @@ fun NutritionScreen(
         ) {
             item {
                 Text(
-                    "Capture or pick a meal photo, optionally describe it, then run AI analysis " +
-                        "(Gemini → Groq → OpenRouter, with offline structured fallback).",
+                    "Describe your meal for an optional AI estimate. Photos are local references; " +
+                        "photo recognition is not connected. Without a usable AI response, nutrition values remain unavailable.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(onClick = { launchCamera() }, modifier = Modifier.weight(1f)) {
+                    OutlinedButton(onClick = { launchCamera() }, enabled = !loading, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Filled.CameraAlt, contentDescription = null)
                         Spacer(Modifier.size(6.dp))
                         Text("Camera")
                     }
-                    OutlinedButton(onClick = { pickGallery.launch("image/*") }, modifier = Modifier.weight(1f)) {
+                    OutlinedButton(onClick = { pickGallery.launch("image/*") }, enabled = !loading, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Filled.PhotoLibrary, contentDescription = null)
                         Spacer(Modifier.size(6.dp))
                         Text("Gallery")
@@ -149,7 +151,8 @@ fun NutritionScreen(
                 OutlinedTextField(
                     value = foodText,
                     onValueChange = { foodText = it },
-                    label = { Text("Food description (optional)") },
+                    label = { Text("Food description") },
+                    enabled = !loading,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                 )
@@ -157,24 +160,36 @@ fun NutritionScreen(
             item {
                 Button(
                     onClick = {
+                        val description = foodText.trim()
+                        val photo = imageUri?.toString()
                         scope.launch {
                             loading = true
-                            val desc = foodText.ifBlank { "Meal from photo" }
-                            val analyzed = nutritionAnalyzer.analyzeFoodLabel(desc, imageUri?.toString())
-                            nutritionAnalyzer.persist(analyzed)
-                            result = analyzed
-                            loading = false
+                            error = null
+                            try {
+                                val analyzed = nutritionAnalyzer.analyzeFoodLabel(description, photo)
+                                nutritionAnalyzer.persist(analyzed)
+                                result = analyzed
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: Exception) {
+                                error = "Could not analyze or save the meal. Please try again."
+                            } finally {
+                                loading = false
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !loading && (foodText.isNotBlank() || imageUri != null),
+                    enabled = !loading && foodText.isNotBlank(),
                 ) {
                     if (loading) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                     } else {
-                        Text("Analyze with AI")
+                        Text("Analyze description")
                     }
                 }
+            }
+            item {
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
             item {
                 result?.let { r ->
