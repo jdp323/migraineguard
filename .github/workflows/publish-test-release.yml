@@ -1,0 +1,61 @@
+name: Publish verified Android test release
+
+on:
+  push:
+    branches: [codex/publish-android-release]
+    paths: [.github/workflows/publish-test-release.yml]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: publish-migraineguard-test-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'jdp323/migraineguard'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SOURCE_RUN_ID: '37731082138'
+      SOURCE_SHA: '5396cbe2d3745c824eda6065872a8a85f60d7e90'
+      APK_SHA256: '2a931130ffac61adfe7fd415ae58b8df67d617498748c9ac6fcd5c3db6fd262b'
+      RELEASE_TAG: 'v1.6.1-debug'
+    steps:
+      - name: Validate the successful source build
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/actions/runs/$SOURCE_RUN_ID" > source-run.json
+          jq -e --arg sha "$SOURCE_SHA" '.status == "completed" and .conclusion == "success" and .head_sha == $sha and .repository.full_name == "jdp323/migraineguard"' source-run.json
+      - name: Download and verify the APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run download "$SOURCE_RUN_ID" --repo "$GH_REPO" --name MigraineGuard-debug-apk --dir verified-apk
+          printf '%s  %s\n' "$APK_SHA256" 'verified-apk/app-debug.apk' | sha256sum --check
+          cp verified-apk/app-debug.apk MigraineGuard-v1.6.1-debug.apk
+      - name: Publish the phone download
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > release-notes.md <<'NOTES'
+          MigraineGuard v1.6.1 debug APK for phone testing.
+
+          Fixes nutrition placeholder estimates, local-day step aggregation, AI timeout/cancellation handling, notification permission failures, and misleading insight/backup labels. Includes the detailed source audit and roadmap.
+
+          All 14 regression tests, Android lint and APK assembly passed:
+          https://github.com/jdp323/migraineguard/actions/runs/37731082138
+
+          Download MigraineGuard-v1.6.1-debug.apk below and open it on your Android phone. Google sign-in, live AI and Samsung health-data behavior still require device testing.
+
+          This is a test build with a different signing identity from older releases. If Android reports a signature conflict, do not uninstall a copy containing important records. Automatic backup and Drive recovery are not available.
+
+          APK SHA-256: 2a931130ffac61adfe7fd415ae58b8df67d617498748c9ac6fcd5c3db6fd262b
+          NOTES
+          gh release create "$RELEASE_TAG" MigraineGuard-v1.6.1-debug.apk --repo "$GH_REPO" --target "$SOURCE_SHA" --title "MigraineGuard v1.6.1 debug" --notes-file release-notes.md --latest
