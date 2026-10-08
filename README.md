@@ -100,3 +100,7 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 Personal / educational tool. **Not a medical device.** Not a substitute for professional care.
 
 Remote: https://github.com/jdp323/migraineguard
+
+## Development takeover and GitHub APKs
+
+See [TAKEOVER.md](docs/TAKEOVER.md) for the verified GitHub baseline, local snapshot/backup commands, CI APK downloads, signing continuity and remaining device checks.

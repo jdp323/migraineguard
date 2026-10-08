@@ -60,3 +60,10 @@ lint/tmp/
 # Misc
 *.log
 *.hprof
+
+# Local development caches, verification snapshots and phone builds
+.local-gradle/
+.local-android/
+verification/
+dist/
+.kotlin/
