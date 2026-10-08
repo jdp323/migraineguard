@@ -37,26 +37,21 @@ class DriveSyncRepositoryImpl(
         val enabled = isSyncEnabled()
         return when {
             !enabled -> "Sync off"
-            lastAttemptIso == null -> "Never (Drive API not wired)"
+            lastAttemptIso == null -> "No cloud backup available"
             else -> {
                 val fmt = DateTimeFormatter.ofPattern("MMM d, HH:mm").withZone(ZoneId.systemDefault())
-                "Queued ${fmt.format(Instant.parse(lastAttemptIso))} — awaiting Drive OAuth"
+                "Requested ${fmt.format(Instant.parse(lastAttemptIso))} — no files uploaded"
             }
         }
     }
 
     override suspend fun statusMessage(): String =
-        if (isSyncEnabled()) {
-            "Drive sync is ON. TODO: attach Google Sign-In Drive scope + REST upload of Room export JSON. " +
-                "No credentials required to compile."
-        } else {
-            "Enable to prepare cloud backup of migraine / nutrition logs (implementation pending)."
-        }
+        "Cloud backup is not available yet. Your records remain on this device; this setting does not upload or protect them."
 
     override suspend fun requestSyncNow(): String {
         if (!isSyncEnabled()) return "Turn on Drive sync first."
         lastAttemptIso = Instant.now().toString()
         // TODO(Drive): export Room tables → JSON → Drive.appDataFolder
-        return "Sync queued locally. Drive upload not configured yet."
+        return "No backup uploaded. Cloud backup is not available yet."
     }
 }

@@ -181,15 +181,15 @@ fun InsightsScreen(
                             }
                             SectionCard(title = "Water", modifier = Modifier.weight(1f), icon = Icons.Filled.WaterDrop) {
                                 Text("${"%.1f".format(r.avgWaterCups)}")
-                                Text("cups/day", style = MaterialTheme.typography.bodySmall)
+                                Text("cups/recorded day", style = MaterialTheme.typography.bodySmall)
                             }
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             SectionCard(title = "Fitness", modifier = Modifier.weight(1f), icon = Icons.Filled.FitnessCenter) {
                                 Text("${r.workoutCount} workouts")
-                                Text("${r.workoutMinutes} min · ${r.totalSteps} steps", style = MaterialTheme.typography.bodySmall)
+                                Text("${r.workoutMinutes} min · ${r.totalSteps} steps today", style = MaterialTheme.typography.bodySmall)
                             }
-                            SectionCard(title = "Sleep", modifier = Modifier.weight(1f), icon = Icons.Filled.Bedtime) {
+                            SectionCard(title = "Latest sleep", modifier = Modifier.weight(1f), icon = Icons.Filled.Bedtime) {
                                 Text("${"%.1f".format(r.avgSleepHours)}h")
                             }
                         }
@@ -211,9 +211,9 @@ fun InsightsScreen(
                     }
                     InsightMode.Food -> {
                         if (r.foodScanCount == 0) {
-                            EmptyState("No food scans", "Use the Food tab to scan meals.", icon = Icons.Filled.LocalDining)
+                            EmptyState("No food scans", "Use the Food tab to log and describe meals.", icon = Icons.Filled.LocalDining)
                         } else {
-                            SectionCard(title = "Food & triggers", icon = Icons.Filled.LocalDining) {
+                            SectionCard(title = "Food log", icon = Icons.Filled.LocalDining) {
                                 Text("${r.foodScanCount} scans in period")
                                 if (r.topFoods.isEmpty()) Text("No labeled foods yet")
                                 else r.topFoods.forEach { Text("· $it") }
@@ -225,7 +225,7 @@ fun InsightsScreen(
                             if (r.avgWaterCups <= 0f) {
                                 Text("No water logged in this range. Aim for steady cups each day.")
                             } else {
-                                Text("Average ${"%.1f".format(r.avgWaterCups)} cups/day")
+                                Text("Average ${"%.1f".format(r.avgWaterCups)} cups per recorded day")
                                 Text(
                                     if (r.avgWaterCups < 6f) "Below a common 6–8 cup target — dehydration can worsen migraines."
                                     else "Solid hydration average for this window.",
@@ -262,7 +262,7 @@ fun InsightsScreen(
                     InsightMode.Weather -> {
                         SectionCard(title = "Weather & pressure", icon = Icons.Filled.Thermostat) {
                             Text(r.pressureTrend)
-                            Text("Correlate pressure dips with migraine days over time for personal patterns.")
+                            Text("Historical pressure and personal correlations are not available yet.")
                         }
                     }
                 }

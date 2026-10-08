@@ -2,12 +2,18 @@
 
 Kotlin + Jetpack Compose + Material 3 app for tracking migraines, hydration, fitness/sleep (via **Health Connect** / Samsung Health), nutrition, weather pressure, body metrics, medications, and **AI Coach / Health Analyst** insights.
 
-**Package:** `com.migraineguard.app`  
-**Version:** 1.6.0 (versionCode 7)  
-**Min SDK:** 26 · **Target / Compile SDK:** 35  
+**Package:** `com.migraineguard.app`
+**Version:** 1.6.1 (versionCode 8)
+**Min SDK:** 26 · **Target / Compile SDK:** 35
 **Auth:** Google Sign-In via Credential Manager with **baked Web Client ID** (Firebase project `migraineguard-66229`). Demo mode remains for offline testing.
 
 ---
+
+## What’s new in v1.6.1
+
+Nutrition estimates remain unknown when AI analysis is unavailable; photos are local references and description analysis requires text. Steps use Health Connect aggregation for the local calendar day, and exercise minutes are no longer inferred from steps. AI requests preserve cancellation and use bounded provider timeouts. Automatic Android backup/transfer is excluded to protect journals and user keys. Notification permission revocation is handled. GitHub CI runs unit tests, lint and debug APK assembly.
+
+See [the source review and development priorities](docs/PROJECT_AUDIT.md) for incomplete features and hardware validation requirements.
 
 ## What’s new in v1.6
 
@@ -47,12 +53,12 @@ Existing v1.5 users who already finished onboarding + profile are migrated as `s
 
 ---
 
-## Google Sign-In (baked for friends)
+## Google Sign-In configuration
 
 - **Firebase project:** `migraineguard-66229`
 - **Web client ID (client_type 3, baked):** `555526836064-aria393bjpcgr17j6fatl0nbeqtvqri6.apps.googleusercontent.com`
 - **Package:** `com.migraineguard.app`
-- **Android SHA-1 for release / box APKs:**  
+- **Previously documented Android SHA-1 for release / box APKs (not the CI certificate):**
   `FD:56:20:0E:83:57:C4:97:47:E4:32:10:D8:60:3F:DE:0C:64:70:14`
 - Demo continue still works without Google.
 - If Sign-In fails, check SHA-1 registration on the Android OAuth client (Settings → Google → Show SHA-1).

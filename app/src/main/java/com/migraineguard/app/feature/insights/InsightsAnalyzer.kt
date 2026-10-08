@@ -46,10 +46,10 @@ class DefaultInsightsAnalyzer(
         val workouts = workoutRepository.inRange(startMs, endMs)
         val foods = nutritionAnalyzer.inRange(startMs, endMs)
         val weather = weatherRepository.currentWeather()
-        val pressureNote = when {
-            weather.pressureHpa < 1005 -> "Low pressure now — historically linked to migraine risk"
-            weather.pressureHpa > 1020 -> "High pressure — often calmer for many people"
-            else -> "Pressure near average"
+        val pressureNote = if (weather.isCachedOrFake) {
+            "Current weather unavailable; demonstration readings excluded. No pressure history collected."
+        } else {
+            "Current pressure ${weather.pressureHpa} hPa. No pressure history or personal correlation calculated."
         }
         val sideCounts = episodes.flatMap { it.markers }.groupingBy {
             runCatching { HeadView.valueOf(it.viewId).label }.getOrDefault(it.viewId)
@@ -69,10 +69,11 @@ class DefaultInsightsAnalyzer(
         val summary = buildString {
             append("Migraines logged: ${episodes.size}. ")
             if (episodes.isNotEmpty()) append("Avg intensity ${"%.1f".format(avgIntensity)}/10. ")
-            append("Avg water ${"%.1f".format(avgWater)} cups/day. ")
+            append("Avg water ${"%.1f".format(avgWater)} cups per recorded day. ")
             append("Recent sleep ${sleep.hours}h (${sleep.qualityLabel}). ")
             append("${workouts.size} workouts · ${workouts.sumOf { it.durationMinutes }} min. ")
             append("Steps today ${fitness.steps}. ")
+            append("Sleep and steps are current snapshots, not averages or totals for this period. ")
             append(pressureNote)
             append(".")
         }
@@ -99,11 +100,11 @@ class DefaultInsightsAnalyzer(
             Period: ${report.periodLabel}
             Migraines: ${report.migraineCount}, avg intensity ${report.avgIntensity}
             Head sides: ${report.sideSummary}
-            Water avg cups: ${report.avgWaterCups}
-            Sleep hours: ${report.avgSleepHours}
+            Water average over recorded days, cups: ${report.avgWaterCups}
+            Latest sleep session snapshot, hours (not period average): ${report.avgSleepHours}
             Food scans: ${report.foodScanCount}, top: ${report.topFoods.joinToString()}
             Workouts: ${report.workoutCount} (${report.workoutMinutes} min), steps today: ${report.totalSteps}
-            Pressure: ${report.pressureTrend}
+            Current weather status (not period trend): ${report.pressureTrend}
             Stats summary: ${report.summary}
         """.trimIndent()
         return aiClient.summarizeInsights(blob)
