@@ -34,6 +34,9 @@ jobs:
             mkdir -p "$HOME/.android"
             printf '%s' "$MG_DEBUG_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
             chmod 600 "$HOME/.android/debug.keystore"
+            keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android > "$RUNNER_TEMP/test-certificate.txt"
+            grep -q 'FB:67:0D:1D:96:C2:8B:9E:27:0D:36:F8:D6:57:53:E3:6B:30:8D:E8' "$RUNNER_TEMP/test-certificate.txt"
+            echo "MG_DEBUG_KEYSTORE_PATH=$HOME/.android/debug.keystore" >> "$GITHUB_ENV"
             echo "stable=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Build and verify
@@ -45,6 +48,7 @@ jobs:
         run: |
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
           "$APKSIGNER" verify --print-certs app/build/outputs/apk/debug/app-debug.apk > app/build/outputs/apk/debug/SIGNING-CERTIFICATE.txt
+          cat app/build/outputs/apk/debug/SIGNING-CERTIFICATE.txt
           grep -qi 'certificate SHA-1 digest: fb670d1d96c28b9e270d36f8d65753e36b308de8' app/build/outputs/apk/debug/SIGNING-CERTIFICATE.txt
       - name: Upload phone testing APK
         uses: actions/upload-artifact@v4

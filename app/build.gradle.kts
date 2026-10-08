@@ -47,6 +47,16 @@ android {
         buildConfigField("String", "OPENROUTER_API_KEY", "\"\"")
     }
 
+    // CI passes an explicit path: SDK defaults can vary between runner images.
+    signingConfigs.getByName("debug") {
+        System.getenv("MG_DEBUG_KEYSTORE_PATH")?.takeIf { it.isNotBlank() }?.let {
+            storeFile = file(it)
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
