@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.migraineguard.app.BuildConfig
 import com.migraineguard.app.R
 import kotlinx.coroutines.launch
 
@@ -78,7 +79,7 @@ fun SignInScreen(
         }
         Spacer(Modifier.height(20.dp))
         Text(
-            text = stringResource(R.string.app_version_label),
+            text = stringResource(R.string.app_version_label, BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary,
         )

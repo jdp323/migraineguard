@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.migraineguard.app.BuildConfig
 import com.migraineguard.app.R
 import com.migraineguard.app.core.ai.FallbackAiClient
 import com.migraineguard.app.core.data.Result
@@ -218,7 +219,7 @@ private fun WelcomeStep(onNext: () -> Unit, modifier: Modifier = Modifier) {
         }
         Spacer(Modifier.height(20.dp))
         Text(
-            stringResource(R.string.app_version_label),
+            stringResource(R.string.app_version_label, BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary,
         )

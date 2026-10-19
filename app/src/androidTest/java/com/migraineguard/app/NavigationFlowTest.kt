@@ -39,8 +39,10 @@ class NavigationFlowTest {
         container.authRepository.signOut()
         ActivityScenario.launch(MainActivity::class.java).use {
             awaitText("Start setup")
+            compose.onNodeWithText("MigraineGuard v${BuildConfig.VERSION_NAME}").assertIsDisplayed()
             compose.onNodeWithText("Start setup").performClick()
             awaitText("Continue locally")
+            compose.onNodeWithText("MigraineGuard v${BuildConfig.VERSION_NAME}").assertIsDisplayed()
             compose.onNodeWithText("Continue locally").performClick()
             awaitText("Skip Health Connect for now")
             compose.onNodeWithText("Skip Health Connect for now").performScrollTo().performClick()

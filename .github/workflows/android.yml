@@ -149,7 +149,9 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
-          v1.6.4: Google sign-in now uses the approved owned-project Web client with both package/certificate registrations; obsolete shipped OAuth overrides migrate automatically. Google may take time to propagate changes; actual phone login must still be verified.
+          Welcome and sign-in screens show the actual installed build version; the emulator test verifies both labels.
+
+          Google sign-in uses the approved owned-project Web client with both package/certificate registrations; obsolete shipped OAuth overrides migrate automatically. Google may take time to propagate changes; actual phone login must still be verified.
 
           First-run sign-in/profile screens reuse the corrected shared screens. Unit changes preserve physical measurements, medication taken state follows the local date, and missing health readings remain unavailable in Insights and local AI. Emulator checks cover first-run unit conversion and all six main tabs.
 
