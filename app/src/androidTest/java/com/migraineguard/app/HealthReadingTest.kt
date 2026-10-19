@@ -57,9 +57,12 @@ class HealthReadingTest {
 
     @Test fun samsungCountSurvivesCombinedAggregateFailure() = runBlocking {
         val fake = FakeHealthConnectClient()
-        fake.overrides.aggregate = Stub { request ->
-            if (request.dataOriginFilter.isEmpty()) throw IllegalStateException("fixture combined failure")
-            AggregationResult(metrics = mapOf(StepsRecord.COUNT_TOTAL to 180L))
+        var calls = 0
+        fake.overrides.aggregate = Stub { _ ->
+            calls++
+            if (calls == 1) throw IllegalStateException("fixture combined failure")
+            if (calls == 2) AggregationResult(metrics = mapOf(StepsRecord.COUNT_TOTAL to 180L))
+            else AggregationResult(metrics = emptyMap())
         }
         val result = repo(fake).latestFitness()
         assertEquals(180, result.observedSteps)
