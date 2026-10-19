@@ -139,6 +139,9 @@ data class StepSyncSnapshot(
     val sourcePackages: List<String>,
     val readAtMillis: Long,
     val message: String,
+    val rawSummary: String = "",
+    val isEstimated: Boolean = false,
+    val combinedAggregate: Int? = null,
 )
 
 data class SleepSnapshot(

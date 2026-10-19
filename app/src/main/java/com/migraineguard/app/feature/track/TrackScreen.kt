@@ -115,6 +115,8 @@ fun TrackScreen(
     var logMinutes by remember { mutableStateOf("20") }
     var logCalories by remember { mutableStateOf("") }
     var logNotes by remember { mutableStateOf("") }
+    var showConnectionDetails by remember { mutableStateOf(false) }
+    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
     var manualSteps by remember { mutableStateOf("") }
 
     val scope = rememberCoroutineScope()
@@ -361,72 +363,21 @@ fun TrackScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            SectionCard(title = "Samsung Health / Health Connect", icon = Icons.Filled.Watch) {
-                Text("Health Connect belongs to this phone, independently of Google login. Connect only if these are your health records. Each account must connect separately.")
-                Text(
-                    "MigraineGuard appears under Health Connect → Connected apps after the first successful permission request (including sideloaded debug builds). " +
-                        "Enable Samsung Health → Health Connect sharing so Galaxy Watch data flows here.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    "Status: $status · All requested reads: ${if (permitted) "allowed" else "not all allowed"}",
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-                Button(
-                    onClick = { scope.launch {
-                        healthDataRepository.allowDeviceHealth()
-                        healthRefreshCoordinator?.refresh(force = true)
-                        connectHealth()
-                    } },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                ) { Text(stringResource(R.string.connect_health_connect)) }
-                OutlinedButton(
-                    onClick = { openHcFallback() },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(stringResource(R.string.open_health_connect_settings)) }
-                healthDataRepository.openSamsungHealthSettingsIntent()?.let {
-                    OutlinedButton(
-                        onClick = {
-                            runCatching { launchContext.startHealthActivity(it) }
-                                .onFailure { e ->
-                                    healthDataRepository.recordError("Samsung Health: ${e.message ?: e}")
-                                    applyDiag()
-                                }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Open Samsung Health") }
-                }
-            }
-
-            SectionCard(title = "Health Connect status", icon = Icons.Filled.Info) {
-                Text("Installed package: ${launchContext.packageName}", style = MaterialTheme.typography.bodySmall)
-                Text("Device health for this account: ${if (prefs.deviceHealthEnabled) "connected" else "not connected"}", style = MaterialTheme.typography.bodySmall)
-                fitness?.permissionSummary?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                Text("SDK status: ${diag.sdkStatusName}  (raw $sdkRaw)", style = MaterialTheme.typography.bodyMedium)
-                Text("Provider package: $providerPkg", style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    "Google HC installed: ${diag.googleHcInstalled} · Samsung Health: ${diag.samsungHealthInstalled}",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                if (lastError.isNotBlank()) {
-                    Text(
-                        "Last error: $lastError",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                } else {
-                    Text(
-                        "No SDK errors reported; see each reading below",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
+            Text("Move, rest, recover.", style = MaterialTheme.typography.headlineMedium)
+            Text("Your watch and phone, connected to your day.", style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (!prefs.deviceHealthEnabled) Button(onClick = { scope.launch {
+                healthDataRepository.allowDeviceHealth(); healthRefreshCoordinator?.refresh(force = true); connectHealth()
+            } }, modifier = Modifier.fillMaxWidth()) { Text("Connect this phone's health data") }
             SectionCard(title = stringResource(R.string.steps_today), icon = Icons.Filled.DirectionsWalk) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("samsung" to "Samsung Health", "combined" to "Health Connect").forEach { (key, label) ->
+                        FilterChip(selected = prefs.stepSource == key, onClick = { scope.launch {
+                            preferencesRepository.setStepSource(key)
+                            healthRefreshCoordinator?.refresh(force = true)
+                        } }, label = { Text(label) })
+                    }
+                }
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -458,13 +409,15 @@ fun TrackScreen(
 
                 fitness?.stepSync?.let { sync ->
                     Spacer(Modifier.height(12.dp))
-                    Text("Health Connect total: ${sync.total ?: "Unavailable"}")
+                    Text("Selected source: ${sync.total ?: "Unavailable"}")
+                    Text("Combined Health Connect aggregate: ${sync.combinedAggregate ?: "Unavailable"}")
                     Text("Samsung Health shared today: ${sync.samsungTotal ?: "No count received"}")
                     Text(
                         "Read at ${formatTs(sync.readAtMillis)} · ${ZoneId.systemDefault().id}",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Text(sync.message, style = MaterialTheme.typography.bodySmall)
+                    if (sync.rawSummary.isNotBlank()) Text(sync.rawSummary, style = MaterialTheme.typography.labelSmall)
                     if (sync.sourcePackages.isNotEmpty()) {
                         Text("Sources: ${sync.sourcePackages.joinToString()}", style = MaterialTheme.typography.labelSmall)
                     }
@@ -647,6 +600,91 @@ fun TrackScreen(
                 )
             }
 
+            OutlinedButton(onClick = { showConnectionDetails = !showConnectionDetails }, modifier = Modifier.fillMaxWidth()) {
+                Text(if (showConnectionDetails) "Hide connection details" else "Connection & sync details")
+            }
+            if (showConnectionDetails) {
+            SectionCard(title = "Samsung Health / Health Connect", icon = Icons.Filled.Watch) {
+                Text("Health Connect belongs to this phone, independently of Google login. Connect only if these are your health records. Each account must connect separately.")
+                Text(
+                    "MigraineGuard appears under Health Connect → Connected apps after the first successful permission request (including sideloaded debug builds). " +
+                        "Enable Samsung Health → Health Connect sharing so Galaxy Watch data flows here.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    "Status: $status · All requested reads: ${if (permitted) "allowed" else "not all allowed"}",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                Button(
+                    onClick = { scope.launch {
+                        healthDataRepository.allowDeviceHealth()
+                        healthRefreshCoordinator?.refresh(force = true)
+                        connectHealth()
+                    } },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                ) { Text(stringResource(R.string.connect_health_connect)) }
+                OutlinedButton(
+                    onClick = { openHcFallback() },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.open_health_connect_settings)) }
+                healthDataRepository.openSamsungHealthSettingsIntent()?.let {
+                    OutlinedButton(
+                        onClick = {
+                            runCatching { launchContext.startHealthActivity(it) }
+                                .onFailure { e ->
+                                    healthDataRepository.recordError("Samsung Health: ${e.message ?: e}")
+                                    applyDiag()
+                                }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Open Samsung Health") }
+                }
+            }
+
+            SectionCard(title = "Health Connect status", icon = Icons.Filled.Info) {
+                Text("Installed package: ${launchContext.packageName}", style = MaterialTheme.typography.bodySmall)
+                Text("Device health for this account: ${if (prefs.deviceHealthEnabled) "connected" else "not connected"}", style = MaterialTheme.typography.bodySmall)
+                fitness?.permissionSummary?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                Text("SDK status: ${diag.sdkStatusName}  (raw $sdkRaw)", style = MaterialTheme.typography.bodyMedium)
+                Text("Provider package: $providerPkg", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "Google HC installed: ${diag.googleHcInstalled} · Samsung Health: ${diag.samsungHealthInstalled}",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                if (lastError.isNotBlank()) {
+                    Text(
+                        "Last error: $lastError",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                } else {
+                    Text(
+                        "No SDK errors reported; see each reading below",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+                OutlinedButton(onClick = {
+                    clipboard.setText(androidx.compose.ui.text.AnnotatedString(buildString {
+                        appendLine("MigraineGuard " + com.migraineguard.app.BuildConfig.VERSION_NAME + " / " + launchContext.packageName)
+                        appendLine("Zone: " + ZoneId.systemDefault().id + "; SDK: " + diag.sdkStatusName)
+                        appendLine("Account device-health connected: " + prefs.deviceHealthEnabled)
+                        appendLine(fitness?.permissionSummary.orEmpty())
+                        appendLine("Selected source: " + prefs.stepSource + "; steps: " + fitness?.observedSteps)
+                        appendLine("Samsung aggregate: " + fitness?.stepSync?.samsungTotal)
+                        appendLine(fitness?.stepSync?.rawSummary.orEmpty())
+                        appendLine(fitness?.stepSync?.message.orEmpty())
+                        appendLine("Heart: " + fitness?.heartRateBpm + "; at " + fitness?.heartRateRecordedAtMillis)
+                        appendLine(fitness?.heartRateStatus.orEmpty())
+                        appendLine("Sleep: " + sleep?.hours + "; ended " + sleep?.recordedAtMillis + "; " + sleep?.sourceLabel)
+                    }))
+                }, modifier = Modifier.fillMaxWidth()) { Text("Copy sync report") }
+            }
             autoRefreshLabel?.let { label ->
                 Text(
                     "Last auto-refresh $label" + (autoRefreshError?.let { " · $it" } ?: ""),

@@ -4,6 +4,9 @@ import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import com.migraineguard.app.core.ui.DailyOverview
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -64,7 +67,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     userName: String,
@@ -201,40 +204,18 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("$greeting, $displayName", style = MaterialTheme.typography.headlineSmall)
+            Text("$greeting,\n$displayName", style = MaterialTheme.typography.headlineLarge)
             Text(
-                "Today · $today · MigraineGuard v${BuildConfig.VERSION_NAME} · streak $streak day${if (streak == 1) "" else "s"}",
+                today.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d")) + " · " + streak + " day streak",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            SectionCard(title = "Daily summary", icon = Icons.Filled.LocalFireDepartment) {
-                Text("Steps ${health?.observedSteps?.toString() ?: "—"} / $stepGoal")
-                health?.stepSync?.let { sync ->
-                    Text(sync.message, style = MaterialTheme.typography.bodySmall)
-                    sync.samsungTotal?.let { Text("Samsung shared: $it", style = MaterialTheme.typography.labelSmall) }
-                }
-                LinearProgressIndicator(progress = { stepProgress }, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(8.dp))
-                Text("Water $cups / ${prefs.waterGoalCups} cups")
-                LinearProgressIndicator(progress = { waterProgress }, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(8.dp))
-                Text("Sleep ${sleep?.recordedHours?.let { "%.1f".format(it) } ?: "—"}h / ${prefs.sleepGoalHours}h goal")
-                LinearProgressIndicator(progress = { sleepProgress }, modifier = Modifier.fillMaxWidth())
-                health?.caloriesBurned?.let {
-                    Spacer(Modifier.height(6.dp))
-                    Text("Calories ~%.0f kcal".format(it))
-                }
-                Spacer(Modifier.height(6.dp))
-                Text(riskHint, style = MaterialTheme.typography.bodyMedium)
-                lastRefreshedLabel?.let { label ->
-                    Text(
-                        "Health data · last refreshed $label" +
-                            (softHealthError?.let { " · $it" } ?: ""),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+            DailyOverview(health?.observedSteps, stepGoal, cups, prefs.waterGoalCups,
+                sleep?.recordedHours, sleepGoal, lastRefreshedLabel, onOpenFitness, onOpenWater)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Button(onClick = onLogMigraine, modifier = Modifier.weight(1f).height(52.dp)) { Text("Log migraine") }
+                OutlinedButton(onClick = onOpenWater, modifier = Modifier.weight(1f).height(52.dp)) { Text("Add water") }
             }
 
             if (bmi != null) {
@@ -268,7 +249,7 @@ fun HomeScreen(
             SectionCard(title = "Migraine risk hint", icon = Icons.Filled.Healing) {
                 Text(riskHint)
                 Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     AssistChip(onClick = onLogMigraine, label = { Text("Log migraine") })
                     AssistChip(onClick = onOpenWater, label = { Text("Add water") })
                     AssistChip(onClick = onOpenFood, label = { Text("Scan food") })
@@ -286,7 +267,7 @@ fun HomeScreen(
                 }
                 SectionCard(title = "Sleep", modifier = Modifier.weight(1f), icon = Icons.Filled.Bedtime) {
                     val s = sleep
-                    Text(if (s != null) "${s.hours}h" else "—")
+                    Text(s?.recordedHours?.let { "%.1fh".format(it) } ?: "—", style = MaterialTheme.typography.headlineSmall)
                     Text(s?.qualityLabel ?: "", style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -328,7 +309,7 @@ fun HomeScreen(
             SectionCard(title = "Quick actions", icon = Icons.Filled.FitnessCenter) {
                 Text("Use the bottom bar for Migraine, Fitness, Coach, Food, and Insights. Water is on Home.")
                 Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     AssistChip(onClick = onAskCoach, label = { Text("Coach") })
                     AssistChip(onClick = onOpenFitness, label = { Text("Fitness hub") })
                     AssistChip(onClick = onOpenWater, label = { Text("Water") })

@@ -1,6 +1,13 @@
 package com.migraineguard.app.navigation
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -46,6 +53,11 @@ import com.migraineguard.app.feature.setup.SetupWizardScreen
 import com.migraineguard.app.feature.track.TrackScreen
 import com.migraineguard.app.feature.water.WaterScreen
 import kotlinx.coroutines.launch
+import com.migraineguard.app.feature.settings.DriveBackupScreen
+import com.migraineguard.app.feature.settings.DriveBackupCard
+import com.migraineguard.app.feature.setup.HealthConnectStep
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.foundation.layout.fillMaxSize
 
 @Composable
 fun MigraineGuardNavHost(container: AppContainer) {
@@ -56,6 +68,24 @@ fun MigraineGuardNavHost(container: AppContainer) {
     var forceProfileEdit by remember { mutableStateOf(false) }
     var coachPersona by remember { mutableStateOf(AiPersona.COACH) }
     var forceConnectGemini by remember { mutableStateOf(false) }
+
+    var driveChecked by remember { mutableStateOf(false) }
+    var healthChecked by remember { mutableStateOf(false) }
+    var openDrive by remember { mutableStateOf(false) }
+    if (authState.isSignedIn && !authState.isDemo && (!driveChecked || openDrive)) {
+        DriveBackupScreen(container.driveSyncRepository, authState.user?.email.orEmpty(),
+            onContinue = { driveChecked = true; openDrive = false })
+        return
+    }
+    if (authState.isSignedIn && !authState.isDemo && prefs.setupComplete && !healthChecked) {
+        var checked by remember { mutableStateOf<Boolean?>(null) }
+        LaunchedEffect(Unit) { checked = container.healthDataRepository.hasAllPermissions() }
+        if (checked == true) { LaunchedEffect(Unit) { healthChecked = true } }
+        else if (checked == false) HealthConnectStep(container.healthDataRepository,
+            remember { SnackbarHostState() }, onNext = { healthChecked = true },
+            onSkip = { healthChecked = true }, modifier = Modifier.fillMaxSize())
+        return
+    }
 
     // Signed-out storage is empty; old local data is opened only by Continue locally.
     if (!authState.isSignedIn && container.account == com.migraineguard.app.core.security.AccountStorage.SIGNED_OUT) {
@@ -70,7 +100,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
             preferencesRepository = container.preferencesRepository,
             healthDataRepository = container.healthDataRepository,
             aiClient = container.aiClient,
-            onFinished = { /* prefs flow will recompose */ },
+            onFinished = { healthChecked = true },
         )
         return
     }
@@ -140,13 +170,16 @@ fun MigraineGuardNavHost(container: AppContainer) {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
             if (currentRoute !in hideBottom) {
-                NavigationBar {
+                NavigationBar(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).clip(RoundedCornerShape(28.dp)),
+                    containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp,
+                ) {
                     bottomItems.forEach { item ->
                         NavigationBarItem(
                             selected = currentRoute == item.dest.route,
                             onClick = { goBottom(item.dest.route) },
                             icon = { Icon(item.icon, contentDescription = item.dest.label) },
-                            label = { Text(item.dest.label) },
+                            label = { Text(item.dest.label, style = MaterialTheme.typography.labelSmall, maxLines = 1) },
                         )
                     }
                 }
@@ -157,6 +190,8 @@ fun MigraineGuardNavHost(container: AppContainer) {
             navController = navController,
             startDestination = Routes.Home,
             modifier = Modifier.padding(innerPadding),
+            enterTransition = { fadeIn(tween(180)) },
+            exitTransition = { fadeOut(tween(120)) },
         ) {
             composable(Routes.Home) {
                 HomeScreen(
@@ -222,6 +257,8 @@ fun MigraineGuardNavHost(container: AppContainer) {
                     backupRepository = container.backupRepository,
                     healthDataRepository = container.healthDataRepository,
                     aiClient = container.aiClient,
+                    driveRepository = if (authState.isDemo) null else container.driveSyncRepository,
+                    onConnectDrive = { openDrive = true },
                     onSignOut = { container.authRepository.signOut() },
                     onBack = { navController.popBackStack() },
                     onEditProfile = { forceProfileEdit = true },

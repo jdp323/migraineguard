@@ -3,6 +3,7 @@ package com.migraineguard.app
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.response.ReadRecordsResponse
 import androidx.health.connect.client.records.*
 import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.testing.*
@@ -33,8 +34,34 @@ class HealthReadingTest {
         startTime = end.minusSeconds(8 * 3600), startZoneOffset = null,
         endTime = end, endZoneOffset = null, metadata = Metadata.manualEntry())
 
+    @Test fun dailyHeartBucketEndingTonightStillReturnsCurrentSample() = runBlocking {
+        val fake = FakeHealthConnectClient()
+        fake.overrides.aggregate = stub { AggregationResult(metrics = emptyMap()) }
+        val sampleTime = now.minusSeconds(60)
+        fake.insertRecords(listOf(HeartRateRecord(startTime = healthDayStart(now), startZoneOffset = null,
+            endTime = com.migraineguard.app.core.time.healthDayEnd(now).minusSeconds(1), endZoneOffset = null,
+            samples = listOf(HeartRateRecord.Sample(sampleTime, 81), HeartRateRecord.Sample(now.plusSeconds(60), 150)),
+            metadata = Metadata.manualEntry())))
+        val result = repo(fake).latestFitness()
+        assertEquals(81, result.heartRateBpm)
+        assertEquals(sampleTime.toEpochMilli(), result.heartRateRecordedAtMillis)
+    }
+
+    @Test fun rawSamsungRecordsRecoverZeroAggregate() = runBlocking {
+        val fake = FakeHealthConnectClient(packageName = "com.sec.android.app.shealth")
+        fake.overrides.aggregate = stub { AggregationResult(metrics = mapOf(StepsRecord.COUNT_TOTAL to 0L)) }
+        fake.insertRecords(listOf(StepsRecord(startTime = healthDayStart(now), startZoneOffset = null,
+            endTime = com.migraineguard.app.core.time.healthDayEnd(now), endZoneOffset = null,
+            count = 180, metadata = Metadata.manualEntry())))
+        val result = repo(fake).latestFitness()
+        assertEquals(180, result.observedSteps)
+        assertTrue(result.stepSync!!.isEstimated)
+        assertTrue(result.stepSync!!.rawSummary.contains("180"))
+    }
+
     @Test fun grantedButEmptyDoesNotClaimPermissionDenied() = runBlocking {
         val fake = FakeHealthConnectClient()
+        fake.overrides.readRecords = stub { ReadRecordsResponse(records = emptyList<Record>(), pageToken = "") }
         fake.overrides.aggregate = stub { AggregationResult(metrics = emptyMap()) }
         val repo = repo(fake)
         val fitness = repo.latestFitness()
@@ -69,7 +96,7 @@ class HealthReadingTest {
         assertEquals(180, result.observedSteps)
         assertEquals(180, result.stepSync!!.samsungTotal)
         assertTrue(result.sourceLabel.contains("Samsung"))
-        assertTrue(result.stepSync!!.message.contains("combined Health Connect total is unavailable"))
+        assertTrue(result.stepSync!!.message.contains("Showing Samsung Health"))
     }
 
     @Test fun previousDayHeartAndNewestSleepAreFoundAcrossPages() = runBlocking {

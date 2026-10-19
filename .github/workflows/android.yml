@@ -106,11 +106,14 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -memory 2048
           script: |
+            adb shell wm size 900x1600
+            adb shell wm density 420
             adb install verified-build/app-debug.apk
             adb install verified-build/app-debug-androidTest.apk
             adb shell am instrument -w com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-runtime-results.txt
+            adb pull /sdcard/Android/data/com.migraineguard.app/files/verification ui-verification || true
             cat android-runtime-results.txt
-            grep -q 'OK (13 tests)' android-runtime-results.txt
+            grep -q 'OK (17 tests)' android-runtime-results.txt
             adb shell am start -n com.migraineguard.app/.MainActivity
             sleep 5
             adb exec-out screencap -p > android-startup.png
@@ -122,6 +125,7 @@ jobs:
           path: |
             android-runtime-results.txt
             android-startup.png
+            ui-verification/*.png
           if-no-files-found: ignore
           retention-days: 7
   publish:
@@ -149,31 +153,17 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
-          Accounts now have separate profiles, all seven journal tables, goals, API keys and saved AI sessions. Sign-out resets UI and health caches. Older unowned records remain under Continue locally; new Google accounts start empty.
+          Private Google Drive app-data backup now saves each Google account's profile, birthday, measurements, goals, settings, API keys and seven journal tables. At sign-in, the app checks/restores Drive before setup. Returning completed profiles proceed to a phone-specific Health Connect permission check. Allow the native Drive permission prompt once; previously granted access is checked automatically.
 
-          Health Connect belongs to this phone, not the selected Google account. Each account must connect it in Fitness. Steps use independent Samsung fallback; heart rate searches seven days and sleep fourteen days with timestamps. Missing permissions, empty shared data and read failures are shown separately.
+          Drive API keys use Google's transport and storage encryption; this is not a separately password-protected end-to-end backup. Keys are re-encrypted with Android Keystore on each phone. Backup status reflects completed HTTP requests. Local data remains available when offline, and sign-out attempts a final save.
 
-          Samsung Health must have WRITE sharing enabled for Steps, Heart rate and Sleep; the installed Standard or Preview app needs READ permission. Open Samsung Health and sync the watch before refreshing.
+          Samsung Health is the default steps source. You can choose combined Health Connect counts in Fitness. If aggregate counts are zero but raw records exist, a conservative per-writer estimate recovers them and is labeled. Heart queries include Samsung daily buckets ending tonight and exclude future samples; sleep searches completed sessions across fourteen days. The local sync report includes permissions, source and errors for phone diagnosis.
 
-          Automated checks include account A/B separation across all tables and keys, health permission/empty/error states, pagination and older readings. Live Samsung/watch transfer still needs phone testing.
+          New light/dark palettes, rounded cards, animated daily habit rings, smoother navigation and a cleaner Fitness screen. Missing health readings stay unavailable instead of becoming invented zeroes.
 
-          Welcome and sign-in screens show the actual installed build version; the emulator test verifies both labels.
+          Verified release checks include JVM tests, Android lint, retained signing certificates, and 17 Android emulator tests for account separation, migrations, encrypted exports, Drive restore with a simulated transport, health queries and all six tabs. UI screenshots are captured in light/dark themes on a narrow screen. Real Google Drive authorization, Samsung/watch transfer and live AI still require phone testing.
 
-          Google sign-in uses the approved owned-project Web client with both package/certificate registrations; obsolete shipped OAuth overrides migrate automatically. Google may take time to propagate changes; actual phone login must still be verified.
-
-          First-run sign-in/profile screens reuse the corrected shared screens. Unit changes preserve physical measurements, medication taken state follows the local date, and missing health readings remain unavailable in Insights and local AI. Emulator checks cover first-run unit conversion and all six main tabs.
-
-          Install the Preview APK to test alongside an older MigraineGuard installation without uninstalling it. The standard APK updates installations using the retained FB:67 signing key. Preview uses package com.migraineguard.app.preview and separate local storage.
-
-          Health Connect shows Samsung's shared steps alongside the deduplicated total, with sync/priority guidance. Both health screens refresh while visible.
-
-          Food photos can be sent to Gemini with explicit per-photo consent; image location metadata is stripped. AI health summaries are shared with cloud providers only when selected. Saved API keys use Android Keystore encryption.
-
-          Settings includes password-encrypted journal export/import. Restore merges records without deleting existing data. Database upgrades preserve earlier journal records. Water uses one atomic store and changes day at midnight. Profile unit conversion and unavailable weather states are corrected.
-
-          Google sign-in still requires an Android OAuth client in the same project as the Web client. An accessible owned project is now configured in test mode with Web/Standard/Preview clients. Sign in using the approved tester account; local use and personal AI keys remain available independently.
-
-          Verified: unit tests, Android lint, APK build, retained signing certificates, and real Android emulator tests for migrations, encrypted backup restore, key encryption and app startup. Samsung/watch and live Gemini calls require testing on your phone.
+          Install Standard to update an installation signed with the retained FB:67 certificate. Preview installs alongside Standard with separate storage and package com.migraineguard.app.preview. Older unowned data remains under Continue locally; sign in to the original account before connecting Drive to back up its existing details.
           NOTES
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists; it will not be overwritten."

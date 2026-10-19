@@ -1,5 +1,9 @@
 package com.migraineguard.app
 
+import android.graphics.Bitmap
+import androidx.test.platform.app.InstrumentationRegistry
+import com.migraineguard.app.core.domain.ThemeMode
+import java.io.File
 import android.content.Context
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -25,6 +29,15 @@ class NavigationFlowTest {
         }
     }
 
+    private fun capture(name: String) {
+        compose.waitForIdle()
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val directory = File(context.getExternalFilesDir(null), "verification").apply { mkdirs() }
+        val image = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        File(directory, name + ".png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        image.recycle()
+    }
+
     @Test fun onboardingPreservesWeightAndMainTabsOpen() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val app = context as MigraineGuardApp
@@ -32,6 +45,8 @@ class NavigationFlowTest {
         val container = app.container
         runBlocking {
             container.preferencesRepository.setSetupComplete(false)
+            container.preferencesRepository.setDynamicColor(false)
+            container.preferencesRepository.setThemeMode(ThemeMode.LIGHT)
             container.preferencesRepository.clearAllAiKeys()
             container.preferencesRepository.saveBodyProfile(BodyProfile(
                 displayName = "Emulator fixture", dateOfBirthIso = "1990-01-01",
@@ -62,7 +77,15 @@ class NavigationFlowTest {
             for (label in listOf("Migraine", "Fitness", "Food", "Coach", "Insights", "Home")) {
                 awaitText(label)
                 compose.onNode(hasText(label) and hasClickAction()).performClick().assertIsSelected()
+                if (label == "Fitness") { awaitText("Move, rest, recover."); capture("fitness-light") }
+                if (label == "Home") capture("home-light")
             }
+            runBlocking { container.preferencesRepository.setThemeMode(ThemeMode.DARK) }
+            compose.waitForIdle()
+            capture("home-dark")
+            compose.onNode(hasText("Fitness") and hasClickAction()).performClick()
+            awaitText("Move, rest, recover.")
+            capture("fitness-dark")
         }
     }
 }

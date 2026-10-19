@@ -39,6 +39,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStop() {
+        if (::app.isInitialized) app.container.saveCloudOnBackground()
+        super.onStop()
+    }
+
     override fun onResume() {
         super.onResume()
         if (::app.isInitialized && app.container.authRepository.authState.value.isSignedIn) {

@@ -33,8 +33,8 @@ android {
         manifestPlaceholders["appLabel"] = if (preview) "@string/preview_app_name" else "@string/app_name"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
-        versionName = "1.6.6"
+        versionCode = 14
+        versionName = "1.7.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -114,6 +114,7 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services)
     implementation(libs.googleid)
+    implementation("com.google.android.gms:play-services-auth:22.0.0")
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
@@ -125,6 +126,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     testImplementation("org.json:json:20240303")
 

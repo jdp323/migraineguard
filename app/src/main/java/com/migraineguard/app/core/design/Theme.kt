@@ -2,93 +2,50 @@ package com.migraineguard.app.core.design
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.migraineguard.app.core.domain.ThemeMode
 
-/** Teal / indigo medical-calm seed palette. */
-private val TealPrimary = Color(0xFF0D9488)
-private val IndigoSecondary = Color(0xFF4F46E5)
-private val SoftCoral = Color(0xFFE07A5F)
-private val PainMarker = Color(0xFFE53935)
-
-val MigraineGuardPainColor = PainMarker
-
+val MigraineGuardPainColor = Color(0xFFE15C76)
 private val LightColors = lightColorScheme(
-    primary = TealPrimary,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFCCFBF1),
-    onPrimaryContainer = Color(0xFF134E4A),
-    secondary = IndigoSecondary,
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFE0E7FF),
-    onSecondaryContainer = Color(0xFF312E81),
-    tertiary = SoftCoral,
-    onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFFFE4DE),
-    onTertiaryContainer = Color(0xFF7C2D12),
-    background = Color(0xFFF8FAFC),
-    onBackground = Color(0xFF0F172A),
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color(0xFF0F172A),
-    surfaceVariant = Color(0xFFE2E8F0),
-    onSurfaceVariant = Color(0xFF475569),
-    outline = Color(0xFF94A3B8),
-    error = Color(0xFFDC2626),
+    primary = Color(0xFF5954C7), onPrimary = Color.White,
+    primaryContainer = Color(0xFFEEECFF), onPrimaryContainer = Color(0xFF302979),
+    secondary = Color(0xFF147C72), onSecondary = Color.White,
+    secondaryContainer = Color(0xFFDDF6EF), onSecondaryContainer = Color(0xFF14574F),
+    tertiary = Color(0xFF9F5E45), onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFFFEBDF), onTertiaryContainer = Color(0xFF65351F),
+    background = Color(0xFFF5F5FA), onBackground = Color(0xFF202039),
+    surface = Color.White, onSurface = Color(0xFF202039),
+    surfaceVariant = Color(0xFFEEEDF5), onSurfaceVariant = Color(0xFF68677D),
+    outline = Color(0xFF8C899F), outlineVariant = Color(0xFFE4E1ED),
+    error = Color(0xFFBA3450),
 )
-
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFF2DD4BF),
-    onPrimary = Color(0xFF042F2E),
-    primaryContainer = Color(0xFF115E59),
-    onPrimaryContainer = Color(0xFFCCFBF1),
-    secondary = Color(0xFFA5B4FC),
-    onSecondary = Color(0xFF1E1B4B),
-    secondaryContainer = Color(0xFF3730A3),
-    onSecondaryContainer = Color(0xFFE0E7FF),
-    tertiary = Color(0xFFFFB4A2),
-    onTertiary = Color(0xFF5C1A0A),
-    tertiaryContainer = Color(0xFF9A3412),
-    onTertiaryContainer = Color(0xFFFFE4DE),
-    background = Color(0xFF0F172A),
-    onBackground = Color(0xFFF1F5F9),
-    surface = Color(0xFF1E293B),
-    onSurface = Color(0xFFF1F5F9),
-    surfaceVariant = Color(0xFF334155),
-    onSurfaceVariant = Color(0xFFCBD5E1),
-    outline = Color(0xFF64748B),
-    error = Color(0xFFF87171),
+    primary = Color(0xFFC1BCFF), onPrimary = Color(0xFF302979),
+    primaryContainer = Color(0xFF35305E), onPrimaryContainer = Color(0xFFE8E5FF),
+    secondary = Color(0xFF8DDCC9), onSecondary = Color(0xFF143C35),
+    secondaryContainer = Color(0xFF244B44), onSecondaryContainer = Color(0xFFCBF6EA),
+    tertiary = Color(0xFFF3BEA1), onTertiary = Color(0xFF4A2F22),
+    tertiaryContainer = Color(0xFF543D32), onTertiaryContainer = Color(0xFFFFE3D2),
+    background = Color(0xFF12121D), onBackground = Color(0xFFF0EDF7),
+    surface = Color(0xFF1D1D2B), onSurface = Color(0xFFF0EDF7),
+    surfaceVariant = Color(0xFF292836), onSurfaceVariant = Color(0xFFBBB7CB),
+    outline = Color(0xFF938DA8), outlineVariant = Color(0xFF383445),
+    error = Color(0xFFFFB1C0),
 )
 
 @Composable
-fun MigraineGuardTheme(
-    themeMode: ThemeMode = ThemeMode.SYSTEM,
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit,
-) {
-    val systemDark = isSystemInDarkTheme()
-    val darkTheme = when (themeMode) {
-        ThemeMode.SYSTEM -> systemDark
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
-    }
-    val context = LocalContext.current
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColors
-        else -> LightColors
-    }
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = MigraineGuardTypography,
-        content = content,
-    )
+fun MigraineGuardTheme(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = false,
+    content: @Composable () -> Unit) {
+    val dark = when (themeMode) { ThemeMode.SYSTEM -> isSystemInDarkTheme(); ThemeMode.DARK -> true; ThemeMode.LIGHT -> false }
+    val colors = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (dark) dynamicDarkColorScheme(LocalContext.current) else dynamicLightColorScheme(LocalContext.current)
+    } else if (dark) DarkColors else LightColors
+    MaterialTheme(colorScheme = colors, typography = MigraineGuardTypography,
+        shapes = Shapes(small = RoundedCornerShape(12.dp), medium = RoundedCornerShape(20.dp),
+            large = RoundedCornerShape(28.dp), extraLarge = RoundedCornerShape(36.dp)), content = content)
 }

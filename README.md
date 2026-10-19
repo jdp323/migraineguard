@@ -1,12 +1,12 @@
 # MigraineGuard
 
-## Latest update: v1.6.6 (code 13)
+## Latest update: v1.7.0 (code 14)
 
-Separate Google-account storage fixes profile/API-key/journal reuse after sign-out. Older data stays under **Continue locally**. Each account explicitly connects this phone’s Health Connect store. Health reads show individual permissions, empty-data/error states, and recorded timestamps. See [v1.6.6 implementation and phone checks](docs/UPDATE_1_6_6.md).
+Per-account Google Drive app-data backup/restore now includes profile, birthday, measurements, settings, personal AI keys and journals. Sign-in checks Drive before profile setup; returning profiles check only phone health permissions. Samsung-first steps, conservative raw-record recovery, daily heart-bucket reads and clearer diagnostics address records visible in Health Connect but missing in the app. Home/Fitness and shared light/dark UI are refreshed. See [implementation, every changed file/function and limitations](docs/UPDATE_1_7_0.md).
 
 Android app for migraine journaling, hydration, Health Connect fitness/sleep, meals, weight, medications, weather and AI coaching.
 
-**Version:** 1.6.6 (code 13) · Android 8+ · target SDK 35.
+**Version:** 1.7.0 (code 14) · Android 8+ · target SDK 35.
 
 Download builds from [GitHub Releases](https://github.com/jdp323/migraineguard/releases). Use **MigraineGuard Preview** to test alongside an older install without removing its records. Standard APK updates retain the package `com.migraineguard.app`; Preview uses `com.migraineguard.app.preview`. Both use the persistent test signing certificate.
 
@@ -22,13 +22,13 @@ See [the v1.6.4 source/access supplement](docs/UPDATE_1_6_4.md).
 
 ## Current improvements
 
-- Today’s cumulative steps, distance and calories query the full local calendar day, including Samsung daily buckets. Health Connect still deduplicates steps. Source comparisons and refresh timestamps explain what was received.
+- Today’s cumulative steps, distance and calories query the full local calendar day, including Samsung daily buckets. Aggregates remain preferred; single-writer raw recovery is labeled as an estimate. Source comparisons and refresh timestamps explain what was received.
 - Encrypted journal export/restore, preservation migrations, Android Keystore protection for AI keys, and consistent hydration history.
 - Optional Gemini photo analysis with metadata removed; cloud health-summary sharing is an explicit choice. Unknown nutrition and health readings stay unknown.
 - Real optional weather, profile unit conversion, offline coaching and a separate Preview install.
 - CI checks compilation, unit tests, lint, APK certificates and Android emulator migration/backup/key-storage/startup tests before publishing.
 
-Google sign-in now uses a registered Web audience and both APK package/certificate clients in the accessible owned project, in Testing mode for the approved tester account. Install v1.6.4 or newer and allow Google changes to propagate before retrying. Actual phone login remains to be tested. **Continue locally** works without Google. Watch/Fitbit data depends on what its companion app exports to Health Connect; real-device sync and cloud AI responses require phone testing.
+Google sign-in now uses a registered Web audience and both APK package/certificate clients in the accessible owned project, in Testing mode for the approved tester account. Install v1.6.4 or newer and allow Google changes to propagate before retrying. The user has confirmed phone login works. New Drive authorization/transfer still needs phone testing. **Continue locally** works without Google. Watch/Fitbit data depends on what its companion app exports to Health Connect; real-device sync and cloud AI responses require phone testing.
 
 See [feature status](docs/FEATURE_STATUS.md), [phone testing](docs/PHONE_TESTING.md) and [source audit](docs/PROJECT_AUDIT.md).
 
@@ -66,7 +66,7 @@ See [the source review and development priorities](docs/PROJECT_AUDIT.md) for in
 On cold start, if `setupComplete` is not true, MigraineGuard runs one ordered wizard:
 
 1. **Welcome** — what the app does (+ medical disclaimer)
-2. **Sign in** — Google (baked client) or Demo continue
+2. **Sign in** — Google (baked client) or local use. Google accounts check/restore private Drive app data before the remaining steps; completed restored profiles skip key/profile forms.
 3. **Health Connect / Samsung** — illustrated steps: install/open HC → grant permissions → enable Samsung Health sharing → confirm status (skip marks HC skipped)
 4. **Gemini API key** — Open AI Studio → create/copy key on YOUR Google account → paste → Save & Test (skip → OfflineHealthBrain; cloud AI needs your key)
 5. **Profile** — name (prefilled from Google), **DOB calendar**, height/weight/gender — validated

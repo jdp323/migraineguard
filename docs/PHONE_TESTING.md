@@ -1,3 +1,5 @@
+> Current v1.7.0: [Drive account restore, Samsung query fixes, UI and complete changed-file/function supplement](UPDATE_1_7_0.md). This supersedes the older cloud-backup placeholder and current-version descriptions below; historical source references remain pinned to their stated baselines.
+
 ## v1.6.6 account and health checks
 
 Update the same installed package. Sign in with account A, set its profile/key, sign out and select account B: B must start with its own profile and no A keys/logs. Return to A to verify its records remain. Older pre-isolation records are preserved under **Continue locally**; they are not automatically assigned to Google accounts.

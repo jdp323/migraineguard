@@ -1,3 +1,5 @@
+> Current v1.7.0: [Drive account restore, Samsung query fixes, UI and complete changed-file/function supplement](UPDATE_1_7_0.md). This supersedes the older cloud-backup placeholder and current-version descriptions below; historical source references remain pinned to their stated baselines.
+
 > v1.6.6 adds separate Google-account databases/preferences/API keys, safe sign-out, preserved older local records and per-account phone-health opt-in. Health reads now show individual permission/empty/error states and dated heart/sleep records. See [implementation and tests](UPDATE_1_6_6.md). Samsung/watch transport still needs phone verification.
 
 # Implemented app flows and test scope

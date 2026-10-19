@@ -60,7 +60,7 @@ class BackupRepository(
     private val resolver = context.applicationContext.contentResolver
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-    suspend fun export(uri: Uri, password: CharArray) = withContext(Dispatchers.IO) {
+    suspend fun snapshot(): JournalBackup = withContext(Dispatchers.IO) {
         val prefs = preferences.preferences.first()
         val payload = db.withTransaction {
             val dao = db.backupDao()
@@ -72,6 +72,11 @@ class BackupRepository(
                 medications = dao.medications(), sessions = dao.sessions())
         }
         payload.validate()
+        payload
+    }
+
+    suspend fun export(uri: Uri, password: CharArray) = withContext(Dispatchers.IO) {
+        val payload = snapshot()
         val plain = json.encodeToString(payload).toByteArray(Charsets.UTF_8)
         val bytes = try { BackupCipher.encrypt(plain, password) } finally { plain.fill(0); password.fill('\u0000') }
         resolver.openOutputStream(uri, "wt")?.use { it.write(bytes) } ?: error("Could not open the selected file.")
@@ -91,6 +96,10 @@ class BackupRepository(
         } ?: error("Could not read the selected file.")
         val plain = try { BackupCipher.decrypt(encrypted, password) } finally { password.fill('\u0000') }
         val payload = try { json.decodeFromString<JournalBackup>(String(plain, Charsets.UTF_8)) } finally { plain.fill(0) }
+        mergeSnapshot(payload, restoreProfile)
+    }
+
+    suspend fun mergeSnapshot(payload: JournalBackup, restoreProfile: Boolean): Int = withContext(Dispatchers.IO) {
         payload.validate()
         val restored = db.withTransaction {
             val dao = db.backupDao()

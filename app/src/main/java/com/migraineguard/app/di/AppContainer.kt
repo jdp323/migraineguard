@@ -28,7 +28,10 @@ import com.migraineguard.app.feature.weather.OpenMeteoWeatherRepository
 import com.migraineguard.app.feature.weather.WeatherRepository
 import com.migraineguard.app.core.security.AccountStorage
 import com.migraineguard.app.feature.fitness.AccountHealthDataRepository
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,17 +46,26 @@ class AppContainer(context: Context, val account: String = AccountStorage.LOCAL,
 
     val preferencesRepository = UserPreferencesRepository(appContext, account)
     val backupRepository = BackupRepository(appContext, db, preferencesRepository)
+    val driveSyncRepository = com.migraineguard.app.feature.settings.DriveSyncRepository(account, preferencesRepository, db, backupRepository, appScope)
     val authRepository: AuthRepository = sharedAuth ?: DefaultAuthRepository({ preferencesRepository })
     val migraineRepository = MigraineRepository(db.migraineDao())
     val waterIntakeRepository = WaterIntakeRepository(appContext, db.waterHistoryDao(), account == AccountStorage.LOCAL)
     val weatherRepository: WeatherRepository = OpenMeteoWeatherRepository(appContext)
-    val healthDataRepository: HealthDataRepository = AccountHealthDataRepository(HealthConnectHealthDataRepository(appContext), preferencesRepository)
+    val healthDataRepository: HealthDataRepository = AccountHealthDataRepository(HealthConnectHealthDataRepository(appContext, stepSource = { preferencesRepository.preferences.first().stepSource }), preferencesRepository)
     val healthRefreshCoordinator = HealthRefreshCoordinator(healthDataRepository, appScope)
     val workoutRepository = WorkoutRepository(db.workoutDao())
     val weightRepository = WeightRepository(db.weightDao())
     val medicationRepository = MedicationRepository(db.medicationDao())
 
-    fun dispose() { appScope.cancel() }
+    fun saveCloudOnBackground() {
+        if (driveSyncRepository.state.value.connected) appScope.launch {
+            try { driveSyncRepository.backupNow() }
+            catch (e: CancellationException) { throw e }
+            catch (_: Exception) { /* Visible backup status retains the error for the next foreground. */ }
+        }
+    }
+
+    fun dispose() { driveSyncRepository.dispose(); appScope.cancel() }
 
     private val offlineHealthBrain = OfflineHealthBrain()
 

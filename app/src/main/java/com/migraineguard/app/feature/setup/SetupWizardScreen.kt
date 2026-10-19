@@ -105,7 +105,8 @@ fun SetupWizardScreen(
     modifier: Modifier = Modifier,
 ) {
     val authState by authRepository.authState.collectAsStateWithLifecycle()
-    val prefs by preferencesRepository.preferences.collectAsStateWithLifecycle(UserPreferences())
+    val loadedPrefs by preferencesRepository.preferences.collectAsStateWithLifecycle<UserPreferences?>(null)
+    val prefs = loadedPrefs ?: return
     var step by remember { mutableStateOf(if (authState.isSignedIn) WizardStep.HEALTH else WizardStep.WELCOME) }
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
@@ -264,7 +265,7 @@ private fun SignInStep(
 }
 
 @Composable
-private fun HealthConnectStep(
+fun HealthConnectStep(
     healthDataRepository: HealthDataRepository,
     snackbar: SnackbarHostState,
     onNext: () -> Unit,
@@ -622,12 +623,13 @@ private fun GeminiStep(
         IllustratedStep(
             number = 3,
             title = "Paste here · Save & Test",
-            body = "We only store the key on-device in DataStore. Never ship developer keys.",
+            body = "Your key is encrypted on this phone and included in your private Drive backup when connected.",
         ) {
             OutlinedTextField(
                 value = key,
                 onValueChange = { key = it },
                 label = { Text("Paste Gemini API key") },
+                visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,

@@ -77,6 +77,7 @@ class HealthConnectHealthDataRepository(
     private val testSdkStatus: (() -> Int)? = null,
     private val now: () -> Instant = Instant::now,
     private val readPageSize: Int = 1000,
+    private val stepSource: suspend () -> String = { "samsung" },
 ) : HealthDataRepository {
 
     @Volatile
@@ -284,7 +285,7 @@ class HealthConnectHealthDataRepository(
                 TimeRangeFilter.between(start, end), ascendingOrder = false,
                 pageSize = readPageSize, pageToken = token))
             records += page.records
-            token = page.pageToken
+            token = page.pageToken?.takeIf { it.isNotBlank() }
         } while (token != null)
         return records
     }
@@ -322,23 +323,37 @@ class HealthConnectHealthDataRepository(
                     ?.coerceIn(0L, Int.MAX_VALUE.toLong())?.toInt()
             } else kotlin.Result.success(null)
             val samsung = samsungRead.getOrNull()
-            val total = combined ?: samsung
+            val preferSamsung = stepSource() == "samsung"
+            val needsRaw = hasSteps && ((combined ?: 0) == 0 || (preferSamsung && (samsung ?: 0) == 0))
+            val rawRead = if (needsRaw) healthRead { readAll<StepsRecord>(client, start, healthDayEnd(end)) }
+                else kotlin.Result.success(emptyList())
+            val rawRows = rawRead.getOrNull().orEmpty()
+            val rawBySource = rawRows.groupBy { it.metadata.dataOrigin.packageName }
+            val rawCounts = rawBySource.mapValues { (_, rows) -> conservativeSteps(rows.map {
+                StepInterval(it.startTime.toEpochMilli(), it.endTime.toEpochMilli(), it.count, it.metadata.dataOrigin.packageName)
+            }, start.toEpochMilli(), healthDayEnd(end).toEpochMilli()) }
+            val choice = chooseStepReading(combined, samsung, rawCounts, preferSamsung)
+            val total = choice.total
+            val rawSummary = if (!needsRaw) "Raw cross-check not needed: aggregate is available."
+                else if (rawRead.isFailure) readFailure("Raw steps", rawRead.exceptionOrNull()!!)
+                else "Raw records today: " + rawRows.size + "; writers: " + rawBySource.map { (name, rows) -> name + " (" + rows.size + " records; conservative count " + rawCounts[name] + ")" }.joinToString()
             val stepMessage = when {
                 !hasSteps -> "Steps read permission is not allowed for this installed app. Open Health Connect permissions."
+                choice.estimated -> "The aggregate was empty or zero despite stored step records. Showing a conservative estimate from one writer; overlapping records are not added together."
+                preferSamsung && (samsung ?: 0) > 0 -> "Showing Samsung Health's shared count. Combined Health Connect count: " + (combined?.toString() ?: "unavailable") + ". Counts are not added together."
                 combined == null && samsung != null -> "Showing Samsung Health's shared count because the combined Health Connect total is unavailable. Counts are not added together."
                 stepRead.isFailure -> readFailure("Steps", stepRead.exceptionOrNull()!!)
                 else -> stepSyncMessage(total, samsung, samsungRead.isFailure)
             }
             if (stepRead.isFailure && total == null) recordError(stepMessage)
             val stepSync = StepSyncSnapshot(total, samsung,
-                if (combined != null) stepRead.getOrNull()?.dataOrigins?.map { it.packageName }?.sorted().orEmpty()
-                else if (samsung != null) listOf(HealthConnectPackages.SAMSUNG_HEALTH) else emptyList(),
-                end.toEpochMilli(), stepMessage)
+                (stepRead.getOrNull()?.dataOrigins?.map { it.packageName }.orEmpty() + rawBySource.keys).distinct().sorted(),
+                end.toEpochMilli(), stepMessage, rawSummary, choice.estimated, combined)
 
             val heartRead = if (hasHeart) healthRead {
-                readAll<HeartRateRecord>(client, end.minus(7, ChronoUnit.DAYS), end)
+                readAll<HeartRateRecord>(client, end.minus(7, ChronoUnit.DAYS), healthDayEnd(end))
                     .flatMap { record -> record.samples.map { it to record.metadata.dataOrigin.packageName } }
-                    .filter { (sample, _) -> !sample.time.isAfter(end) }
+                    .filter { (sample, _) -> !sample.time.isAfter(end) && !sample.time.isBefore(end.minus(7, ChronoUnit.DAYS)) }
                     .maxByOrNull { (sample, _) -> sample.time }
             } else kotlin.Result.success(null)
             val heart = heartRead.getOrNull()
@@ -369,7 +384,7 @@ class HealthConnectHealthDataRepository(
                     ?.toMinutes()?.coerceIn(0L, 1440L)?.toInt() ?: 0
             }.getOrDefault(0) else 0
             HealthSnapshot(total ?: 0, heart?.first?.beatsPerMinute?.toInt(), active,
-                sourceLabel = if (combined == null && samsung != null) "Samsung Health via Health Connect" else "Health Connect",
+                sourceLabel = choice.source + if (choice.source.startsWith("Samsung")) " via Health Connect" else "",
                 distanceMeters = distance, caloriesBurned = calories?.first, caloriesSourceLabel = calories?.second,
                 stepSync = stepSync, heartRateRecordedAtMillis = heart?.first?.time?.toEpochMilli(),
                 heartRateSource = heart?.second, heartRateStatus = heartMessage, permissionSummary = summary)
@@ -391,7 +406,7 @@ class HealthConnectHealthDataRepository(
             if (sleepReadPermission() !in client.permissionController.getGrantedPermissions())
                 return SleepSnapshot(0f, "—", "Sleep read permission is not allowed for this installed app.")
             val end = now()
-            val latest = readAll<SleepSessionRecord>(client, end.minus(14, ChronoUnit.DAYS), end)
+            val latest = readAll<SleepSessionRecord>(client, end.minus(14, ChronoUnit.DAYS), healthDayEnd(end))
                 .filter { !it.endTime.isAfter(end) && it.endTime.isAfter(it.startTime) }
                 .maxByOrNull { it.endTime }
                 ?: return SleepSnapshot(0f, "No data",

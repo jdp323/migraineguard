@@ -30,6 +30,10 @@ import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import kotlinx.coroutines.CancellationException
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -79,6 +83,8 @@ fun SettingsScreen(
     backupRepository: BackupRepository,
     healthDataRepository: HealthDataRepository,
     aiClient: FallbackAiClient? = null,
+    driveRepository: DriveSyncRepository? = null,
+    onConnectDrive: () -> Unit = {},
     onSignOut: () -> Unit,
     onBack: () -> Unit,
     onEditProfile: () -> Unit = {},
@@ -91,6 +97,9 @@ fun SettingsScreen(
     val prefs by preferencesRepository.preferences.collectAsStateWithLifecycle(UserPreferences())
     var googleId by remember { mutableStateOf("") }
     var showSha by remember { mutableStateOf(false) }
+    var showGoogleSetup by remember { mutableStateOf(false) }
+    var signingOut by remember { mutableStateOf(false) }
+    var signOutError by remember { mutableStateOf<String?>(null) }
     var weightGoalText by remember { mutableStateOf("") }
     var geminiKey by remember { mutableStateOf("") }
     var groqKey by remember { mutableStateOf("") }
@@ -161,7 +170,14 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            driveRepository?.let { DriveBackupCard(it, onConnectDrive) }
+
             SectionCard(title = "Google Sign-In", icon = Icons.Filled.Key) {
+                Text("Google sign-in keeps your profile separate from other accounts on this phone.")
+                TextButton(onClick = { showGoogleSetup = !showGoogleSetup }) {
+                    Text(if (showGoogleSetup) "Hide advanced setup" else "Advanced sign-in setup")
+                }
+                if (showGoogleSetup) {
                 Text(
                     "A default Google Web client ID is included. The app owner must register the installed APK certificate in the same Google project. " +
                         "Optional override below. Google Sign-In is not Gemini access. " +
@@ -205,6 +221,8 @@ fun SettingsScreen(
                 }
             }
 
+                }
+
             SectionCard(title = "AI providers", icon = Icons.Filled.SmartToy) {
                 Text(
                     "Uses YOUR keys only — never developer tokens or the Firebase api_key. Order: Gemini → Groq → OpenRouter → OfflineHealthBrain. " +
@@ -215,6 +233,7 @@ fun SettingsScreen(
                     value = geminiKey,
                     onValueChange = { geminiKey = it },
                     label = { Text("Gemini API key") },
+                    visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
@@ -239,6 +258,7 @@ fun SettingsScreen(
                     value = groqKey,
                     onValueChange = { groqKey = it },
                     label = { Text("Groq API key") },
+                    visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
@@ -247,6 +267,7 @@ fun SettingsScreen(
                     value = openRouterKey,
                     onValueChange = { openRouterKey = it },
                     label = { Text("OpenRouter API key") },
+                    visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
@@ -482,12 +503,6 @@ fun SettingsScreen(
 
             BackupCard(backupRepository)
 
-            SectionCard(title = "Cloud backup", icon = Icons.Filled.Cloud) {
-                Text("Use Export encrypted backup above and choose a Google Drive folder in Android's file picker. Import that file to restore it on another installation.")
-                Text("This is a manual encrypted backup. Automatic background Drive synchronization is not enabled.",
-                    style = MaterialTheme.typography.bodySmall)
-            }
-
             SectionCard(title = "About", icon = Icons.Filled.Info) {
                 Text("MigraineGuard v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
                 Text("Package ${BuildConfig.APPLICATION_ID}")
@@ -506,14 +521,32 @@ fun SettingsScreen(
 
             SectionCard(title = "Privacy", icon = Icons.Filled.PrivacyTip) {
                 Text(
-                    "Logs stay on this device unless you export a backup or choose to share a health summary with cloud AI. " +
+                    "Logs stay on this device unless you enable Drive backup, export a backup or choose to share a health summary with cloud AI. " +
                         "Weather shares approximate coordinates with Open-Meteo. Cloud AI uses your encrypted stored keys; food photos are sent to Gemini only when you select that option. " +
                         "OfflineHealthBrain always available. Not a medical device — for personal awareness only.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
 
-            Button(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) { Text("Sign out") }
+            Button(onClick = {
+                signingOut = true
+                scope.launch {
+                    try {
+                        if (driveRepository?.state?.value?.connected == true) driveRepository.backupNow()
+                        onSignOut()
+                    } catch (e: CancellationException) { throw e
+                    } catch (e: Exception) { signOutError = e.message ?: "Drive backup could not finish." }
+                    finally { signingOut = false }
+                }
+            }, enabled = !signingOut, modifier = Modifier.fillMaxWidth()) {
+                Text(if (signingOut) "Saving before sign-out…" else "Sign out")
+            }
+            signOutError?.let { message ->
+                AlertDialog(onDismissRequest = { signOutError = null }, title = { Text("Backup needs attention") },
+                    text = { Text(message + " Your details are still saved on this phone. Reconnect Drive and try again, or sign out using the local copy.") },
+                    confirmButton = { TextButton(onClick = { signOutError = null }) { Text("Keep me signed in") } },
+                    dismissButton = { TextButton(onClick = { signOutError = null; onSignOut() }) { Text("Sign out with local copy") } })
+            }
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
         }
     }

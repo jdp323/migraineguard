@@ -36,12 +36,15 @@ private object AccountPreferenceStores {
     }
 }
 
+@kotlinx.serialization.Serializable
 data class UserPreferences(
+    val modifiedAtMillis: Long = 0L,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = false,
     val waterGoalCups: Int = 8,
     val waterUnit: WaterUnit = WaterUnit.CUPS,
     val dailyStepGoal: Int = 8000,
+    val stepSource: String = "samsung",
     val sleepGoalHours: Float = 8f,
     val weightGoalKg: Float? = null,
     val notificationsEnabled: Boolean = true,
@@ -67,10 +70,12 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
     private val dataStore = AccountPreferenceStores.get(context, account)
     private val apiKeyVault = ApiKeyVault()
 
+    private val modifiedKey = androidx.datastore.preferences.core.longPreferencesKey("modified_at_millis")
     private val themeKey = stringPreferencesKey("theme_mode")
     private val dynamicKey = booleanPreferencesKey("dynamic_color")
     private val waterGoalKey = intPreferencesKey("water_goal_cups")
     private val waterUnitKey = stringPreferencesKey("water_unit")
+    private val stepSourceKey = stringPreferencesKey("step_source")
     private val stepGoalKey = intPreferencesKey("daily_step_goal")
     private val sleepGoalKey = floatPreferencesKey("sleep_goal_hours")
     private val weightGoalKey = floatPreferencesKey("weight_goal_kg")
@@ -122,6 +127,7 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
             return@transform
         }
         emit(UserPreferences(
+            modifiedAtMillis = p[modifiedKey] ?: 0L,
             themeMode = runCatching { ThemeMode.valueOf(p[themeKey] ?: ThemeMode.SYSTEM.name) }
                 .getOrDefault(ThemeMode.SYSTEM),
             dynamicColor = p[dynamicKey] ?: false,
@@ -129,6 +135,7 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
             waterUnit = runCatching { WaterUnit.valueOf(p[waterUnitKey] ?: WaterUnit.CUPS.name) }
                 .getOrDefault(WaterUnit.CUPS),
             dailyStepGoal = p[stepGoalKey] ?: 8000,
+            stepSource = p[stepSourceKey] ?: "samsung",
             sleepGoalHours = p[sleepGoalKey] ?: 8f,
             weightGoalKg = p[weightGoalKey],
             notificationsEnabled = p[notifKey] ?: true,
@@ -164,53 +171,62 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
         ))
     }
 
+    private suspend fun editUser(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
+        dataStore.edit { block(it); it[modifiedKey] = maxOf(System.currentTimeMillis(), (it[modifiedKey] ?: 0L) + 1L) }
+    }
+
     suspend fun getGoogleWebClientId(): String =
         preferences.first().googleWebClientId
 
     suspend fun setThemeMode(mode: ThemeMode) {
-        dataStore.edit { it[themeKey] = mode.name }
+        editUser { it[themeKey] = mode.name }
     }
 
     suspend fun setDynamicColor(enabled: Boolean) {
-        dataStore.edit { it[dynamicKey] = enabled }
+        editUser { it[dynamicKey] = enabled }
     }
 
     suspend fun setWaterGoalCups(goal: Int) {
-        dataStore.edit { it[waterGoalKey] = goal.coerceIn(1, 20) }
+        editUser { it[waterGoalKey] = goal.coerceIn(1, 20) }
     }
 
     suspend fun setWaterUnit(unit: WaterUnit) {
-        dataStore.edit { it[waterUnitKey] = unit.name }
+        editUser { it[waterUnitKey] = unit.name }
+    }
+
+    suspend fun setStepSource(source: String) {
+        require(source in setOf("samsung", "combined"))
+        editUser { it[stepSourceKey] = source }
     }
 
     suspend fun setDailyStepGoal(goal: Int) {
-        dataStore.edit { it[stepGoalKey] = goal.coerceIn(1000, 30000) }
+        editUser { it[stepGoalKey] = goal.coerceIn(1000, 30000) }
     }
 
     suspend fun setSleepGoalHours(hours: Float) {
-        dataStore.edit { it[sleepGoalKey] = hours.coerceIn(4f, 12f) }
+        editUser { it[sleepGoalKey] = hours.coerceIn(4f, 12f) }
     }
 
     suspend fun setWeightGoalKg(kg: Float?) {
-        dataStore.edit {
+        editUser {
             if (kg == null) it.remove(weightGoalKey) else it[weightGoalKey] = kg
         }
     }
 
     suspend fun setNotificationsEnabled(enabled: Boolean) {
-        dataStore.edit { it[notifKey] = enabled }
+        editUser { it[notifKey] = enabled }
     }
 
     suspend fun setWaterReminders(enabled: Boolean) {
-        dataStore.edit { it[waterRemindKey] = enabled }
+        editUser { it[waterRemindKey] = enabled }
     }
 
     suspend fun setMigraineReminders(enabled: Boolean) {
-        dataStore.edit { it[migraineRemindKey] = enabled }
+        editUser { it[migraineRemindKey] = enabled }
     }
 
     suspend fun setMedicationReminders(enabled: Boolean) {
-        dataStore.edit { it[medRemindKey] = enabled }
+        editUser { it[medRemindKey] = enabled }
     }
 
     suspend fun setDriveSyncEnabled(enabled: Boolean) {
@@ -218,26 +234,26 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
     }
 
     suspend fun setOnboardingDone(done: Boolean) {
-        dataStore.edit { it[onboardingKey] = done }
+        editUser { it[onboardingKey] = done }
     }
 
     suspend fun setUseCelsius(use: Boolean) {
-        dataStore.edit { it[celsiusKey] = use }
+        editUser { it[celsiusKey] = use }
     }
 
     suspend fun setGoogleWebClientId(id: String) {
-        dataStore.edit { it[googleClientKey] = id.trim() }
+        editUser { it[googleClientKey] = id.trim() }
     }
 
     suspend fun setEnergyLevel(level: Int, dateIso: String) {
-        dataStore.edit {
+        editUser {
             it[energyKey] = level.coerceIn(1, 5)
             it[energyDateKey] = dateIso
         }
     }
 
     suspend fun saveBodyProfile(profile: BodyProfile) {
-        dataStore.edit {
+        editUser {
             it[profileNameKey] = profile.displayName
             it[profileDobKey] = profile.dateOfBirthIso
             profile.sex?.let { s -> it[profileSexKey] = s.name } ?: it.remove(profileSexKey)
@@ -260,31 +276,31 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
     }
 
     suspend fun setGeminiApiKey(key: String) {
-        dataStore.edit { it[geminiKey] = apiKeyVault.encrypt(key.trim()) }
+        editUser { it[geminiKey] = apiKeyVault.encrypt(key.trim()) }
     }
 
     suspend fun clearGeminiApiKey() {
-        dataStore.edit { it[geminiKey] = "" }
+        editUser { it[geminiKey] = "" }
     }
 
     suspend fun setGroqApiKey(key: String) {
-        dataStore.edit { it[groqKey] = apiKeyVault.encrypt(key.trim()) }
+        editUser { it[groqKey] = apiKeyVault.encrypt(key.trim()) }
     }
 
     suspend fun clearGroqApiKey() {
-        dataStore.edit { it[groqKey] = "" }
+        editUser { it[groqKey] = "" }
     }
 
     suspend fun setOpenRouterApiKey(key: String) {
-        dataStore.edit { it[openRouterKey] = apiKeyVault.encrypt(key.trim()) }
+        editUser { it[openRouterKey] = apiKeyVault.encrypt(key.trim()) }
     }
 
     suspend fun clearOpenRouterApiKey() {
-        dataStore.edit { it[openRouterKey] = "" }
+        editUser { it[openRouterKey] = "" }
     }
 
     suspend fun clearAllAiKeys() {
-        dataStore.edit {
+        editUser {
             it[geminiKey] = ""
             it[groqKey] = ""
             it[openRouterKey] = ""
@@ -292,7 +308,7 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
     }
 
     suspend fun setSetupComplete(done: Boolean) {
-        dataStore.edit {
+        editUser {
             it[setupCompleteKey] = done
             if (done) it[onboardingKey] = true
         }
@@ -304,6 +320,36 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
 
     suspend fun setDeviceHealthEnabled(enabled: Boolean) {
         dataStore.edit { it[deviceHealthKey] = enabled }
+    }
+
+    /** Restores account data atomically; OS permissions and device consent never come from Drive. */
+    suspend fun restoreCloudSettings(value: UserPreferences): Boolean {
+        var applied = false
+        dataStore.edit { p ->
+            if ((p[modifiedKey] ?: 0L) > value.modifiedAtMillis) return@edit
+            p[themeKey] = value.themeMode.name; p[dynamicKey] = value.dynamicColor
+            p[waterGoalKey] = value.waterGoalCups; p[waterUnitKey] = value.waterUnit.name
+            p[stepSourceKey] = value.stepSource; p[stepGoalKey] = value.dailyStepGoal; p[sleepGoalKey] = value.sleepGoalHours
+            value.weightGoalKg?.let { p[weightGoalKey] = it } ?: p.remove(weightGoalKey)
+            p[notifKey] = value.notificationsEnabled; p[waterRemindKey] = value.waterReminders
+            p[migraineRemindKey] = value.migraineReminders; p[medRemindKey] = value.medicationReminders
+            p[celsiusKey] = value.useCelsius; p[energyKey] = value.energyLevel; p[energyDateKey] = value.energyDateIso
+            val body = value.bodyProfile
+            p[profileNameKey] = body.displayName; p[profileDobKey] = body.dateOfBirthIso
+            body.sex?.let { p[profileSexKey] = it.name } ?: p.remove(profileSexKey)
+            body.heightCm?.let { p[profileHeightKey] = it } ?: p.remove(profileHeightKey)
+            body.weightKg?.let { p[profileWeightKey] = it } ?: p.remove(profileWeightKey)
+            body.activityLevel?.let { p[profileActivityKey] = it.name } ?: p.remove(profileActivityKey)
+            p[profileMetricKey] = body.useMetric; p[profileCompleteKey] = body.profileComplete
+            p[setupCompleteKey] = value.setupComplete
+            p[onboardingKey] = value.onboardingDone || value.setupComplete
+            p[geminiKey] = apiKeyVault.encrypt(value.geminiApiKey)
+            p[groqKey] = apiKeyVault.encrypt(value.groqApiKey)
+            p[openRouterKey] = apiKeyVault.encrypt(value.openRouterApiKey)
+            p[modifiedKey] = value.modifiedAtMillis
+            applied = true
+        }
+        return applied
     }
 
     suspend fun getGeminiApiKey(): String = preferences.first().geminiApiKey

@@ -1,57 +1,125 @@
 package com.migraineguard.app.feature.settings
 
+import androidx.room.InvalidationTracker
+import com.migraineguard.app.core.data.db.AppDatabase
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
-import kotlinx.coroutines.flow.first
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import com.migraineguard.app.core.security.AccountStorage
+import com.migraineguard.app.feature.backup.BackupRepository
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
-/**
- * Google Drive backup / sync.
- * Persists the toggle in DataStore; actual Drive REST upload is intentionally a clear TODO
- * so the app builds without Drive credentials.
- */
-interface DriveSyncRepository {
-    suspend fun isSyncEnabled(): Boolean
-    suspend fun setSyncEnabled(enabled: Boolean)
-    suspend fun lastSyncLabel(): String
-    suspend fun statusMessage(): String
-    suspend fun requestSyncNow(): String
-}
+data class DriveBackupState(
+    val connected: Boolean = false,
+    val busy: Boolean = false,
+    val lastSavedMillis: Long? = null,
+    val message: String = "Connect Drive to keep your account backed up.",
+)
 
-class DriveSyncRepositoryImpl(
+@OptIn(FlowPreview::class)
+class DriveSyncRepository(
+    private val account: String,
     private val prefs: UserPreferencesRepository,
-) : DriveSyncRepository {
-    @Volatile private var lastAttemptIso: String? = null
+    private val db: AppDatabase,
+    private val backup: BackupRepository,
+    private val scope: CoroutineScope,
+    private val remote: DriveBackupTransport = DriveRestClient(),
+) {
+    private val mutableState = MutableStateFlow(DriveBackupState())
+    val state = mutableState.asStateFlow()
+    private val mutex = Mutex()
+    private var token: String? = null
+    private var refreshAccessToken: (suspend () -> String)? = null
+    private var observer: Job? = null
+    private var fingerprint: String? = null
 
-    override suspend fun isSyncEnabled(): Boolean = prefs.preferences.first().driveSyncEnabled
-
-    override suspend fun setSyncEnabled(enabled: Boolean) {
-        prefs.setDriveSyncEnabled(enabled)
-        if (enabled) {
-            lastAttemptIso = Instant.now().toString()
-        }
-    }
-
-    override suspend fun lastSyncLabel(): String {
-        val enabled = isSyncEnabled()
-        return when {
-            !enabled -> "Sync off"
-            lastAttemptIso == null -> "No cloud backup available"
-            else -> {
-                val fmt = DateTimeFormatter.ofPattern("MMM d, HH:mm").withZone(ZoneId.systemDefault())
-                "Requested ${fmt.format(Instant.parse(lastAttemptIso))} — no files uploaded"
+    suspend fun connect(accessToken: String, email: String, refresh: (suspend () -> String)? = null) = mutex.withLock {
+        require(AccountStorage.google(email) == account) { "Drive account does not match this profile." }
+        mutableState.value = mutableState.value.copy(busy = true, message = "Checking your private Drive backup…")
+        try {
+            remote.verifyAccount(accessToken, email)
+            val file = remote.download(accessToken)
+            if (file != null) {
+                val payload = CloudBackupFormat.decode(file.bytes, account)
+                backup.mergeSnapshot(payload.journal, restoreProfile = false)
+                prefs.restoreCloudSettings(payload.settings)
+                fingerprint = CloudBackupFormat.fingerprint(payload)
             }
+            token = accessToken
+            refreshAccessToken = refresh
+            prefs.setDriveSyncEnabled(true)
+            mutableState.value = DriveBackupState(true, false, null,
+                if (file == null) "Drive connected. Your details will back up as you save them."
+                else "Your account backup is restored. Checking this phone's health permissions next.")
+        } catch (e: CancellationException) { throw e
+        } catch (e: Exception) {
+            token = null
+            mutableState.value = DriveBackupState(message = e.message ?: "Drive restore could not finish. Local data is preserved.")
+            throw e
+        }
+        observer?.cancel()
+        observer = scope.launch {
+            combine(prefs.preferences.map { CloudBackupFormat.json.encodeToString(
+                com.migraineguard.app.core.data.prefs.UserPreferences.serializer(),
+                CloudBackupFormat.portable(it)) }.distinctUntilChanged(), journalChanges()) { _, _ -> Unit }
+                .debounce(4_000).collect {
+                    if (prefs.preferences.first().driveSyncEnabled) {
+                        try { backupNow() } catch (e: CancellationException) { throw e
+                        } catch (_: Exception) { /* A visible status remains; retry on the next change or manually. */ }
+                    }
+                }
         }
     }
 
-    override suspend fun statusMessage(): String =
-        "Cloud backup is not available yet. Your records remain on this device; this setting does not upload or protect them."
+    private fun journalChanges(): Flow<Unit> = kotlinx.coroutines.flow.callbackFlow {
+        val observer = object : InvalidationTracker.Observer("migraine_episodes", "nutrition_scans",
+            "water_history", "workouts", "weight_entries", "medications", "ai_sessions") {
+            override fun onInvalidated(tables: Set<String>) { trySend(Unit) }
+        }
+        db.invalidationTracker.addObserver(observer)
+        trySend(Unit)
+        awaitClose { db.invalidationTracker.removeObserver(observer) }
+    }
 
-    override suspend fun requestSyncNow(): String {
-        if (!isSyncEnabled()) return "Turn on Drive sync first."
-        lastAttemptIso = Instant.now().toString()
-        // TODO(Drive): export Room tables → JSON → Drive.appDataFolder
-        return "No backup uploaded. Cloud backup is not available yet."
+    suspend fun backupNow() = mutex.withLock {
+        val previousToken = token ?: error("Reconnect Drive to save a backup.")
+        if (!prefs.preferences.first().driveSyncEnabled) return@withLock
+        mutableState.value = mutableState.value.copy(busy = true, message = "Saving your account to Drive…")
+        try {
+            val currentToken = refreshAccessToken?.invoke() ?: previousToken
+            token = currentToken
+            // Always inspect/merge the remote copy before writing; never overwrite a restore failure.
+            val previous = remote.download(currentToken)
+            if (previous != null) {
+                val cloud = CloudBackupFormat.decode(previous.bytes, account)
+                backup.mergeSnapshot(cloud.journal, restoreProfile = false)
+                prefs.restoreCloudSettings(cloud.settings)
+            }
+            val settings = prefs.preferences.first()
+            val payload = CloudAccountBackup(owner = account, savedAtMillis = System.currentTimeMillis(),
+                settings = CloudBackupFormat.portable(settings), journal = backup.snapshot())
+            val hash = CloudBackupFormat.fingerprint(payload)
+            if (hash != fingerprint) {
+                remote.upload(currentToken, CloudBackupFormat.encode(payload), previous)
+                fingerprint = hash
+            }
+            mutableState.value = DriveBackupState(true, false, System.currentTimeMillis(),
+                "Your profile, settings, API keys and journal are backed up to your private Drive app data.")
+        } catch (e: CancellationException) { throw e
+        } catch (e: Exception) {
+            mutableState.value = mutableState.value.copy(busy = false,
+                message = e.message ?: "Backup failed. Your local data is preserved.")
+            throw e
+        }
+    }
+
+    fun dispose() { observer?.cancel(); observer = null; token = null; refreshAccessToken = null }
+
+    suspend fun pause() {
+        prefs.setDriveSyncEnabled(false)
+        observer?.cancel(); observer = null; token = null; refreshAccessToken = null
+        mutableState.value = DriveBackupState(message = "Automatic backup paused. Existing Drive files are retained.")
     }
 }
