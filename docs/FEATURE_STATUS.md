@@ -29,10 +29,10 @@ Both APKs are signed with the retained test certificate. The original temporary 
 | Encrypted cloud files | Android file picker can separately save a password-encrypted journal export to an available Drive provider | Manual export/import; provider keys are excluded from this separate format |
 | Key storage | User API keys encrypted with Android Keystore; legacy plaintext values migrated | Android on-disk encryption and round-trip test |
 | APK publishing | Tests, lint, signature verification and Android emulator tests gate Releases | GitHub Actions results and certificate reports |
-| Google sign-in | Explicit account picker and actual installed-certificate diagnostics | Web/Standard/Preview clients registered in the accessible project; approved tester configured; real phone login pending |
+| Google sign-in | Explicit account picker and actual installed-certificate diagnostics | Web/Standard/Preview clients registered; phone login confirmed; Google Audience is now External / In production, with non-sensitive app-data/email scopes. Additional-account Drive transfer still needs phone acceptance |
 | Watch app | Watch data reaches the phone via Samsung Health / Fitbit and Health Connect | No separate Wear OS application or direct live watch sensor stream |
 
-Backups exclude API keys, photo files and imported Health Connect records. They contain the local journal data you choose to export and require the password to restore. Photos remain in their original app/provider storage.
+Password-encrypted manual exports exclude API keys, photo files and imported Health Connect records; optional account Drive snapshots do include portable API keys as described above. They contain the local journal data you choose to export and require the password to restore. Photos remain in their original app/provider storage.
 
 The all-in-one phone app is a working development build, not a validated medical device. The Android emulator cannot verify a real Samsung/Google device data pipeline or a user's cloud credentials.
 

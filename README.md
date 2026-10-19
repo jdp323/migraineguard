@@ -28,7 +28,7 @@ See [the v1.6.4 source/access supplement](docs/UPDATE_1_6_4.md).
 - Real optional weather, profile unit conversion, offline coaching and a separate Preview install.
 - CI checks compilation, unit tests, lint, APK certificates and Android emulator migration/backup/key-storage/startup tests before publishing.
 
-Google sign-in now uses a registered Web audience and both APK package/certificate clients in the accessible owned project, in Testing mode for the approved tester account. Install v1.6.4 or newer and allow Google changes to propagate before retrying. The user has confirmed phone login works. New Drive authorization/transfer still needs phone testing. **Continue locally** works without Google. Watch/Fitbit data depends on what its companion app exports to Health Connect; real-device sync and cloud AI responses require phone testing.
+Google sign-in uses the registered Web audience and both APK package/certificate clients in the owned project. Google Audience now reports **In production, External** (2026-10-19), allowing any Google account to request its own private Drive app-data access. The public [homepage](https://gen-lang-client-0426132502.web.app/), [privacy policy](https://gen-lang-client-0426132502.web.app/privacy.html) and terms are deployed on free Firebase Hosting. No APK rebuild is needed for this cloud-side change. The custom brand is not yet verified/shown; Google says data-access verification is not required for the current non-sensitive scopes. See [configuration and remaining phone checks](docs/PUBLIC_GOOGLE_ACCESS.md). The user confirmed phone login and original-account backup work; previously blocked additional accounts and cross-device restore still need phone testing. **Continue locally** works without Google. Watch/Fitbit data depends on what its companion app exports to Health Connect; real-device sync and cloud AI responses require phone testing.
 
 See [feature status](docs/FEATURE_STATUS.md), [phone testing](docs/PHONE_TESTING.md) and [source audit](docs/PROJECT_AUDIT.md).
 
@@ -82,7 +82,7 @@ Existing v1.5 users who already finished onboarding + profile are migrated as `s
 - **Public Web audience:** `539944675853-i6otink5q9a4tr94mo7hm85jli1edq61.apps.googleusercontent.com`.
 - **Registered packages:** Standard `com.migraineguard.app` and Preview `com.migraineguard.app.preview`.
 - **Retained APK SHA-1:** `FB:67:0D:1D:96:C2:8B:9E:27:0D:36:F8:D6:57:53:E3:6B:30:8D:E8`.
-- Google consent is in Testing mode with the approved tester account. No private Web client secret is used by the Android app.
+- Google consent is External / In production. Each user must grant their own optional Drive app-data authorization. No private Web client secret is used by the Android app.
 - Original Firebase project/configuration and the older FD:56 signer are historical; they are not the current APK registration.
 - Continue locally opens the preserved local profile. Google accounts have separate records and AI keys. A new Google account must configure its own profile/key and device-health connection.
 

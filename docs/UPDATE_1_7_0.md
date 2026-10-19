@@ -32,7 +32,7 @@ flowchart TD
 7. Sign-out waits for a final backup attempt when connected. Failure gives a visible choice to keep the session or sign out retaining the local copy. App backgrounding makes a best-effort save in the account scope. Android may kill the process before a background network request completes; there is no claim of an always-running service. Back up now gives an explicit completed-save status.
 8. Access tokens live only in memory. Already granted access is refreshed silently for later saves; if permission needs a new prompt, Settings offers reconnect. Pausing retains the cloud file. A new app/sign-in restore check or explicit reconnect can enable backup again; pause is not a permanent revocation of the Google grant. Offline, denial, malformed files and quota failures preserve local data and do not display successful backup.
 
-The configured Google Cloud project has the Drive API enabled and saved non-sensitive app-data/email declarations. Auth remains in Testing mode for allowed accounts. The phone must still grant native Drive consent; developer-console configuration is not a grant to read a user’s Drive.
+The configured Google Cloud project has the Drive API enabled and saved non-sensitive app-data/email declarations. Auth was moved to External / In production on 2026-10-19 after the public policy pages were deployed. See [the exact cloud setup record](PUBLIC_GOOGLE_ACCESS.md). The phone must still grant native Drive consent; developer-console configuration is not a grant to read a user’s Drive.
 
 ## Data and security boundary
 

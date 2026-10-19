@@ -2,7 +2,7 @@
 
 ## Problem
 
-Google OAuth is External but in Testing. Signing in with basic name/email can work for an unlisted account, while adding Drive app-data permission is blocked for that same account. Adding a few test users does not satisfy open sharing with unknown friends.
+The previous Google OAuth configuration was External and in Testing. Signing in with basic name/email can work for an unlisted account, while adding Drive app-data permission is blocked for that same account. Adding a few test users does not satisfy open sharing with unknown friends.
 
 ## Verified configuration
 
@@ -18,9 +18,21 @@ See [website/README.md](../website/README.md) for every file. Public assets are 
 
 ## Deployment and publishing status
 
-The website is prepared and locally previewed. Cloud Shell is waiting for an explicit credential-authorization approval. It requests permission to make Google Cloud API calls with the signed-in account, including future calls. No live deployment, domain verification or public OAuth switch is claimed yet.
+Completed on 2026-10-19 after explicit user approvals for Firebase terms, Cloud Shell credential authorization and Google public audience publishing.
 
-Next: deploy Hosting only, verify the public pages, add exact URLs/owned authorized domain in Branding, then prepare Google Audience's Production publishing confirmation. Complete any domain/brand verification Google actually requires. Moving to Production does not itself mean Google has verified the brand. Each friend must still grant their own app-data permission; it does not make any user's backup public.
+- Live homepage: https://gen-lang-client-0426132502.web.app/
+- Privacy: https://gen-lang-client-0426132502.web.app/privacy.html
+- Terms: https://gen-lang-client-0426132502.web.app/terms.html
+- Help: https://gen-lang-client-0426132502.web.app/support.html
+- Official preinstalled Firebase CLI 15.32.0 deployed Hosting only. The console reported Spark/no-cost; Analytics remained disabled and no billing upgrade was performed.
+- All seven public files were downloaded over HTTPS and matched the reviewed local bytes exactly. CSP, no-referrer, nosniff and camera/microphone/location denial headers are configured; live CSP/nosniff were verified. Internal links and successful/error HTTP routes were checked. Desktop homepage and privacy screenshots were inspected. Phone-width rendering has not been visually verified.
+- Google Branding saved the exact homepage/privacy/terms URLs and the specific project web.app authorized domain. The existing support contact was retained; no personal email was copied into the site or repository.
+- Google Audience visibly reports **In production**, External. Unknown friends no longer need the Testing allowlist.
+- Verification Center says data-access verification is not required because no sensitive or restricted scopes are requested. It separately says the custom branding is not shown to users. This is Production audience access, not a claim that Google has verified the app name/brand. Domain ownership verification has not been claimed or submitted.
+
+Each friend must grant their own app-data permission. Production does not publish backups or grant one user access to another account. Existing v1.7.0 APKs use this OAuth project; this cloud-side change requires no APK rebuild. Phone acceptance: retry Drive reconnect/authorization with a previously blocked account, complete a backup, then verify account-specific restore. Live friend-account authorization/transfer has not been performed from this VM. Google account administrator policies can still restrict individual accounts.
+
+Private local proof is in verification/firebase (ignored by Git): in-production.png, verification-status.png, live-homepage.png, live-privacy.png and live-site-verification.json. Current public source and setup documentation are committed on codex/github-build-and-takeover.
 
 ## Distribution
 
