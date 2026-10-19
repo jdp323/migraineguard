@@ -1,3 +1,5 @@
+> v1.6.6 adds separate Google-account databases/preferences/API keys, safe sign-out, preserved older local records and per-account phone-health opt-in. Health reads now show individual permission/empty/error states and dated heart/sleep records. See [implementation and tests](UPDATE_1_6_6.md). Samsung/watch transport still needs phone verification.
+
 # Implemented app flows and test scope
 
 This update adds functional local journal backups, device-bound AI key storage, opt-in food photo analysis, explicit health-summary sharing, preserving database migrations, one-store hydration history, corrected profile unit conversion, real/unavailable weather states, and a separately installable Preview APK.

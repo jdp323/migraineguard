@@ -11,6 +11,7 @@ import androidx.health.connect.client.testing.stubs.Stub
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.migraineguard.app.feature.fitness.HealthConnectHealthDataRepository
+import com.migraineguard.app.core.time.healthDayStart
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.CancellationException
 import org.junit.Assert.*
@@ -74,7 +75,7 @@ class HealthReadingTest {
     @Test fun previousDayHeartAndNewestSleepAreFoundAcrossPages() = runBlocking {
         val fake = FakeHealthConnectClient()
         fake.overrides.aggregate = stub { AggregationResult(metrics = mapOf(StepsRecord.COUNT_TOTAL to 0L)) }
-        val sampleTime = now.minusSeconds(4 * 3600)
+        val sampleTime = healthDayStart(now).minusSeconds(3600)
         fake.insertRecords(listOf(heart(sampleTime.minusSeconds(900), 63), heart(sampleTime, 77),
             heart(sampleTime.minusSeconds(600), 65), heart(sampleTime.minusSeconds(300), 66),
             sleep(now.minusSeconds(24 * 3600)), sleep(now.minusSeconds(48 * 3600)),

@@ -6,7 +6,7 @@ Separate Google-account storage fixes profile/API-key/journal reuse after sign-o
 
 Android app for migraine journaling, hydration, Health Connect fitness/sleep, meals, weight, medications, weather and AI coaching.
 
-**Version:** 1.6.5 (code 12) · Android 8+ · target SDK 35.
+**Version:** 1.6.6 (code 13) · Android 8+ · target SDK 35.
 
 Download builds from [GitHub Releases](https://github.com/jdp323/migraineguard/releases). Use **MigraineGuard Preview** to test alongside an older install without removing its records. Standard APK updates retain the package `com.migraineguard.app`; Preview uses `com.migraineguard.app.preview`. Both use the persistent test signing certificate.
 
