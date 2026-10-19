@@ -15,6 +15,11 @@ class StepReadingPolicyTest {
     @Test fun overlappingDailyBucketsAreNotAddedTogether() {
         val records = listOf(StepInterval(0, 1000, 100, samsung), StepInterval(0, 1000, 180, samsung))
         assertEquals(180, conservativeSteps(records, 0, 1000))
+        val dailyAndHourly = listOf(StepInterval(0, 24000, 180, samsung),
+            StepInterval(0, 1000, 100, samsung), StepInterval(1000, 2000, 50, samsung))
+        assertEquals(180, conservativeSteps(dailyAndHourly, 0, 24000))
+        assertEquals(180, conservativeSteps(listOf(StepInterval(0, 1000, 100, samsung),
+            StepInterval(500, 1500, 180, samsung)), 0, 1500))
     }
     @Test fun disjointIntervalsAddAndCrossDayIntervalsAreClipped() {
         val records = listOf(StepInterval(-1000, 1000, 100, samsung), StepInterval(1000, 2000, 80, samsung))

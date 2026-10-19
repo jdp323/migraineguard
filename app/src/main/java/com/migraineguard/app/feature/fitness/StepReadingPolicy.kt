@@ -4,25 +4,31 @@ import kotlin.math.roundToLong
 
 data class StepInterval(val startMillis: Long, val endMillis: Long, val count: Long, val source: String)
 
-/** One writer at a time. Overlapping intervals contribute their maximum density, never their sum. */
+/** One writer at a time. Choose the highest-count set of non-overlapping intervals. */
 fun conservativeSteps(records: List<StepInterval>, start: Long, end: Long): Int? {
     val valid = records.filter { it.count >= 0 && it.endMillis > it.startMillis &&
         it.startMillis < end && it.endMillis > start }
     if (valid.isEmpty()) return null
     require(valid.map { it.source }.distinct().size == 1) { "Do not combine raw writers." }
-    val points = (valid.flatMap { listOf(maxOf(it.startMillis, start), minOf(it.endMillis, end)) }).distinct().sorted()
-    data class Slice(val start: Long, val end: Long, val density: Double)
-    val slices = valid.map { Slice(maxOf(start, it.startMillis), minOf(end, it.endMillis),
-        it.count.toDouble() / (it.endMillis - it.startMillis)) }.sortedBy { it.start }
-    val active = java.util.PriorityQueue<Slice>(compareByDescending { it.density })
-    var index = 0
-    var count = 0.0
-    for ((a, b) in points.zipWithNext()) {
-        while (index < slices.size && slices[index].start <= a) active.add(slices[index++])
-        while (active.isNotEmpty() && (active.peek()?.end ?: Long.MAX_VALUE) <= a) active.poll()
-        count += (b - a) * (active.peek()?.density ?: 0.0)
+    data class Slice(val start: Long, val end: Long, val count: Double)
+    val slices = valid.map {
+        val a = maxOf(start, it.startMillis)
+        val b = minOf(end, it.endMillis)
+        Slice(a, b, it.count.toDouble() * (b - a) / (it.endMillis - it.startMillis))
+    }.sortedBy { it.end }
+    // Weighted interval scheduling: a parent daily bucket and its hourly children
+    // are alternatives, never additive. Partial overlaps can underestimate, safely.
+    val best = DoubleArray(slices.size + 1)
+    for (i in slices.indices) {
+        var lo = 0
+        var hi = i
+        while (lo < hi) {
+            val mid = (lo + hi) ushr 1
+            if (slices[mid].end <= slices[i].start) lo = mid + 1 else hi = mid
+        }
+        best[i + 1] = maxOf(best[i], best[lo] + slices[i].count)
     }
-    return count.coerceIn(0.0, Int.MAX_VALUE.toDouble()).roundToLong().toInt()
+    return best.last().coerceIn(0.0, Int.MAX_VALUE.toDouble()).roundToLong().toInt()
 }
 
 data class StepChoice(val total: Int?, val source: String, val estimated: Boolean = false)
