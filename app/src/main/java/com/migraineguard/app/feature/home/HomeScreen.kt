@@ -209,7 +209,7 @@ fun HomeScreen(
             )
 
             SectionCard(title = "Daily summary", icon = Icons.Filled.LocalFireDepartment) {
-                Text("Steps ${health?.stepSync?.let { it.total?.toString() ?: "—" } ?: (health?.steps ?: 0).toString()} / $stepGoal")
+                Text("Steps ${health?.observedSteps?.toString() ?: "—"} / $stepGoal")
                 health?.stepSync?.let { sync ->
                     Text(sync.message, style = MaterialTheme.typography.bodySmall)
                     sync.samsungTotal?.let { Text("Samsung shared: $it", style = MaterialTheme.typography.labelSmall) }
@@ -280,7 +280,7 @@ fun HomeScreen(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 SectionCard(title = "Steps", modifier = Modifier.weight(1f), icon = Icons.Filled.DirectionsWalk) {
                     val h = health
-                    Text(h?.stepSync?.let { it.total?.toString() ?: "—" } ?: h?.steps?.toString() ?: "—")
+                    Text(h?.observedSteps?.toString() ?: "—")
                     Text("Goal $stepGoal · ${(stepProgress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
                     Text(h?.sourceLabel ?: "", style = MaterialTheme.typography.bodySmall)
                 }
