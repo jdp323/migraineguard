@@ -187,10 +187,10 @@ fun InsightsScreen(
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             SectionCard(title = "Fitness", modifier = Modifier.weight(1f), icon = Icons.Filled.FitnessCenter) {
                                 Text("${r.workoutCount} workouts")
-                                Text("${r.workoutMinutes} min · ${r.totalSteps} steps today", style = MaterialTheme.typography.bodySmall)
+                                Text("${r.workoutMinutes} min · ${r.totalSteps ?: "—"} steps today", style = MaterialTheme.typography.bodySmall)
                             }
                             SectionCard(title = "Latest sleep", modifier = Modifier.weight(1f), icon = Icons.Filled.Bedtime) {
-                                Text("${"%.1f".format(r.avgSleepHours)}h")
+                                Text(r.avgSleepHours?.let { "%.1fh".format(it) } ?: "Unavailable")
                             }
                         }
                         OutlinedButton(
@@ -234,25 +234,25 @@ fun InsightsScreen(
                         }
                     }
                     InsightMode.Fitness -> {
-                        if (r.workoutCount == 0 && r.totalSteps == 0) {
+                        if (r.workoutCount == 0 && (r.totalSteps == null || r.totalSteps == 0)) {
                             EmptyState("No fitness data", "Connect Health Connect or log workouts on the Fitness tab.", icon = Icons.Filled.FitnessCenter)
                         } else {
                             SectionCard(title = "Fitness", icon = Icons.Filled.FitnessCenter) {
                                 Text("${r.workoutCount} workouts · ${r.workoutMinutes} minutes")
-                                Text("Steps (latest day snapshot): ${r.totalSteps}")
+                                Text("Steps (latest day snapshot): ${r.totalSteps ?: "Unavailable"}")
                             }
                         }
                     }
                     InsightMode.Sleep -> {
                         SectionCard(title = "Sleep", icon = Icons.Filled.Bedtime) {
-                            if (r.avgSleepHours <= 0f) {
+                            if (r.avgSleepHours == null) {
                                 Text("No sleep data yet. Grant Health Connect sleep permission or wait for sync.")
                             } else {
                                 Text("Recent sleep ~ ${"%.1f".format(r.avgSleepHours)} hours")
                                 Text(
                                     when {
                                         r.avgSleepHours < 6f -> "Short sleep — a frequent migraine amplifier."
-                                        r.avgSleepHours >= 7.5f -> "Restorative range — protect this schedule."
+                                        r.avgSleepHours >= 7.5f -> "Recorded session duration; sleep quality is not measured here."
                                         else -> "Fair sleep window; consistency matters as much as duration."
                                     },
                                 )

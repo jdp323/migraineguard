@@ -152,13 +152,13 @@ fun HomeScreen(
             todayMigraines > 0 -> append("You already logged a migraine today — rest & hydrate.")
             !weatherLoading && w != null && !w.isCachedOrFake && w.pressureHpa < 1005 -> append("Low pressure (${w.pressureHpa} hPa) — elevated migraine risk hint.")
             cups < prefs.waterGoalCups / 2 -> append("Hydration is low so far — a common migraine trigger.")
-            sleep != null && sleep!!.hours < 6f -> append("Short sleep last night — watch for tension headaches.")
+            sleep?.recordedHours?.let { it < 6f } == true -> append("Short sleep last night — watch for tension headaches.")
             else -> append("Conditions look steady. Keep logging habits for better insights.")
         }
     }
     val waterProgress = (cups.toFloat() / prefs.waterGoalCups.coerceAtLeast(1)).coerceAtMost(1f)
     val stepGoal = prefs.dailyStepGoal.coerceAtLeast(1)
-    val stepProgress = ((health?.steps ?: 0).toFloat() / stepGoal).coerceAtMost(1f)
+    val stepProgress = ((health?.observedSteps ?: 0).toFloat() / stepGoal).coerceAtMost(1f)
     val sleepGoal = prefs.sleepGoalHours.coerceAtLeast(1f)
     val sleepProgress = (((sleep?.hours ?: 0f) / sleepGoal).coerceAtMost(1f))
     val streak = remember(waterHistory, health) {
@@ -168,7 +168,7 @@ fun HomeScreen(
         while (true) {
             val iso = d.toString()
             val hasWater = iso in waterDates || (iso == todayIso && cups > 0)
-            val hasSteps = iso == todayIso && (health?.steps ?: 0) > 0
+            val hasSteps = iso == todayIso && (health?.observedSteps ?: 0) > 0
             if (hasWater || hasSteps) {
                 s++
                 d = d.minusDays(1)
@@ -219,7 +219,7 @@ fun HomeScreen(
                 Text("Water $cups / ${prefs.waterGoalCups} cups")
                 LinearProgressIndicator(progress = { waterProgress }, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(8.dp))
-                Text("Sleep ${sleep?.hours ?: "—"}h / ${prefs.sleepGoalHours}h goal")
+                Text("Sleep ${sleep?.recordedHours?.let { "%.1f".format(it) } ?: "—"}h / ${prefs.sleepGoalHours}h goal")
                 LinearProgressIndicator(progress = { sleepProgress }, modifier = Modifier.fillMaxWidth())
                 health?.caloriesBurned?.let {
                     Spacer(Modifier.height(6.dp))

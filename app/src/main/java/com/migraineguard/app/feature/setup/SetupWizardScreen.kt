@@ -71,10 +71,12 @@ import com.migraineguard.app.core.data.Result
 import com.migraineguard.app.core.data.prefs.UserPreferences
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
 import com.migraineguard.app.core.domain.ActivityLevel
+import com.migraineguard.app.feature.profile.ProfileSetupScreen
 import com.migraineguard.app.core.domain.BodyProfile
 import com.migraineguard.app.core.domain.SexGender
 import com.migraineguard.app.core.ui.DateOfBirthField
 import com.migraineguard.app.core.ui.SectionCard
+import com.migraineguard.app.feature.auth.SignInScreen
 import com.migraineguard.app.feature.auth.AuthRepository
 import com.migraineguard.app.feature.fitness.HealthConnectPackages
 import com.migraineguard.app.feature.fitness.HealthDataRepository
@@ -146,7 +148,7 @@ fun SetupWizardScreen(
                 onNeedGoogleSetup = {
                     scope.launch {
                         snackbar.showSnackbar(
-                            "Google Web Client ID missing — unusual for this build. Use Demo continue.",
+                            "Google sign-in needs project setup. Continue locally while it is configured.",
                         )
                     }
                 },
@@ -253,85 +255,11 @@ private fun SignInStep(
     onNeedGoogleSetup: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var loading by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var configured by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        configured = authRepository.hasConfiguredClientId()
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            Icons.Filled.Person,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(48.dp),
-        )
-        Spacer(Modifier.height(12.dp))
-        Text("Sign in", style = MaterialTheme.typography.headlineSmall)
-        Text(
-            "Google Sign-In is baked for friends. Demo continues offline. " +
-                "Google Sign-In ≠ Gemini API access.",
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(vertical = 12.dp),
-        )
-        Button(
-            onClick = {
-                scope.launch {
-                    loading = true
-                    error = null
-                    configured = authRepository.hasConfiguredClientId()
-                    if (!configured) {
-                        loading = false
-                        error = "Google Web Client ID missing"
-                        onNeedGoogleSetup()
-                        return@launch
-                    }
-                    val result = authRepository.signInWithGoogle(context)
-                    loading = false
-                    result.onFailure { error = it.message ?: "Google Sign-In failed" }
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(16.dp),
-            enabled = !loading,
-        ) {
-            if (loading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-            else Text(stringResource(R.string.sign_in_google))
-        }
-        Spacer(Modifier.height(10.dp))
-        OutlinedButton(
-            onClick = { authRepository.signInDemo() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(16.dp),
-            enabled = !loading,
-        ) { Text(stringResource(R.string.continue_demo)) }
-        error?.let {
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 12.dp),
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
+    SignInScreen(
+        authRepository = authRepository,
+        onNeedGoogleSetup = onNeedGoogleSetup,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -772,167 +700,13 @@ private fun ProfileStep(
     onNext: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var name by remember { mutableStateOf(initial.displayName.ifBlank { prefilledName }) }
-    var dob by remember { mutableStateOf(initial.dateOfBirthIso) }
-    var sex by remember { mutableStateOf(initial.sex ?: SexGender.PREFER_NOT) }
-    var useMetric by remember { mutableStateOf(initial.useMetric) }
-    var heightCm by remember { mutableStateOf(initial.heightCm?.toInt()?.toString() ?: "170") }
-    var heightFt by remember { mutableStateOf("5") }
-    var heightIn by remember { mutableStateOf("7") }
-    var weight by remember {
-        mutableStateOf(
-            when {
-                initial.weightKg != null && !useMetric ->
-                    String.format("%.0f", initial.weightKg * 2.20462f)
-                initial.weightKg != null -> String.format("%.0f", initial.weightKg)
-                else -> if (useMetric) "70" else "154"
-            },
-        )
-    }
-    var activity by remember { mutableStateOf(initial.activityLevel ?: ActivityLevel.MODERATE) }
-    var error by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text("Your profile", style = MaterialTheme.typography.headlineSmall)
-        Text(
-            "Name is prefilled from Google when available. Date of birth uses a calendar — Google doesn’t share DOB.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        SectionCard(title = "Basics") {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Display name") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-            )
-            DateOfBirthField(isoDate = dob, onIsoDateChange = { dob = it })
-            Text("Sex / gender", style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SexGender.entries.forEach { s ->
-                    FilterChip(
-                        selected = sex == s,
-                        onClick = { sex = s },
-                        label = { Text(s.label) },
-                    )
-                }
-            }
-        }
-        SectionCard(title = "Body metrics") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = useMetric, onClick = { useMetric = true }, label = { Text("Metric") })
-                FilterChip(selected = !useMetric, onClick = { useMetric = false }, label = { Text("Imperial") })
-            }
-            if (useMetric) {
-                OutlinedTextField(
-                    value = heightCm,
-                    onValueChange = { heightCm = it.filter { c -> c.isDigit() }.take(3) },
-                    label = { Text("Height (cm)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                )
-            } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = heightFt,
-                        onValueChange = { heightFt = it.filter { c -> c.isDigit() }.take(1) },
-                        label = { Text("ft") },
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true,
-                    )
-                    OutlinedTextField(
-                        value = heightIn,
-                        onValueChange = { heightIn = it.filter { c -> c.isDigit() }.take(2) },
-                        label = { Text("in") },
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true,
-                    )
-                }
-            }
-            OutlinedTextField(
-                value = weight,
-                onValueChange = { weight = it.filter { c -> c.isDigit() || c == '.' }.take(5) },
-                label = { Text(if (useMetric) "Weight (kg)" else "Weight (lb)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-            )
-        }
-        SectionCard(title = "Activity (optional)") {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ActivityLevel.entries.forEach { a ->
-                    FilterChip(
-                        selected = activity == a,
-                        onClick = { activity = a },
-                        label = { Text(a.label) },
-                    )
-                }
-            }
-        }
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        Button(
-            onClick = {
-                val hCm = if (useMetric) {
-                    heightCm.toFloatOrNull()
-                } else {
-                    val ft = heightFt.toFloatOrNull() ?: 0f
-                    val inch = heightIn.toFloatOrNull() ?: 0f
-                    ((ft * 12f) + inch) * 2.54f
-                }
-                val wKg = if (useMetric) {
-                    weight.toFloatOrNull()
-                } else {
-                    weight.toFloatOrNull()?.div(2.20462f)
-                }
-                when {
-                    name.isBlank() -> error = "Please enter a display name"
-                    dob.isBlank() || runCatching { java.time.LocalDate.parse(dob) }.isFailure ->
-                        error = "Please pick a valid date of birth"
-                    hCm == null || hCm < 100f || hCm > 250f -> error = "Enter a valid height"
-                    wKg == null || wKg < 30f || wKg > 300f -> error = "Enter a valid weight"
-                    else -> {
-                        error = null
-                        scope.launch {
-                            preferencesRepository.saveBodyProfile(
-                                BodyProfile(
-                                    displayName = name.trim(),
-                                    dateOfBirthIso = dob.trim(),
-                                    sex = sex,
-                                    heightCm = hCm,
-                                    weightKg = wKg,
-                                    activityLevel = activity,
-                                    useMetric = useMetric,
-                                    profileComplete = true,
-                                ),
-                            )
-                            onNext()
-                        }
-                    }
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) { Text("Save & continue") }
-        Spacer(Modifier.height(24.dp))
-    }
+    ProfileSetupScreen(
+        preferencesRepository = preferencesRepository,
+        prefilledName = prefilledName,
+        initial = initial,
+        onComplete = onNext,
+        modifier = modifier,
+    )
 }
 
 @Composable

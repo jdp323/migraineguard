@@ -76,9 +76,9 @@ class OfflineHealthBrain : BaseAiProvider("OfflineHealthBrain", priority = 99) {
                 .put("sleepGoalHours", pack.prefs.sleepGoalHours))
             .put("migrainesRecent", migraines)
             .put("waterAdherence", waterAdherence(pack))
-            .put("steps", pack.fitness?.let { if (it.stepSync != null) it.stepSync.total else it.steps })
+            .put("steps", pack.fitness?.observedSteps)
             .put("stepsGoal", pack.prefs.dailyStepGoal)
-            .put("sleepHours", pack.sleep?.hours)
+            .put("sleepHours", pack.sleep?.recordedHours)
             .put("sleepSource", pack.sleep?.sourceLabel)
             .put("pressureHpa", pack.weather?.pressureHpa)
             .put("weather", pack.weather?.condition)
@@ -114,12 +114,10 @@ class OfflineHealthBrain : BaseAiProvider("OfflineHealthBrain", priority = 99) {
     }
 
     private fun coachReport(pack: ContextPack, prompt: String): String {
-        val steps = pack.fitness?.let { fitness ->
-            if (fitness.stepSync != null) fitness.stepSync.total else fitness.steps
-        }
+        val steps = pack.fitness?.observedSteps
         val goal = pack.prefs.dailyStepGoal
         val cupsToday = pack.waterByDay[LocalDate.now().toString()] ?: 0
-        val sleepH = pack.sleep?.hours ?: 0f
+        val sleepH = pack.sleep?.recordedHours ?: 0f
         val workouts = pack.workouts.size
         val stepPct = steps?.let { ((it.toFloat() / goal.coerceAtLeast(1)) * 100).toInt().coerceAtMost(200) }
         val waterPct = ((cupsToday.toFloat() / pack.waterGoal.coerceAtLeast(1)) * 100).toInt()
@@ -191,7 +189,7 @@ class OfflineHealthBrain : BaseAiProvider("OfflineHealthBrain", priority = 99) {
             appendLine("- Profile: age ${age ?: "—"}, BMI ${bmi?.let { "%.1f".format(it) } ?: "—"} (${pack.prefs.bodyProfile.bmiLabel})")
             appendLine("- Migraines in window: **${migraines.size}** · avg intensity **${"%.1f".format(avgIntensity)}**/10")
             appendLine("- Water adherence ~**$adherence%** of goal")
-            appendLine("- Steps today: ${pack.fitness?.steps ?: "—"} / ${pack.prefs.dailyStepGoal}")
+            appendLine("- Steps today: ${pack.fitness?.observedSteps ?: "—"} / ${pack.prefs.dailyStepGoal}")
             appendLine("- Sleep: ${pack.sleep?.let { if (it.hours > 0) "%.1fh (%s)".format(it.hours, it.qualityLabel) else it.sourceLabel } ?: "—"}")
             appendLine("- Workouts: ${pack.workouts.size} (${pack.workouts.sumOf { it.durationMinutes }} min)")
             appendLine("- Energy check-in: ${pack.energyLevel ?: "—"}")

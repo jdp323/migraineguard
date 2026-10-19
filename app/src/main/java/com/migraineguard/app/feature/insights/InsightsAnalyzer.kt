@@ -70,9 +70,9 @@ class DefaultInsightsAnalyzer(
             append("Migraines logged: ${episodes.size}. ")
             if (episodes.isNotEmpty()) append("Avg intensity ${"%.1f".format(avgIntensity)}/10. ")
             append("Avg water ${"%.1f".format(avgWater)} cups per recorded day. ")
-            append("Recent sleep ${sleep.hours}h (${sleep.qualityLabel}). ")
+            append(sleep.recordedHours?.let { "Recent sleep ${it}h (${sleep.qualityLabel}). " } ?: "Sleep reading unavailable. ")
             append("${workouts.size} workouts · ${workouts.sumOf { it.durationMinutes }} min. ")
-            append("Steps today ${fitness.steps}. ")
+            append(fitness.observedSteps?.let { "Steps today $it. " } ?: "Steps reading unavailable. ")
             append("Sleep and steps are current snapshots, not averages or totals for this period. ")
             append(pressureNote)
             append(".")
@@ -84,11 +84,11 @@ class DefaultInsightsAnalyzer(
             migraineCount = episodes.size,
             avgIntensity = avgIntensity,
             avgWaterCups = avgWater,
-            avgSleepHours = sleep.hours,
+            avgSleepHours = sleep.recordedHours,
             pressureTrend = pressureNote,
             foodScanCount = foods.size,
             topFoods = topFoods,
-            totalSteps = fitness.steps,
+            totalSteps = fitness.observedSteps,
             workoutCount = workouts.size,
             workoutMinutes = workouts.sumOf { it.durationMinutes },
             sideSummary = sideSummary,
@@ -101,9 +101,9 @@ class DefaultInsightsAnalyzer(
             Migraines: ${report.migraineCount}, avg intensity ${report.avgIntensity}
             Head sides: ${report.sideSummary}
             Water average over recorded days, cups: ${report.avgWaterCups}
-            Latest sleep session snapshot, hours (not period average): ${report.avgSleepHours}
+            Latest sleep session snapshot, hours (not period average): ${report.avgSleepHours ?: "unavailable"}
             Food scans: ${report.foodScanCount}, top: ${report.topFoods.joinToString()}
-            Workouts: ${report.workoutCount} (${report.workoutMinutes} min), steps today: ${report.totalSteps}
+            Workouts: ${report.workoutCount} (${report.workoutMinutes} min), steps today: ${report.totalSteps ?: "unavailable"}
             Current weather status (not period trend): ${report.pressureTrend}
             Stats summary: ${report.summary}
         """.trimIndent()

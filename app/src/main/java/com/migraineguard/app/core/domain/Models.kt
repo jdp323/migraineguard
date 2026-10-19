@@ -124,7 +124,10 @@ data class HealthSnapshot(
     val caloriesBurned: Double? = null,
     val caloriesSourceLabel: String? = null,
     val stepSync: StepSyncSnapshot? = null,
-)
+) {
+    /** A failed/empty Health Connect query is unknown, while an actual zero remains zero. */
+    val observedSteps: Int? get() = if (stepSync != null) stepSync.total else steps
+}
 
 data class StepSyncSnapshot(
     val total: Int?,
@@ -138,7 +141,9 @@ data class SleepSnapshot(
     val hours: Float,
     val qualityLabel: String,
     val sourceLabel: String = "Local",
-)
+) {
+    val recordedHours: Float? get() = hours.takeIf { it.isFinite() && it > 0f }
+}
 
 data class WeatherSnapshot(
     val temperatureC: Float,
@@ -174,11 +179,11 @@ data class InsightReport(
     val migraineCount: Int = 0,
     val avgIntensity: Float = 0f,
     val avgWaterCups: Float = 0f,
-    val avgSleepHours: Float = 0f,
+    val avgSleepHours: Float? = null,
     val pressureTrend: String = "",
     val foodScanCount: Int = 0,
     val topFoods: List<String> = emptyList(),
-    val totalSteps: Int = 0,
+    val totalSteps: Int? = null,
     val workoutCount: Int = 0,
     val workoutMinutes: Int = 0,
     val sideSummary: String = "",

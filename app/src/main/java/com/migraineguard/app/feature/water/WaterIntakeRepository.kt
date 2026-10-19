@@ -11,7 +11,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.migraineguard.app.core.data.db.WaterDayEntity
 import com.migraineguard.app.core.data.db.WaterHistoryDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
+import com.migraineguard.app.core.time.localDates
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -44,10 +44,8 @@ class WaterIntakeRepository(context: Context, private val historyDao: WaterHisto
     @OptIn(ExperimentalCoroutinesApi::class)
     val cupsToday: Flow<Int> = flow {
         migrateLegacy()
-        emitAll(flow {
-            while (true) { emit(LocalDate.now().toString()); delay(30_000) }
-        }.distinctUntilChanged().flatMapLatest { day ->
-            historyDao.observeDay(day).map { it?.cups ?: 0 }
+        emitAll(localDates().flatMapLatest { day ->
+            historyDao.observeDay(day.toString()).map { it?.cups ?: 0 }
         })
     }
 

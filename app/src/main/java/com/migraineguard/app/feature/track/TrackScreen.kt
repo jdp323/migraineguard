@@ -339,7 +339,8 @@ fun TrackScreen(
         eodDoneToday = workouts.any { it.fromExerciseOfDay && it.timestampMillis >= todayStart }
     }
 
-    val steps = fitness?.steps ?: 0
+    val observedSteps = fitness?.observedSteps
+    val steps = observedSteps ?: 0
     val stepGoal = prefs.dailyStepGoal.coerceAtLeast(1)
     val stepProgress = (steps.toFloat() / stepGoal).coerceAtMost(1f)
 
@@ -425,7 +426,7 @@ fun TrackScreen(
                 ) {
                     ProgressRing(
                         progress = stepProgress,
-                        label = if (fitness?.stepSync?.total == null && fitness?.stepSync != null) "—" else "$steps",
+                        label = observedSteps?.toString() ?: "—",
                         size = 120.dp,
                         stroke = 12.dp,
                     )
@@ -587,7 +588,7 @@ fun TrackScreen(
 
             SectionCard(title = "This week", icon = Icons.Filled.FitnessCenter) {
                 Text("${weekWorkouts.size} workouts · $weekMinutes minutes")
-                Text("Steps today: $steps / $stepGoal")
+                Text("Steps today: ${observedSteps?.toString() ?: "—"} / $stepGoal")
                 Text("Exercise minutes: ${fitness?.activeMinutes ?: 0}")
             }
 
