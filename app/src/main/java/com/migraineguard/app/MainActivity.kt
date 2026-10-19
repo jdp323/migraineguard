@@ -1,6 +1,10 @@
 package com.migraineguard.app
 
 import android.os.Bundle
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
+import androidx.core.view.WindowCompat
+import com.migraineguard.app.core.domain.ThemeMode
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -27,6 +31,18 @@ class MainActivity : ComponentActivity() {
             key(container) {
                 val prefs by container.preferencesRepository.preferences
                     .collectAsStateWithLifecycle(UserPreferences())
+                val systemDark = isSystemInDarkTheme()
+                val dark = when (prefs.themeMode) {
+                    ThemeMode.DARK -> true
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.SYSTEM -> systemDark
+                }
+                LaunchedEffect(dark) {
+                    WindowCompat.getInsetsController(window, window.decorView).apply {
+                        isAppearanceLightStatusBars = !dark
+                        isAppearanceLightNavigationBars = !dark
+                    }
+                }
                 MigraineGuardTheme(
                     themeMode = prefs.themeMode,
                     dynamicColor = prefs.dynamicColor,

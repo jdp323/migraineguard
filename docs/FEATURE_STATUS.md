@@ -25,7 +25,8 @@ Both APKs are signed with the retained test certificate. The original temporary 
 | AI coach / analyst | User prompt plus optional health summary; cloud fallback and local reports | Provider/cancellation tests; local summaries avoid automatic health-data uploads |
 | Weather | Approximate-location Open-Meteo readings; explicit unavailable/stale states | Compilation; network/location behavior requires phone testing |
 | Backups | Password-encrypted export/import, all seven journal tables, profile/goals optional on restore; merges without deleting current records | Encryption/tampering/duplicate-ID tests and Android round-trip tests |
-| Cloud files | Android file picker can save the encrypted backup to an available Drive provider | Manual user-selected export; no automatic background synchronization |
+| Account cloud backup | Private Drive app data restores profile/DOB/measurements/goals/settings/API keys and seven journal tables at login; changes, backgrounding and sign-out attempt saves | Simulated transport restore/identity/failure tests; native consent and real Google Drive transfer need phone acceptance |
+| Encrypted cloud files | Android file picker can separately save a password-encrypted journal export to an available Drive provider | Manual export/import; provider keys are excluded from this separate format |
 | Key storage | User API keys encrypted with Android Keystore; legacy plaintext values migrated | Android on-disk encryption and round-trip test |
 | APK publishing | Tests, lint, signature verification and Android emulator tests gate Releases | GitHub Actions results and certificate reports |
 | Google sign-in | Explicit account picker and actual installed-certificate diagnostics | Web/Standard/Preview clients registered in the accessible project; approved tester configured; real phone login pending |
@@ -37,4 +38,4 @@ The all-in-one phone app is a working development build, not a validated medical
 
 ## v1.6.4 follow-up
 
-The first-run wizard reuses the corrected shared sign-in/profile screens. Medication daily state now follows a date Flow without a database write. Health snapshots preserve unavailable steps/sleep through dashboard, Insights and offline AI. See [the file/function supplement](UPDATE_1_6_4.md) for exact changes and current access checks. Google OAuth is now registered in an accessible project after explicit approval. The original project remains inaccessible, while actual phone login still requires testing.
+The first-run wizard reuses the corrected shared sign-in/profile screens. Medication daily state now follows a date Flow without a database write. Health snapshots preserve unavailable steps/sleep through dashboard, Insights and offline AI. See [the file/function supplement](UPDATE_1_6_4.md) for exact changes and current access checks. Google OAuth is now registered in an accessible project after explicit approval. The original project remains inaccessible, and the user has now confirmed phone login works. Native Drive consent/transfer still requires phone testing.

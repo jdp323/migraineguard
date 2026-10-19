@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -179,7 +180,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
                             selected = currentRoute == item.dest.route,
                             onClick = { goBottom(item.dest.route) },
                             icon = { Icon(item.icon, contentDescription = item.dest.label) },
-                            label = { Text(item.dest.label, style = MaterialTheme.typography.labelSmall, maxLines = 1) },
+                            label = { Text(item.dest.label, style = MaterialTheme.typography.labelSmall, fontSize = 10.sp, letterSpacing = 0.sp, maxLines = 1) },
                         )
                     }
                 }

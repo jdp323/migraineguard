@@ -1,6 +1,14 @@
 > Current v1.7.0: [Drive account restore, Samsung query fixes, UI and complete changed-file/function supplement](UPDATE_1_7_0.md). This supersedes the older cloud-backup placeholder and current-version descriptions below; historical source references remain pinned to their stated baselines.
 
-## v1.6.6 account and health checks
+## v1.7.0 Drive restore and Samsung checks
+
+Install the Standard v1.7.0 APK over the same signed installation. Keep Standard and Preview distinct. Sign in to the Google account containing your details and allow the native private Drive app-data prompt. Save any missing details once, then use Settings → Back up now and wait for the completed result before switching accounts. Other accounts must use their own profile/key/journal. Returning to the original account should restore birthday, measurements and keys without repeating setup. A fresh phone can restore only a previously completed backup for that account/application.
+
+Google Auth remains in Testing mode; accounts must be allowed by that configuration. The Drive API and app-data/email scope declarations are enabled in the configured project. This does not replace the native permission grant on each user's phone. Google protects the portable cloud keys in transit/at rest; this is not a separately password-encrypted end-to-end backup. Local keys use Android Keystore.
+
+Health Connect records are phone-specific. After restoring, verify this installed app's permissions. Fitness defaults to Samsung Health, offers a combined source, and labels a raw-record estimate if aggregates are zero despite records. BPM is a dated sample, not a live stream. If actual Samsung records remain missing, use Connection & sync details → Copy sync report and share the local diagnostic report, which omits profile/API-key information. See [implementation and known limits](UPDATE_1_7_0.md).
+
+## v1.6.6 account and health checks (retained background)
 
 Update the same installed package. Sign in with account A, set its profile/key, sign out and select account B: B must start with its own profile and no A keys/logs. Return to A to verify its records remain. Older pre-isolation records are preserved under **Continue locally**; they are not automatically assigned to Google accounts.
 
@@ -12,7 +20,7 @@ Each account must connect this phone’s Health Connect data in Fitness. Grant t
 
 Google Auth is configured in the accessible existing project gen-lang-client-0426132502. Standard and Preview are both registered with the retained FB:67 signing certificate, and the APK uses their matching Web audience. Testing mode is retained for the approved Google account. Install the new APK and use that account; do not create a new API key for Google login. Old shipped Web-client overrides migrate automatically while custom settings are preserved.
 
-Google client changes may take five minutes to a few hours to propagate. The old APK still points to the earlier project until updated. A cancellation message alone does not prove the picker was dismissed. Phone login still needs real-device verification. See [the current source/setup supplement](UPDATE_1_6_4.md).
+Google client changes may take five minutes to a few hours to propagate. The old APK still points to the earlier project until updated. A cancellation message alone does not prove the picker was dismissed. The user subsequently confirmed phone login works; new Drive authorization/transfer remains a phone acceptance check. See [the current source/setup supplement](UPDATE_1_6_4.md).
 
 The sections below also preserve earlier signing and troubleshooting history.
 

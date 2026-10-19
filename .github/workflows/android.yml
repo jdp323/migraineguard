@@ -113,7 +113,7 @@ jobs:
             adb shell am instrument -w com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-runtime-results.txt
             adb pull /sdcard/Android/data/com.migraineguard.app/files/verification ui-verification || true
             cat android-runtime-results.txt
-            grep -q 'OK (17 tests)' android-runtime-results.txt
+            grep -q 'OK (18 tests)' android-runtime-results.txt
             adb shell am start -n com.migraineguard.app/.MainActivity
             sleep 5
             adb exec-out screencap -p > android-startup.png
@@ -161,7 +161,7 @@ jobs:
 
           New light/dark palettes, rounded cards, animated daily habit rings, smoother navigation and a cleaner Fitness screen. Missing health readings stay unavailable instead of becoming invented zeroes.
 
-          Verified release checks include JVM tests, Android lint, retained signing certificates, and 17 Android emulator tests for account separation, migrations, encrypted exports, Drive restore with a simulated transport, health queries and all six tabs. UI screenshots are captured in light/dark themes on a narrow screen. Real Google Drive authorization, Samsung/watch transfer and live AI still require phone testing.
+          Verified release checks include JVM tests, Android lint, retained signing certificates, and 18 Android emulator tests for account separation, migrations, encrypted exports, Drive restore with a simulated transport, health queries and all six tabs. UI screenshots are captured in light/dark themes on a narrow screen. Real Google Drive authorization, Samsung/watch transfer and live AI still require phone testing.
 
           Install Standard to update an installation signed with the retained FB:67 certificate. Preview installs alongside Standard with separate storage and package com.migraineguard.app.preview. Older unowned data remains under Continue locally; sign in to the original account before connecting Drive to back up its existing details.
           NOTES

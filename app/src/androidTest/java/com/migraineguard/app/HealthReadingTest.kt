@@ -59,6 +59,18 @@ class HealthReadingTest {
         assertTrue(result.stepSync!!.rawSummary.contains("180"))
     }
 
+    @Test fun rawCrossMidnightStepsAreClippedToToday() = runBlocking {
+        val fake = FakeHealthConnectClient(packageName = "com.sec.android.app.shealth")
+        fake.overrides.aggregate = stub { AggregationResult(metrics = mapOf(StepsRecord.COUNT_TOTAL to 0L)) }
+        val midnight = healthDayStart(now)
+        fake.insertRecords(listOf(StepsRecord(startTime = midnight.minusSeconds(600), startZoneOffset = null,
+            endTime = midnight.plusSeconds(600), endZoneOffset = null,
+            count = 200, metadata = Metadata.manualEntry())))
+        val result = repo(fake).latestFitness()
+        assertEquals(100, result.observedSteps)
+        assertTrue(result.stepSync!!.isEstimated)
+    }
+
     @Test fun grantedButEmptyDoesNotClaimPermissionDenied() = runBlocking {
         val fake = FakeHealthConnectClient()
         fake.overrides.readRecords = stub { ReadRecordsResponse(records = emptyList<Record>(), pageToken = "") }

@@ -184,7 +184,7 @@ Coach and Health Analyst are educational personas defined in Personas.kt. AiCoac
 
 Automatic Insights narrative stays local/offline. No personal health summary is sent merely by opening Insights. Offline reports use templates/descriptive statistics; they are not equivalent to a language model performing a validated clinical assessment. Missing step readings are left unavailable rather than interpreted as inactivity.
 
-Successful replies are stored in ai_sessions with the user prompt and full response. Sign-out does not purge the journal. The app does not have a backend account database, payment service, team-sharing server or automatic Drive sync.
+Successful replies are stored in ai_sessions with the user prompt and full response. Sign-out does not purge the journal. The app does not have a backend account database, payment service or team-sharing server. The v1.6.3 baseline had no automatic Drive backup; [v1.7.0](UPDATE_1_7_0.md) adds account-scoped app-data backup/restore with native Google authorization.
 
 ## 11. Weather
 
@@ -262,7 +262,7 @@ These tests do not use the user's accounts or modify a real phone's Health Conne
 | Weather missing | Grant optional coarse location, turn location services on and retry; stale data is labeled. |
 | Reminders absent | App toggle, notification permission/channel and OS scheduling/battery policy all matter. These are periodic check-ins, not exact alarms. |
 | Backup won't restore | Correct password, recognized format and size/record validation are required. Failure before transaction leaves journal unchanged. |
-| Old medication check remains visible at midnight | Daily interpretation occurs on record emission; force reload/re-enter screen until a date-driven flow is added. |
+| Old medication check remains visible at midnight | Fixed after the baseline by the local-date Flow documented in v1.6.4; verify the installed build version if it persists. |
 | Historical Insights appears to show today's steps | The report deliberately labels current snapshots; historical Health Connect series are a future enhancement. |
 
 Near-term improvements should prioritize a phone-tested Health Connect matrix, an owned Google OAuth setup, stronger UI/navigation regression coverage, exact optional medication schedules with appropriate Android alarm handling, historical health/weather series with explicit sampling/source semantics, and an intentionally designed multi-device sync backend if required. Do not describe these as already implemented.

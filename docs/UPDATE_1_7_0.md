@@ -4,6 +4,25 @@ Version 1.7.0 / code 14. This supplements the full [project guide](PROJECT_GUIDE
 
 ## Sign-in and backup sequence
 
+```mermaid
+flowchart TD
+    A[Google sign-in] --> B[Bind Drive authorization to selected account]
+    B --> C{Private app-data backup available?}
+    C -->|Yes| D[Validate owner and merge journal]
+    D --> E[Restore newer settings and re-encrypt keys locally]
+    C -->|No| F[Keep account-local details]
+    C -->|Offline or denied| F
+    E --> G{Profile setup already complete?}
+    F --> G
+    G -->|Yes| H[Verify this phone Health Connect access]
+    G -->|No| I[Complete setup once]
+    I --> H
+    H --> J[Home and feature tabs]
+    J --> K[Observe saved changes and back up to same Drive account]
+    L[Phone Health Connect records] -->|Permissioned reads| J
+```
+
+
 1. Credential Manager signs in to the selected Google account. AccountStorage hashes its normalized email into a separate database/settings namespace. A different account never reads the previous account's local database or keys.
 2. Before onboarding/profile forms, DriveBackupScreen asks Google AuthorizationClient for drive.appdata and userinfo.email, bound with setAccount. Existing grants can return a fresh access token silently. First-time consent stays in the native Google screen on the phone.
 3. DriveRestClient verifies the token's email through Google's userinfo endpoint, then lists only the app's own appDataFolder for migraineguard-account-v2.json. The decoded backup must match the current account hash and supported format/version/bounds.
@@ -12,6 +31,8 @@ Version 1.7.0 / code 14. This supplements the full [project guide](PROJECT_GUIDE
 6. Room table invalidations and portable preference changes trigger a backup after four quiet seconds. Before saving, the app inspects/merges the remote copy again. A stable data fingerprint excludes export timestamps, avoiding repeated uploads when data is unchanged. Existing ETags use If-Match; HTTP 412 leaves local data intact and reports the conflict.
 7. Sign-out waits for a final backup attempt when connected. Failure gives a visible choice to keep the session or sign out retaining the local copy. App backgrounding makes a best-effort save in the account scope. Android may kill the process before a background network request completes; there is no claim of an always-running service. Back up now gives an explicit completed-save status.
 8. Access tokens live only in memory. Already granted access is refreshed silently for later saves; if permission needs a new prompt, Settings offers reconnect. Pausing retains the cloud file. Offline, denial, malformed files and quota failures preserve local data and do not display successful backup.
+
+The configured Google Cloud project has the Drive API enabled and saved non-sensitive app-data/email declarations. Auth remains in Testing mode for allowed accounts. The phone must still grant native Drive consent; developer-console configuration is not a grant to read a user’s Drive.
 
 ## Data and security boundary
 
@@ -28,7 +49,7 @@ Limits: one current cloud snapshot, 20 MB validation/read bound, no attachments,
 The user confirmed real Samsung records are visible inside Health Connect. The application therefore changes its reads instead of assuming missing sharing.
 
 - Steps prefer Samsung Health's independent aggregate by default, with a Combined Health Connect option. Neither option adds the two totals together.
-- When the relevant aggregate is empty/zero, raw records are read across the full local calendar day, including Samsung buckets ending tonight. Records are grouped by writer. Within a single writer, weighted interval scheduling chooses the highest-count set of non-overlapping intervals. A daily parent bucket and its hourly children are alternatives, not additive. Partial overlaps may be underestimated; disjoint intervals accumulate and intervals crossing midnight are proportionally clipped. This is deliberately labeled a conservative raw-record estimate, not the authoritative aggregate or an exact Samsung UI match.
+- When the relevant aggregate is empty/zero, raw records are fetched from the previous midnight through one millisecond beyond the next midnight, then clipped to today. This includes records crossing midnight and buckets ending exactly at midnight without adding next-day steps. Records are grouped by writer. Within a single writer, weighted interval scheduling chooses the highest-count set of non-overlapping intervals. A daily parent bucket and its hourly children are alternatives, not additive. Partial overlaps may be underestimated; disjoint intervals accumulate and intervals crossing midnight are proportionally clipped. This is deliberately labeled a conservative raw-record estimate, not the authoritative aggregate or an exact Samsung UI match.
 - A positive raw Samsung count can recover an aggregate zero. Other writers are never summed with Samsung. A truly empty read stays unavailable; a genuine aggregate zero stays zero.
 - Heart queries include the end of the local day so a day-long Samsung bucket is discoverable; only samples at or before now within the past seven days are considered. The latest sample carries its writer and timestamp. It is not a live watch stream.
 - Sleep searches completed positive sessions over fourteen days, with timestamps and a recent/older distinction. Sessions still in progress are excluded.
@@ -50,12 +71,12 @@ All Kotlin application paths below are relative to app/src/main/java/com/migrain
 | feature/settings/DriveSyncRepository.kt | connect verifies identity and restores before enabling observation. journalChanges registers/removes Room invalidation callbacks for all seven tables. backupNow refreshes token, reads/merges remote state, snapshots and uploads changes under a mutex. pause/dispose cancel observers and drop in-memory tokens. DriveBackupState exposes real progress/results. |
 | feature/settings/DriveBackupScreen.kt (new) | driveRequest binds the selected account/scopes. silentDriveToken renews a prior grant without opening background consent. DriveBackupScreen handles native consent resolution, automatic returning-user restore, error/local-only paths and lifecycle cancellation. DriveBackupCard exposes status, explicit save, reconnect and pause. |
 | di/AppContainer.kt | Owns one DriveSyncRepository per account, supplies the saved steps origin to Health Connect, attempts a background save and disposes scoped work on account switch. |
-| MainActivity.kt | onStop requests the account-scoped best-effort backup; onResume still refreshes phone health. |
+| MainActivity.kt | onStop requests the account-scoped best-effort backup; onResume still refreshes phone health. System-bar icon contrast follows the selected light/dark app theme. |
 | navigation/MigraineGuardNavHost.kt | Drive restore gate precedes profile/setup. Completed returning profiles check phone health permissions without redoing keys/DOB. Settings supplies cloud actions. Bottom navigation uses rounded surfaces and fade transitions. |
 | feature/setup/SetupWizardScreen.kt | Waits for real saved preferences before initializing remembered form state. Reusable HealthConnectStep handles returning-user permission review. |
 | feature/settings/SettingsScreen.kt | Places real backup status near the top; collapses technical Google override fields; masks all provider keys. Sign-out flushes pending backup and reports failure while preserving local data. |
 | feature/fitness/StepReadingPolicy.kt (new) | StepInterval, conservativeSteps and chooseStepReading implement bounded single-writer non-overlapping interval recovery and Samsung/combined selection. |
-| feature/fitness/HealthDataRepository.kt | Full-day raw fallback, independent aggregates and writer diagnostics; sample-level heart filtering, completed sleep queries, null/blank page termination and existing per-type error isolation. |
+| feature/fitness/HealthDataRepository.kt | Full-day raw fallback, independent aggregates and writer diagnostics; sample-level heart filtering, completed sleep queries, null/blank page termination, inclusive interval-end retrieval with strict sample/day filtering, and existing per-type error isolation. |
 | core/domain/Models.kt | StepSyncSnapshot now records raw diagnostics, estimate status and the actual combined aggregate separately from the selected total. |
 | feature/track/TrackScreen.kt | Readings/source selection before technical panels; persisted origin chips, explicit estimate/source/permission messages and local copyable sync report. |
 | core/design/Theme.kt, Type.kt | Updated light/dark lavender/indigo, mint and warm accent scheme, typography and rounded shapes; existing theme/dynamic-color controls honored. |
@@ -70,7 +91,7 @@ All Kotlin application paths below are relative to app/src/main/java/com/migrain
 - StepReadingPolicyTest: Samsung/combined preference, raw aggregate recovery, overlap avoidance, midnight clipping, unknown versus zero and rejection of mixed writers.
 - CloudBackupTest: portable profile/key serialization, account mismatch, timestamp-stable fingerprint, appData-only lookup, conditional PATCH, verified token email, multipart first creation and denied-upload failure.
 - DriveRestoreTest (Android): simulated remote transport across separate account-scoped stores; DOB/height/weight/all three keys/setup/journal restore, local key ciphertext, idempotent merge and refusal of older remote preferences. These tests do not use live Google credentials.
-- HealthReadingTest (Android): adds zero-aggregate Samsung raw recovery and daily heart buckets with future-sample exclusion; also checks empty page token completion, paging, previous-day data, individual permissions, empty/error states and cancellation.
+- HealthReadingTest (Android): adds zero-aggregate Samsung raw recovery at an exact-midnight boundary, cross-midnight clipping and daily heart buckets with future-sample exclusion; also checks empty page token completion, paging, previous-day data, individual permissions, empty/error states and cancellation.
 - NavigationFlowTest (Android): actual first-run unit conversion and all six tabs, then Home/Fitness screenshots in explicit light/dark themes on a narrow emulator.
 
 Local JVM tests, lint, Standard/test APK compilation and hosted Android execution must pass before publishing. Retained FB:67 signatures and package/version metadata are checked on downloaded build artifacts. The release evidence below will be appended after the hosted run finishes. Live native Google consent/Drive transfer, Samsung watch transport and cloud AI calls still require the user's phone; simulated remote tests do not prove those external services worked.

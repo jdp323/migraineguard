@@ -282,7 +282,7 @@ class HealthConnectHealthDataRepository(
         do {
             check(++pages <= 100) { "Health Connect returned too many pages; try refreshing later" }
             val page = client.readRecords(ReadRecordsRequest(T::class,
-                TimeRangeFilter.between(start, end), ascendingOrder = false,
+                TimeRangeFilter.between(start, end.plusMillis(1)), ascendingOrder = false,
                 pageSize = readPageSize, pageToken = token))
             records += page.records
             token = page.pageToken?.takeIf { it.isNotBlank() }
@@ -325,7 +325,7 @@ class HealthConnectHealthDataRepository(
             val samsung = samsungRead.getOrNull()
             val preferSamsung = stepSource() == "samsung"
             val needsRaw = hasSteps && ((combined ?: 0) == 0 || (preferSamsung && (samsung ?: 0) == 0))
-            val rawRead = if (needsRaw) healthRead { readAll<StepsRecord>(client, start, healthDayEnd(end)) }
+            val rawRead = if (needsRaw) healthRead { readAll<StepsRecord>(client, start.minus(1, ChronoUnit.DAYS), healthDayEnd(end)) }
                 else kotlin.Result.success(emptyList())
             val rawRows = rawRead.getOrNull().orEmpty()
             val rawBySource = rawRows.groupBy { it.metadata.dataOrigin.packageName }
