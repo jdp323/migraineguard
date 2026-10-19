@@ -1,8 +1,8 @@
+# MigraineGuard
+
 ## Latest update: v1.6.6 (code 13)
 
 Separate Google-account storage fixes profile/API-key/journal reuse after sign-out. Older data stays under **Continue locally**. Each account explicitly connects this phone’s Health Connect store. Health reads show individual permissions, empty-data/error states, and recorded timestamps. See [v1.6.6 implementation and phone checks](docs/UPDATE_1_6_6.md).
-
-# MigraineGuard
 
 Android app for migraine journaling, hydration, Health Connect fitness/sleep, meals, weight, medications, weather and AI coaching.
 
@@ -49,12 +49,12 @@ See [the source review and development priorities](docs/PROJECT_AUDIT.md) for in
 
 ---
 
-## What’s new in v1.5
+## What’s new in v1.5 (historical; superseded by the current setup below)
 
 | Area | Upgrade |
 |------|---------|
-| Google Sign-In | Web Client ID baked — friends sign in out of the box (no pasting client ID). Settings can still override. Clear SHA-1 mismatch errors. |
-| Firebase | `app/google-services.json` for project `migraineguard-66229` (Credential Manager path; no full Firebase Auth SDK required). |
+| Google Sign-In | Introduced a built-in Web Client ID; current project/tester/certificate setup is listed below. |
+| Firebase | Legacy `app/google-services.json` retained in source; current Credential Manager setup uses the owned project listed below. |
 | Per-user Gemini | After Sign-In / demo, **ConnectGeminiScreen** if no user Gemini key. Uses YOUR free AI Studio quota — never developer tokens. |
 | AI keys | BuildConfig AI defaults are empty. Cloud Coach/Analyst only with the user’s DataStore keys. OfflineHealthBrain otherwise + CTA. |
 | Settings | Manage / remove your own AI keys; Google SHA-1 help for release APKs. |
@@ -78,15 +78,15 @@ Existing v1.5 users who already finished onboarding + profile are migrated as `s
 
 ## Google Sign-In configuration
 
-- **Firebase project:** `migraineguard-66229`
-- **Web client ID (client_type 3, baked):** `555526836064-aria393bjpcgr17j6fatl0nbeqtvqri6.apps.googleusercontent.com`
-- **Package:** `com.migraineguard.app`
-- **Previously documented Android SHA-1 for release / box APKs (not the CI certificate):**
-  `FD:56:20:0E:83:57:C4:97:47:E4:32:10:D8:60:3F:DE:0C:64:70:14`
-- Demo continue still works without Google.
-- If Sign-In fails, check SHA-1 registration on the Android OAuth client (Settings → Google → Show SHA-1).
+- **Project:** Default Gemini Project (`gen-lang-client-0426132502`).
+- **Public Web audience:** `539944675853-i6otink5q9a4tr94mo7hm85jli1edq61.apps.googleusercontent.com`.
+- **Registered packages:** Standard `com.migraineguard.app` and Preview `com.migraineguard.app.preview`.
+- **Retained APK SHA-1:** `FB:67:0D:1D:96:C2:8B:9E:27:0D:36:F8:D6:57:53:E3:6B:30:8D:E8`.
+- Google consent is in Testing mode with the approved tester account. No private Web client secret is used by the Android app.
+- Original Firebase project/configuration and the older FD:56 signer are historical; they are not the current APK registration.
+- Continue locally opens the preserved local profile. Google accounts have separate records and AI keys. A new Google account must configure its own profile/key and device-health connection.
 
-**Google Sign-In ≠ Gemini tokens.** Signing in does **not** grant Gemini API access.
+**Google Sign-In does not grant Gemini API access.**
 
 ---
 
@@ -119,8 +119,9 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 
 1. Install **Health Connect** (Play Store / system app) — also covered in the setup wizard.
 2. Grant permissions (wizard step or Fitness tab → Connect).
-3. Samsung: enable Health Connect sharing in Samsung Health.
-4. Data auto-refreshes on app resume and when switching bottom tabs.
+3. Allow the installed Standard/Preview app to READ Steps, Heart rate and Sleep, and Samsung Health to WRITE those types. Open Samsung Health and sync the watch after changing sharing.
+4. Connect this phone’s health data once for the selected app account; Android grants alone do not choose its owner.
+5. Data auto-refreshes on app resume and when switching bottom tabs.
 
 ---
 
@@ -137,7 +138,9 @@ See [TAKEOVER.md](docs/TAKEOVER.md) for the verified GitHub baseline, local snap
 ## Complete documentation
 
 - [Project guide](docs/PROJECT_GUIDE.md): architecture, every workflow, storage/network boundaries, security, build/release operations and actual verification limits.
-- [File and function reference](docs/FILE_REFERENCE.md): 114 files, 75 Kotlin files and 385 named function declarations, with source links, constructor fields, SQL and per-function behavior.
+- [File and function reference](docs/FILE_REFERENCE.md): 114 files, 75 Kotlin files and 385 named function declarations, with source links, constructor fields, SQL and per-function behavior. This is the v1.6.3 baseline; the linked supplements cover later changes.
 - [Feature status](docs/FEATURE_STATUS.md) and [phone testing](docs/PHONE_TESTING.md): what works, external setup and real-device checks.
+
+Current inventory is 126 tracked files, 85 Kotlin files and 423 named functions; see [v1.6.6 changes and verification](docs/UPDATE_1_6_6.md). Verified: **36 JVM tests + 13 Android emulator tests**, lint, both builds and signing checks.
 
 Documentation baseline is v1.6.3 source commit 61cc34b3a7c9614fe6ee20944a0ab0de058b0dfa; later documentation commits do not replace the verified APKs.

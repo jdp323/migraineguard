@@ -88,4 +88,19 @@ Official references:
 
 ## Verification
 
-Checks and publication results will be recorded after completion. Expected suite: 36 JVM tests and 13 Android tests. Retained APK certificate, Standard/Preview packages and APK checksums must be verified before delivery.
+Verified on October 19, 2026:
+
+- Release: [v1.6.6-debug](https://github.com/jdp323/migraineguard/releases/tag/v1.6.6-debug), version 1.6.6/code 13.
+- APK source: `357fe8684e5040cd97be95b09b769eba186a0198`.
+- [GitHub workflow 39204889851](https://github.com/jdp323/migraineguard/actions/runs/39204889851): build, Android runtime and publication all succeeded.
+- 36 JVM tests passed with zero failures/errors. Android lint, Standard/Preview builds and certificate checks passed.
+- 13 Android API 35 emulator tests passed: AccountIsolationTest (1), AppReliabilityTest (5), HealthReadingTest (6), NavigationFlowTest (1).
+- Downloaded artifact ZIP digests verified before extraction. APK package names, version, retained signer and release asset digests independently matched.
+- Retained signer SHA-1: `FB:67:0D:1D:96:C2:8B:9E:27:0D:36:F8:D6:57:53:E3:6B:30:8D:E8`.
+- Standard APK SHA-256: `aa9e3deedef71ec4ac4e070da6f2aef1f32c50d31e2560c0440ce701cc8df5e8`.
+- Preview APK SHA-256: `1b32f213285c03cfc9681c1c98758835b20ab169c49367db61f8949f907ea24d`.
+- Startup screenshot inspected: Welcome screen displays v1.6.6. The navigation test also checks the sign-in version label.
+- Source inventory: 126 tracked files, 85 Kotlin files and 423 named function declarations. Local documentation links checked.
+
+The health tests use Google's fake client with synthetic records; they verify app read logic and failure handling. They do not verify Samsung/watch transport, live Google credential selection or user Gemini responses. Those remain phone checks. Update the same installed APK type and connect device health separately for each account.
+
