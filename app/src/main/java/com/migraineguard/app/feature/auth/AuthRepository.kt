@@ -104,7 +104,11 @@ class DefaultAuthRepository(
                 Result.failure(IllegalStateException("Unexpected credential type from Google Sign-In"))
             }
         } catch (e: GetCredentialCancellationException) {
-            Result.failure(IllegalStateException("Sign-In cancelled"))
+            Result.failure(IllegalStateException(
+                "Google account selection was cancelled or could not finish. " +
+                    "If you did not dismiss it, install the latest APK and retry after Google configuration propagates. " +
+                    "You can continue locally in the meantime.", e,
+            ))
         } catch (e: NoCredentialException) {
             Result.failure(IllegalStateException(
                 "Google could not offer an account. Check that a Google account is on this phone. " +

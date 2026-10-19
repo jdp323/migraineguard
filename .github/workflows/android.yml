@@ -110,7 +110,7 @@ jobs:
             adb install verified-build/app-debug-androidTest.apk
             adb shell am instrument -w com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-runtime-results.txt
             cat android-runtime-results.txt
-            grep -q 'OK (5 tests)' android-runtime-results.txt
+            grep -q 'OK (6 tests)' android-runtime-results.txt
             adb shell am start -n com.migraineguard.app/.MainActivity
             sleep 5
             adb exec-out screencap -p > android-startup.png
@@ -149,7 +149,9 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
-          v1.6.4: First-run sign-in/profile screens reuse the corrected shared screens. Unit changes preserve physical measurements, medication taken state follows the local date, and missing health readings remain unavailable in Insights and local AI. Emulator checks cover first-run unit conversion and all six main tabs.
+          v1.6.4: Google sign-in now uses the approved owned-project Web client with both package/certificate registrations; obsolete shipped OAuth overrides migrate automatically. Google may take time to propagate changes; actual phone login must still be verified.
+
+          First-run sign-in/profile screens reuse the corrected shared screens. Unit changes preserve physical measurements, medication taken state follows the local date, and missing health readings remain unavailable in Insights and local AI. Emulator checks cover first-run unit conversion and all six main tabs.
 
           Install the Preview APK to test alongside an older MigraineGuard installation without uninstalling it. The standard APK updates installations using the retained FB:67 signing key. Preview uses package com.migraineguard.app.preview and separate local storage.
 
@@ -159,7 +161,7 @@ jobs:
 
           Settings includes password-encrypted journal export/import. Restore merges records without deleting existing data. Database upgrades preserve earlier journal records. Water uses one atomic store and changes day at midnight. Profile unit conversion and unavailable weather states are corrected.
 
-          Google sign-in still requires an Android OAuth client in the same project as the Web client. The account currently available cannot administer the old migraineguard-66229 project; local use and personal AI keys do not require Google sign-in.
+          Google sign-in still requires an Android OAuth client in the same project as the Web client. An accessible owned project is now configured in test mode with Web/Standard/Preview clients. Sign in using the approved tester account; local use and personal AI keys remain available independently.
 
           Verified: unit tests, Android lint, APK build, retained signing certificates, and real Android emulator tests for migrations, encrypted backup restore, key encryption and app startup. Samsung/watch and live Gemini calls require testing on your phone.
           NOTES

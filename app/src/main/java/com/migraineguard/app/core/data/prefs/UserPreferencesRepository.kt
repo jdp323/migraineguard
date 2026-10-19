@@ -1,5 +1,6 @@
 package com.migraineguard.app.core.data.prefs
 
+import com.migraineguard.app.BuildConfig
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -85,6 +86,14 @@ class UserPreferencesRepository(context: Context) {
     private val profileCompleteKey = booleanPreferencesKey("profile_complete")
 
     val preferences: Flow<UserPreferences> = dataStore.data.transform { p ->
+        // Retire only the earlier shipped default. Deliberate custom clients remain intact.
+        val legacyClient = "555526836064-aria393bjpcgr17j6fatl0nbeqtvqri6.apps.googleusercontent.com"
+        if (p[googleClientKey] == legacyClient && BuildConfig.GOOGLE_WEB_CLIENT_ID != legacyClient) {
+            dataStore.edit { values ->
+                if (values[googleClientKey] == legacyClient) values.remove(googleClientKey)
+            }
+            return@transform
+        }
         val apiKeys = listOf(geminiKey, groqKey, openRouterKey)
         if (apiKeys.any { !p[it].isNullOrBlank() && !p[it]!!.startsWith(ApiKeyVault.PREFIX) }) {
             dataStore.edit { values ->

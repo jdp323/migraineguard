@@ -47,9 +47,9 @@ class NavigationFlowTest {
             awaitText("Skip — use offline brain only")
             compose.onNodeWithText("Skip — use offline brain only").performScrollTo().performClick()
             awaitText("Complete your profile")
-            compose.onNodeWithText("Imperial").performScrollTo().performClick()
+            compose.onNodeWithText("Imperial (ft/in · lb)").performScrollTo().performClick()
             compose.onNodeWithText("154.3").assertExists()
-            compose.onNodeWithText("Metric").performScrollTo().performClick()
+            compose.onNodeWithText("Metric (cm / kg)").performScrollTo().performClick()
             compose.onNodeWithText("Save & continue").performScrollTo().performClick()
             awaitText("Enter MigraineGuard")
             val saved = runBlocking { container.preferencesRepository.preferences.first() }

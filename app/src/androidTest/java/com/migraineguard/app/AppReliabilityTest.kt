@@ -99,4 +99,16 @@ class AppReliabilityTest {
             scenario.onActivity { assertFalse(it.isFinishing) }
         }
     }
+    @Test fun legacyOAuthOverrideMigratesButCustomClientIsPreserved() = runBlocking {
+        val prefs = UserPreferencesRepository(context)
+        val previous = prefs.getGoogleWebClientId()
+        try {
+            prefs.setGoogleWebClientId("555526836064-aria393bjpcgr17j6fatl0nbeqtvqri6.apps.googleusercontent.com")
+            assertEquals("", prefs.getGoogleWebClientId())
+            val custom = "fixture-custom.apps.googleusercontent.com"
+            prefs.setGoogleWebClientId(custom)
+            assertEquals(custom, prefs.getGoogleWebClientId())
+        } finally { prefs.setGoogleWebClientId(previous) }
+    }
+
 }

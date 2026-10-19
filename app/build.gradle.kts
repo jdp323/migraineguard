@@ -21,7 +21,7 @@ fun localOrDefault(key: String, default: String = ""): String =
 // Baked Web OAuth client (client_type 3) for Google Sign-In via Credential Manager.
 // The installed APK certificate must also be registered with an Android OAuth client.
 val bakedGoogleWebClientId =
-    "555526836064-aria393bjpcgr17j6fatl0nbeqtvqri6.apps.googleusercontent.com"
+    "539944675853-i6otink5q9a4tr94mo7hm85jli1edq61.apps.googleusercontent.com"
 
 android {
     namespace = "com.migraineguard.app"
