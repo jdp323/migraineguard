@@ -22,7 +22,7 @@ private val Context.waterDataStore: DataStore<Preferences> by preferencesDataSto
 data class WaterDay(val dateIso: String, val cups: Int)
 
 /** Room is the single source of truth; older DataStore counters migrate without lowering totals. */
-class WaterIntakeRepository(context: Context, private val historyDao: WaterHistoryDao) {
+class WaterIntakeRepository(context: Context, private val historyDao: WaterHistoryDao, private val migrateLocalLegacy: Boolean = true) {
     private val legacy = context.applicationContext.waterDataStore
     private val cupsKey = intPreferencesKey("cups")
     private val dateKey = stringPreferencesKey("date")
@@ -30,6 +30,7 @@ class WaterIntakeRepository(context: Context, private val historyDao: WaterHisto
     private val migrationMutex = Mutex()
 
     private suspend fun migrateLegacy() = migrationMutex.withLock {
+        if (!migrateLocalLegacy) return@withLock
         val prefs = legacy.data.first()
         if (prefs[migratedKey] != true) {
             val date = prefs[dateKey]

@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.migraineguard.app.core.data.prefs.UserPreferences
@@ -21,14 +22,18 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         app = application as MigraineGuardApp
         setContent {
-            val prefs by app.container.preferencesRepository.preferences
-                .collectAsStateWithLifecycle(UserPreferences())
-            MigraineGuardTheme(
-                themeMode = prefs.themeMode,
-                dynamicColor = prefs.dynamicColor,
-            ) {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    MigraineGuardNavHost(container = app.container)
+            val active by app.containers.collectAsStateWithLifecycle()
+            val container = active ?: return@setContent
+            key(container) {
+                val prefs by container.preferencesRepository.preferences
+                    .collectAsStateWithLifecycle(UserPreferences())
+                MigraineGuardTheme(
+                    themeMode = prefs.themeMode,
+                    dynamicColor = prefs.dynamicColor,
+                ) {
+                    Surface(modifier = Modifier.fillMaxSize()) {
+                        MigraineGuardNavHost(container = container)
+                    }
                 }
             }
         }
@@ -36,7 +41,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (::app.isInitialized) {
+        if (::app.isInitialized && app.container.authRepository.authState.value.isSignedIn) {
             // Soft auto-refresh Health Connect on foreground
             app.container.healthRefreshCoordinator.refresh(force = false)
         }

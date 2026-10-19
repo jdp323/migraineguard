@@ -35,13 +35,14 @@ interface AuthRepository {
 }
 
 class DefaultAuthRepository(
-    private val preferencesRepository: UserPreferencesRepository,
+    private val preferencesRepository: () -> UserPreferencesRepository,
+    private val onAccountChanged: (AuthState) -> Unit = {},
 ) : AuthRepository {
     private val _state = MutableStateFlow(AuthState())
     override val authState: StateFlow<AuthState> = _state.asStateFlow()
 
     override suspend fun resolveClientId(): String? {
-        val prefsId = preferencesRepository.getGoogleWebClientId().trim()
+        val prefsId = preferencesRepository().getGoogleWebClientId().trim()
         val buildId = BuildConfig.GOOGLE_WEB_CLIENT_ID.trim()
         val id = when {
             isValidClientId(prefsId) -> prefsId
@@ -66,6 +67,7 @@ class DefaultAuthRepository(
                 email = "demo@migraineguard.app",
             ),
         )
+        onAccountChanged(_state.value)
     }
 
     override suspend fun signInWithGoogle(activityContext: Context): Result<UserProfile> {
@@ -97,8 +99,7 @@ class DefaultAuthRepository(
                     email = google.id,
                     photoUrl = google.profilePictureUri?.toString(),
                 )
-                preferencesRepository.seedProfileNameIfBlank(profile.displayName)
-                _state.value = AuthState(isSignedIn = true, isDemo = false, user = profile)
+                activateGoogleProfile(profile)
                 Result.success(profile)
             } else {
                 Result.failure(IllegalStateException("Unexpected credential type from Google Sign-In"))
@@ -135,7 +136,16 @@ class DefaultAuthRepository(
         }
     }
 
+    /** Called only after Credential Manager returns a Google ID credential. */
+    internal suspend fun activateGoogleProfile(profile: UserProfile) {
+        val next = AuthState(isSignedIn = true, isDemo = false, user = profile)
+        onAccountChanged(next) // Swap all storage before exposing the signed-in identity.
+        _state.value = next
+        preferencesRepository().seedProfileNameIfBlank(profile.displayName)
+    }
+
     override fun signOut() {
         _state.value = AuthState()
+        onAccountChanged(_state.value)
     }
 }

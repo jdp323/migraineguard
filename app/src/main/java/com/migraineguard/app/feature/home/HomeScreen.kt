@@ -160,7 +160,7 @@ fun HomeScreen(
     val stepGoal = prefs.dailyStepGoal.coerceAtLeast(1)
     val stepProgress = ((health?.observedSteps ?: 0).toFloat() / stepGoal).coerceAtMost(1f)
     val sleepGoal = prefs.sleepGoalHours.coerceAtLeast(1f)
-    val sleepProgress = (((sleep?.hours ?: 0f) / sleepGoal).coerceAtMost(1f))
+    val sleepProgress = (((sleep?.recordedHours ?: 0f) / sleepGoal).coerceAtMost(1f))
     val streak = remember(waterHistory, health) {
         var s = 0
         var d = today

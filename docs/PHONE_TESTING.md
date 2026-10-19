@@ -1,3 +1,9 @@
+## v1.6.6 account and health checks
+
+Update the same installed package. Sign in with account A, set its profile/key, sign out and select account B: B must start with its own profile and no A keys/logs. Return to A to verify its records remain. Older pre-isolation records are preserved under **Continue locally**; they are not automatically assigned to Google accounts.
+
+Each account must connect this phone’s Health Connect data in Fitness. Grant the installed Standard/Preview app READ access, and Samsung Health WRITE access, for Steps, Heart rate and Sleep. Open Samsung Health and sync the watch, then refresh. Check the new package/read-permission diagnostics and dated heart/sleep readings. See [full implementation and troubleshooting](UPDATE_1_6_6.md).
+
 # Phone testing and persistent signing
 
 ## Current Google sign-in setup (v1.6.4)

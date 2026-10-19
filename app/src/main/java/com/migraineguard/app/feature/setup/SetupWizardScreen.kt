@@ -106,7 +106,7 @@ fun SetupWizardScreen(
 ) {
     val authState by authRepository.authState.collectAsStateWithLifecycle()
     val prefs by preferencesRepository.preferences.collectAsStateWithLifecycle(UserPreferences())
-    var step by remember { mutableStateOf(WizardStep.WELCOME) }
+    var step by remember { mutableStateOf(if (authState.isSignedIn) WizardStep.HEALTH else WizardStep.WELCOME) }
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
 
@@ -362,6 +362,7 @@ private fun HealthConnectStep(
     fun connectHealth() {
         Toast.makeText(launchContext, "Checking Health Connect…", Toast.LENGTH_SHORT).show()
         scope.launch {
+            healthDataRepository.allowDeviceHealth()
             snackbar.showSnackbar("Checking Health Connect…")
             val raw = healthDataRepository.sdkStatusRaw(launchContext)
             refreshStatus()
@@ -411,7 +412,7 @@ private fun HealthConnectStep(
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
         Text(
-            "Illustrated steps — tap each action. Skip anytime; you can finish later in Settings / Fitness.",
+            "Health Connect belongs to this phone, independently of Google login. Connect only if the phone and watch records are yours. Skip anytime.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

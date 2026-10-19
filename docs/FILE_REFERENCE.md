@@ -1,3 +1,5 @@
+> For all new and modified files/functions after the baseline, also read [v1.6.6 account and health changes](UPDATE_1_6_6.md) and [v1.6.4–v1.6.5](UPDATE_1_6_4.md).
+
 # MigraineGuard — file and function reference
 
 Current update: [v1.6.4 changes, new files/functions and access checks](UPDATE_1_6_4.md). The detailed source-line reference below preserves the v1.6.3 baseline.

@@ -2,7 +2,7 @@ package com.migraineguard.app.feature.fitness
 
 /** Source totals are diagnostic comparisons, never added to the deduplicated total. */
 fun stepSyncMessage(total: Int?, samsung: Int?, samsungReadFailed: Boolean = false): String = when {
-    total == null -> "Steps could not be read. Check MigraineGuard's Steps permission and refresh."
+    total == null -> "Steps permission is granted, but Health Connect returned no steps for today. Allow Samsung Health to write Steps, open Samsung Health to sync, then refresh. If the records exist in Health Connect, check its activity source priority."
     samsungReadFailed -> "Samsung's count could not be checked. The displayed total is from Health Connect."
     samsung == null || samsung == 0 ->
         "No Samsung steps received for today. Allow Samsung Health to write Steps in Health Connect, open Samsung Health and Sync now, then refresh here."

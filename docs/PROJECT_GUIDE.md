@@ -1,3 +1,5 @@
+> Current account ownership, Health Connect query behavior, new files/functions and test coverage are documented in [v1.6.6](UPDATE_1_6_6.md). Original local data is retained under Continue locally.
+
 # MigraineGuard — complete project guide
 
 Current update: [v1.6.4 changes, new files/functions and access checks](UPDATE_1_6_4.md). The detailed source-line reference below preserves the v1.6.3 baseline.

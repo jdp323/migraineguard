@@ -25,7 +25,9 @@ class ReminderWorker(
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
-        val prefs = UserPreferencesRepository(applicationContext).preferences.first()
+        val container = (applicationContext as com.migraineguard.app.MigraineGuardApp).container
+        if (!container.authRepository.authState.value.isSignedIn) return Result.success()
+        val prefs = container.preferencesRepository.preferences.first()
         if (!prefs.notificationsEnabled) return Result.success()
         val messages = mutableListOf<String>()
         if (prefs.waterReminders) messages += "Time for a glass of water — hydration helps migraines."

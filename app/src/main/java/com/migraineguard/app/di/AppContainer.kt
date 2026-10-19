@@ -26,6 +26,9 @@ import com.migraineguard.app.feature.nutrition.NutritionAnalyzer
 import com.migraineguard.app.feature.water.WaterIntakeRepository
 import com.migraineguard.app.feature.weather.OpenMeteoWeatherRepository
 import com.migraineguard.app.feature.weather.WeatherRepository
+import com.migraineguard.app.core.security.AccountStorage
+import com.migraineguard.app.feature.fitness.AccountHealthDataRepository
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,22 +36,24 @@ import kotlinx.coroutines.SupervisorJob
 /**
  * Manual composition root — simple AppContainer (no Hilt).
  */
-class AppContainer(context: Context) {
+class AppContainer(context: Context, val account: String = AccountStorage.LOCAL, sharedAuth: AuthRepository? = null) {
     private val appContext = context.applicationContext
-    private val db = AppDatabase.get(appContext)
+    private val db = AppDatabase.get(appContext, account)
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    val preferencesRepository = UserPreferencesRepository(appContext)
+    val preferencesRepository = UserPreferencesRepository(appContext, account)
     val backupRepository = BackupRepository(appContext, db, preferencesRepository)
-    val authRepository: AuthRepository = DefaultAuthRepository(preferencesRepository)
+    val authRepository: AuthRepository = sharedAuth ?: DefaultAuthRepository({ preferencesRepository })
     val migraineRepository = MigraineRepository(db.migraineDao())
-    val waterIntakeRepository = WaterIntakeRepository(appContext, db.waterHistoryDao())
+    val waterIntakeRepository = WaterIntakeRepository(appContext, db.waterHistoryDao(), account == AccountStorage.LOCAL)
     val weatherRepository: WeatherRepository = OpenMeteoWeatherRepository(appContext)
-    val healthDataRepository: HealthDataRepository = HealthConnectHealthDataRepository(appContext)
+    val healthDataRepository: HealthDataRepository = AccountHealthDataRepository(HealthConnectHealthDataRepository(appContext), preferencesRepository)
     val healthRefreshCoordinator = HealthRefreshCoordinator(healthDataRepository, appScope)
     val workoutRepository = WorkoutRepository(db.workoutDao())
     val weightRepository = WeightRepository(db.weightDao())
     val medicationRepository = MedicationRepository(db.medicationDao())
+
+    fun dispose() { appScope.cancel() }
 
     private val offlineHealthBrain = OfflineHealthBrain()
 

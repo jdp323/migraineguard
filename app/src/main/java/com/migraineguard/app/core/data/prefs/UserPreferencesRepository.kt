@@ -9,7 +9,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.preferencesDataStoreFile
+import com.migraineguard.app.core.security.AccountStorage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import com.migraineguard.app.core.domain.ActivityLevel
 import com.migraineguard.app.core.domain.BodyProfile
 import com.migraineguard.app.core.domain.SexGender
@@ -21,7 +26,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transform
 import com.migraineguard.app.core.security.ApiKeyVault
 
-private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore("user_settings")
+private object AccountPreferenceStores {
+    private val stores = mutableMapOf<String, DataStore<Preferences>>()
+    @Synchronized fun get(context: Context, account: String): DataStore<Preferences> {
+        val file = context.applicationContext.preferencesDataStoreFile(AccountStorage.settingsName(account))
+        return stores.getOrPut(file.absolutePath) {
+            PreferenceDataStoreFactory.create(scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)) { file }
+        }
+    }
+}
 
 data class UserPreferences(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -47,10 +60,11 @@ data class UserPreferences(
     val openRouterApiKey: String = "",
     val setupComplete: Boolean = false,
     val healthConnectSkipped: Boolean = false,
+    val deviceHealthEnabled: Boolean = false,
 )
 
-class UserPreferencesRepository(context: Context) {
-    private val dataStore = context.applicationContext.settingsDataStore
+class UserPreferencesRepository(context: Context, account: String = AccountStorage.LOCAL) {
+    private val dataStore = AccountPreferenceStores.get(context, account)
     private val apiKeyVault = ApiKeyVault()
 
     private val themeKey = stringPreferencesKey("theme_mode")
@@ -74,6 +88,7 @@ class UserPreferencesRepository(context: Context) {
     private val groqKey = stringPreferencesKey("groq_api_key")
     private val openRouterKey = stringPreferencesKey("openrouter_api_key")
     private val setupCompleteKey = booleanPreferencesKey("setup_complete")
+    private val deviceHealthKey = booleanPreferencesKey("device_health_enabled")
     private val hcSkippedKey = booleanPreferencesKey("health_connect_skipped")
 
     private val profileNameKey = stringPreferencesKey("profile_display_name")
@@ -133,6 +148,7 @@ class UserPreferencesRepository(context: Context) {
             setupComplete = p[setupCompleteKey]
                 ?: ((p[onboardingKey] == true) && (p[profileCompleteKey] == true)),
             healthConnectSkipped = p[hcSkippedKey] ?: false,
+            deviceHealthEnabled = p[deviceHealthKey] ?: false,
             bodyProfile = BodyProfile(
                 displayName = p[profileNameKey] ?: "",
                 dateOfBirthIso = p[profileDobKey] ?: "",
@@ -284,6 +300,10 @@ class UserPreferencesRepository(context: Context) {
 
     suspend fun setHealthConnectSkipped(skipped: Boolean) {
         dataStore.edit { it[hcSkippedKey] = skipped }
+    }
+
+    suspend fun setDeviceHealthEnabled(enabled: Boolean) {
+        dataStore.edit { it[deviceHealthKey] = enabled }
     }
 
     suspend fun getGeminiApiKey(): String = preferences.first().geminiApiKey

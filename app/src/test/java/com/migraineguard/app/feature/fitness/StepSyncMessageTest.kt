@@ -4,8 +4,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StepSyncMessageTest {
-    @Test fun failedReadDoesNotClaimZeroSteps() {
-        assertTrue(stepSyncMessage(null, null).contains("could not be read"))
+    @Test fun emptyReadExplainsSharingWithoutClaimingPermissionFailure() {
+        assertTrue(stepSyncMessage(null, null).contains("returned no steps"))
     }
     @Test fun missingSamsungDataGivesSharingAndSyncSteps() {
         assertTrue(stepSyncMessage(12, null).contains("Allow Samsung Health to write Steps"))

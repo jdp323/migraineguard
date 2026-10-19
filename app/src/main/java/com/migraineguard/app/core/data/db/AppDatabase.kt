@@ -1,6 +1,7 @@
 package com.migraineguard.app.core.data.db
 
 import android.content.Context
+import com.migraineguard.app.core.security.AccountStorage
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -31,15 +32,15 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun aiSessionDao(): AiSessionDao
 
     companion object {
-        @Volatile private var instance: AppDatabase? = null
+        private val instances = mutableMapOf<String, AppDatabase>()
 
-        fun get(context: Context): AppDatabase =
-            instance ?: synchronized(this) {
-                instance ?: Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "migraineguard.db",
-                ).addMigrations(*PreservingMigrations.ALL).build().also { instance = it }
+        @Synchronized fun get(context: Context, account: String = AccountStorage.LOCAL): AppDatabase {
+            val name = AccountStorage.databaseName(account)
+            val key = context.getDatabasePath(name).absolutePath
+            return instances.getOrPut(key) {
+                Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, name)
+                    .addMigrations(*PreservingMigrations.ALL).build()
             }
+        }
     }
 }

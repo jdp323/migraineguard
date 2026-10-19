@@ -1,3 +1,7 @@
+## Latest update: v1.6.6 (code 13)
+
+Separate Google-account storage fixes profile/API-key/journal reuse after sign-out. Older data stays under **Continue locally**. Each account explicitly connects this phone’s Health Connect store. Health reads show individual permissions, empty-data/error states, and recorded timestamps. See [v1.6.6 implementation and phone checks](docs/UPDATE_1_6_6.md).
+
 # MigraineGuard
 
 Android app for migraine journaling, hydration, Health Connect fitness/sleep, meals, weight, medications, weather and AI coaching.

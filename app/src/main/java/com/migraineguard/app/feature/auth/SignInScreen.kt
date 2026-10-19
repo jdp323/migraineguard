@@ -157,7 +157,7 @@ fun SignInScreen(
         Text(
             text = if (configured) {
                 "Google sign-in requires the app certificate to be registered. " +
-                    "Continue locally to use health data and your Gemini key without Google sign-in."
+                    "Each Google account has separate local records and API keys. Continue locally opens the original local profile and older records."
             } else {
                 "Google sign-in is not configured. You can continue locally."
             },

@@ -27,7 +27,9 @@ class NavigationFlowTest {
 
     @Test fun onboardingPreservesWeightAndMainTabsOpen() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val container = (context as MigraineGuardApp).container
+        val app = context as MigraineGuardApp
+        app.container.authRepository.signInDemo()
+        val container = app.container
         runBlocking {
             container.preferencesRepository.setSetupComplete(false)
             container.preferencesRepository.clearAllAiKeys()

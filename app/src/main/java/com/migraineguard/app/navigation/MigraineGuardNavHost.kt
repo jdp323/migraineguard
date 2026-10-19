@@ -50,11 +50,18 @@ import kotlinx.coroutines.launch
 @Composable
 fun MigraineGuardNavHost(container: AppContainer) {
     val authState by container.authRepository.authState.collectAsStateWithLifecycle()
-    val prefs by container.preferencesRepository.preferences.collectAsStateWithLifecycle(UserPreferences())
+    val loadedPrefs by container.preferencesRepository.preferences.collectAsStateWithLifecycle<UserPreferences?>(null)
+    val prefs = loadedPrefs ?: return
     val scope = rememberCoroutineScope()
     var forceProfileEdit by remember { mutableStateOf(false) }
     var coachPersona by remember { mutableStateOf(AiPersona.COACH) }
     var forceConnectGemini by remember { mutableStateOf(false) }
+
+    // Signed-out storage is empty; old local data is opened only by Continue locally.
+    if (!authState.isSignedIn && container.account == com.migraineguard.app.core.security.AccountStorage.SIGNED_OUT) {
+        SetupWizardScreen(container.authRepository, container.preferencesRepository, container.healthDataRepository, container.aiClient, {})
+        return
+    }
 
     // First-run: single ordered SetupWizard until setupComplete
     if (!prefs.setupComplete) {

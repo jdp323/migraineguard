@@ -362,18 +362,23 @@ fun TrackScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             SectionCard(title = "Samsung Health / Health Connect", icon = Icons.Filled.Watch) {
+                Text("Health Connect belongs to this phone, independently of Google login. Connect only if these are your health records. Each account must connect separately.")
                 Text(
                     "MigraineGuard appears under Health Connect → Connected apps after the first successful permission request (including sideloaded debug builds). " +
                         "Enable Samsung Health → Health Connect sharing so Galaxy Watch data flows here.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    "Status: $status · Permissions: ${if (permitted) "granted" else "needed"}",
+                    "Status: $status · All requested reads: ${if (permitted) "allowed" else "not all allowed"}",
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(top = 8.dp),
                 )
                 Button(
-                    onClick = { connectHealth() },
+                    onClick = { scope.launch {
+                        healthDataRepository.allowDeviceHealth()
+                        healthRefreshCoordinator?.refresh(force = true)
+                        connectHealth()
+                    } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
@@ -397,6 +402,9 @@ fun TrackScreen(
             }
 
             SectionCard(title = "Health Connect status", icon = Icons.Filled.Info) {
+                Text("Installed package: ${launchContext.packageName}", style = MaterialTheme.typography.bodySmall)
+                Text("Device health for this account: ${if (prefs.deviceHealthEnabled) "connected" else "not connected"}", style = MaterialTheme.typography.bodySmall)
+                fitness?.permissionSummary?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 Text("SDK status: ${diag.sdkStatusName}  (raw $sdkRaw)", style = MaterialTheme.typography.bodyMedium)
                 Text("Provider package: $providerPkg", style = MaterialTheme.typography.bodyMedium)
                 Text(
@@ -411,7 +419,7 @@ fun TrackScreen(
                     )
                 } else {
                     Text(
-                        "No blocking errors",
+                        "No SDK errors reported; see each reading below",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -481,6 +489,7 @@ fun TrackScreen(
                                 fitness = (fitness ?: HealthSnapshot(0, null, 0)).copy(
                                     steps = s,
                                     sourceLabel = "Manual",
+                                    stepSync = null,
                                 )
                             }
                         },
@@ -608,6 +617,7 @@ fun TrackScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                    s.recordedAtMillis?.let { Text("Session ended: ${formatTs(it)}", style = MaterialTheme.typography.bodySmall) }
                     Text(
                         "Source: ${s.sourceLabel}",
                         style = MaterialTheme.typography.bodySmall,
@@ -619,7 +629,7 @@ fun TrackScreen(
                     )
                     if (soft) {
                         Text(
-                            "Sleep is optional — fitness data still works. Grant Sleep in Health Connect when ready.",
+                            "Samsung Health must be allowed to write Sleep, and this installed MigraineGuard app must be allowed to read it. Open Samsung Health after changing sharing.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -628,9 +638,11 @@ fun TrackScreen(
             }
 
             SectionCard(title = "Heart", icon = Icons.Filled.Favorite) {
+                fitness?.heartRateRecordedAtMillis?.let { Text("Recorded: ${formatTs(it)}", style = MaterialTheme.typography.bodySmall) }
+                fitness?.heartRateSource?.let { Text("Source: $it", style = MaterialTheme.typography.bodySmall) }
                 Text("Latest BPM: ${fitness?.heartRateBpm ?: "—"}")
                 Text(
-                    "Latest recorded measurement shared with Health Connect; unavailable when no measurement is received.",
+                    fitness?.heartRateStatus.orEmpty(),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }

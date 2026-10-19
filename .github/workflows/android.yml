@@ -97,7 +97,7 @@ jobs:
           path: verified-build
       - name: Enable KVM for the hosted test emulator
         run: sudo chmod 666 /dev/kvm
-      - name: Test migrations, backup, key storage, startup and setup/navigation on Android
+      - name: Test account isolation, health reads, migrations, backups and navigation on Android
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
         with:
           api-level: 35
@@ -110,7 +110,7 @@ jobs:
             adb install verified-build/app-debug-androidTest.apk
             adb shell am instrument -w com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-runtime-results.txt
             cat android-runtime-results.txt
-            grep -q 'OK (6 tests)' android-runtime-results.txt
+            grep -q 'OK (13 tests)' android-runtime-results.txt
             adb shell am start -n com.migraineguard.app/.MainActivity
             sleep 5
             adb exec-out screencap -p > android-startup.png
@@ -149,6 +149,14 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
+          Accounts now have separate profiles, all seven journal tables, goals, API keys and saved AI sessions. Sign-out resets UI and health caches. Older unowned records remain under Continue locally; new Google accounts start empty.
+
+          Health Connect belongs to this phone, not the selected Google account. Each account must connect it in Fitness. Steps use independent Samsung fallback; heart rate searches seven days and sleep fourteen days with timestamps. Missing permissions, empty shared data and read failures are shown separately.
+
+          Samsung Health must have WRITE sharing enabled for Steps, Heart rate and Sleep; the installed Standard or Preview app needs READ permission. Open Samsung Health and sync the watch before refreshing.
+
+          Automated checks include account A/B separation across all tables and keys, health permission/empty/error states, pagination and older readings. Live Samsung/watch transfer still needs phone testing.
+
           Welcome and sign-in screens show the actual installed build version; the emulator test verifies both labels.
 
           Google sign-in uses the approved owned-project Web client with both package/certificate registrations; obsolete shipped OAuth overrides migrate automatically. Google may take time to propagate changes; actual phone login must still be verified.

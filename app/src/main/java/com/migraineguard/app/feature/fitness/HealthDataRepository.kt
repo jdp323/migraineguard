@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
@@ -43,6 +44,7 @@ data class HealthConnectDiagnostics(
 )
 
 interface HealthDataRepository {
+    suspend fun allowDeviceHealth() {}
     suspend fun latestFitness(): HealthSnapshot
     suspend fun latestSleep(): SleepSnapshot
     suspend fun availabilityStatus(): HealthConnectStatus
@@ -71,6 +73,10 @@ enum class HealthConnectStatus {
 
 class HealthConnectHealthDataRepository(
     private val context: Context,
+    private val testClient: HealthConnectClient? = null,
+    private val testSdkStatus: (() -> Int)? = null,
+    private val now: () -> Instant = Instant::now,
+    private val readPageSize: Int = 1000,
 ) : HealthDataRepository {
 
     @Volatile
@@ -102,6 +108,7 @@ class HealthConnectHealthDataRepository(
     }
 
     override fun sdkStatusRaw(uiContext: Context?): Int {
+        testSdkStatus?.let { return it() }
         val ctx = uiContext ?: context
         return healthRead {
             HealthConnectClient.getSdkStatus(ctx, providerPackage())
@@ -134,7 +141,6 @@ class HealthConnectHealthDataRepository(
             HealthPermission.getReadPermission(ExerciseSessionRecord::class),
             HealthPermission.getReadPermission(DistanceRecord::class),
             HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
-            HealthPermission.getWritePermission(ExerciseSessionRecord::class),
         )
         return if (base.isEmpty()) {
             setOf(
@@ -164,7 +170,7 @@ class HealthConnectHealthDataRepository(
     override suspend fun hasAllPermissions(): Boolean {
         if (availabilityStatus() != HealthConnectStatus.AVAILABLE) return false
         return healthRead {
-            val client = HealthConnectClient.getOrCreate(context)
+            val client = testClient ?: HealthConnectClient.getOrCreate(context)
             val granted = client.permissionController.getGrantedPermissions()
             requiredPermissions().all { it in granted }
         }.getOrElse {
@@ -265,222 +271,140 @@ class HealthConnectHealthDataRepository(
     private fun stepsReadPermission(): String =
         HealthPermission.getReadPermission(StepsRecord::class)
 
-    /** Soft / permission-only messages must not clobber a real fitness error. */
-    private fun recordMeaningfulError(message: String, soft: Boolean = false) {
-        if (soft) return
-        val trimmed = message.trim()
-        if (trimmed.isBlank()) return
-        lastErrorText = trimmed
+    /** Read every page: a first page can contain old or empty sessions. */
+    private suspend inline fun <reified T : Record> readAll(
+        client: HealthConnectClient, start: Instant, end: Instant,
+    ): List<T> {
+        val records = mutableListOf<T>()
+        var token: String? = null
+        var pages = 0
+        do {
+            check(++pages <= 100) { "Health Connect returned too many pages; try refreshing later" }
+            val page = client.readRecords(ReadRecordsRequest(T::class,
+                TimeRangeFilter.between(start, end), ascendingOrder = false,
+                pageSize = readPageSize, pageToken = token))
+            records += page.records
+            token = page.pageToken
+        } while (token != null)
+        return records
     }
 
-    private fun clearErrorIfSleepOnly() {
-        if (lastErrorText.contains("latestSleep", ignoreCase = true) ||
-            lastErrorText.contains("Sleep permission", ignoreCase = true)
-        ) {
-            lastErrorText = ""
-        }
-    }
+    private fun readFailure(label: String, error: Throwable): String =
+        if (error is SecurityException) label + " read permission is missing or was revoked. Open Health Connect permissions."
+        else label + " read failed (" + error.javaClass.simpleName + "). Retry; if it persists, update Health Connect and Samsung Health."
 
     override suspend fun latestFitness(): HealthSnapshot {
         lastErrorText = ""
+        val end = now()
+        if (availabilityStatus() != HealthConnectStatus.AVAILABLE) return HealthSnapshot(
+            0, null, 0, "Health Connect unavailable",
+            stepSync = StepSyncSnapshot(null, null, emptyList(), end.toEpochMilli(), "Health Connect unavailable"))
         return try {
-            if (availabilityStatus() != HealthConnectStatus.AVAILABLE) {
-                return HealthSnapshot(
-                    steps = 0,
-                    heartRateBpm = null,
-                    activeMinutes = 0,
-                    sourceLabel = "Health Connect unavailable",
-                    stepSync = StepSyncSnapshot(null, null, emptyList(), System.currentTimeMillis(), "Health Connect unavailable"),
-                )
-            }
-            val client = HealthConnectClient.getOrCreate(context)
-            val granted = healthRead {
-                client.permissionController.getGrantedPermissions()
-            }.getOrDefault(emptySet())
-
-            val stepsPerm = stepsReadPermission()
-            if (stepsPerm.isNotBlank() && stepsPerm !in granted && granted.isNotEmpty()) {
-                // Partial grants: still try reads; missing perms throw SecurityException which we catch.
-            }
-
-            val end = Instant.now()
+            val client = testClient ?: HealthConnectClient.getOrCreate(context)
+            // A permission-query failure is not an empty grant set.
+            val granted = client.permissionController.getGrantedPermissions()
             val start = healthDayStart(end)
-            val filter = TimeRangeFilter.between(start, end)
-            // Health Connect rescales interval counts to the requested window. Cover the
-            // whole day to include updated daily buckets whose end time is tonight.
             val dayFilter = TimeRangeFilter.between(start, healthDayEnd(end))
-
-            val stepRead = healthRead {
-                client.aggregate(
-                    AggregateRequest(metrics = setOf(StepsRecord.COUNT_TOTAL), timeRangeFilter = dayFilter),
-                )
-            }
-            val stepTotal = stepRead.getOrNull()?.let { response ->
-                response[StepsRecord.COUNT_TOTAL]?.coerceIn(0L, Int.MAX_VALUE.toLong())?.toInt()
-            }
-            stepRead.exceptionOrNull()?.let { e ->
-                recordMeaningfulError(
-                    if (e is SecurityException) "Steps permission needed"
-                    else "Steps read unavailable (${e.javaClass.simpleName})",
-                )
-            }
-            // This is a comparison only: never sum a source total with the combined aggregate.
-            val samsungRead = if (stepRead.isSuccess) healthRead {
-                client.aggregate(
-                    AggregateRequest(
-                        metrics = setOf(StepsRecord.COUNT_TOTAL),
-                        timeRangeFilter = dayFilter,
-                        dataOriginFilter = setOf(DataOrigin(HealthConnectPackages.SAMSUNG_HEALTH)),
-                    ),
-                )[StepsRecord.COUNT_TOTAL]?.coerceIn(0L, Int.MAX_VALUE.toLong())?.toInt()
+            val hasSteps = stepsReadPermission() in granted
+            val hasHeart = HealthPermission.getReadPermission(HeartRateRecord::class) in granted
+            val summary = listOf("Steps" to hasSteps, "Heart rate" to hasHeart,
+                "Sleep" to (sleepReadPermission() in granted))
+                .joinToString(" · ") { (name, allowed) -> name + ": " + if (allowed) "allowed" else "not allowed" }
+            val stepRead = if (hasSteps) healthRead {
+                client.aggregate(AggregateRequest(setOf(StepsRecord.COUNT_TOTAL), dayFilter))
+            } else kotlin.Result.failure(SecurityException("Steps not granted"))
+            val combined = stepRead.getOrNull()?.get(StepsRecord.COUNT_TOTAL)
+                ?.coerceIn(0L, Int.MAX_VALUE.toLong())?.toInt()
+            // Query Samsung independently, even if the combined aggregate is empty or fails.
+            val samsungRead = if (hasSteps) healthRead {
+                client.aggregate(AggregateRequest(setOf(StepsRecord.COUNT_TOTAL), dayFilter,
+                    setOf(DataOrigin(HealthConnectPackages.SAMSUNG_HEALTH))))[StepsRecord.COUNT_TOTAL]
+                    ?.coerceIn(0L, Int.MAX_VALUE.toLong())?.toInt()
             } else kotlin.Result.success(null)
-            val steps = stepTotal ?: 0
-            val stepSync = StepSyncSnapshot(
-                total = stepTotal,
-                samsungTotal = samsungRead.getOrNull(),
-                sourcePackages = stepRead.getOrNull()?.dataOrigins?.map { it.packageName }?.sorted().orEmpty(),
-                readAtMillis = end.toEpochMilli(),
-                message = stepSyncMessage(stepTotal, samsungRead.getOrNull(), samsungRead.isFailure),
-            )
+            val samsung = samsungRead.getOrNull()
+            val total = combined ?: samsung
+            val stepMessage = when {
+                !hasSteps -> "Steps read permission is not allowed for this installed app. Open Health Connect permissions."
+                combined == null && samsung != null -> "Showing Samsung Health's shared count because the combined Health Connect total is unavailable. Counts are not added together."
+                stepRead.isFailure -> readFailure("Steps", stepRead.exceptionOrNull()!!)
+                else -> stepSyncMessage(total, samsung, samsungRead.isFailure)
+            }
+            if (stepRead.isFailure && total == null) recordError(stepMessage)
+            val stepSync = StepSyncSnapshot(total, samsung,
+                if (combined != null) stepRead.getOrNull()?.dataOrigins?.map { it.packageName }?.sorted().orEmpty()
+                else if (samsung != null) listOf(HealthConnectPackages.SAMSUNG_HEALTH) else emptyList(),
+                end.toEpochMilli(), stepMessage)
 
-            val bpm = healthRead {
-                client.readRecords(ReadRecordsRequest(HeartRateRecord::class, filter, ascendingOrder = false, pageSize = 1))
-                    .records.flatMap { it.samples }
-                    .maxByOrNull { it.time }?.beatsPerMinute?.toInt()
-            }.getOrNull()
-
-            val distance = healthRead {
+            val heartRead = if (hasHeart) healthRead {
+                readAll<HeartRateRecord>(client, end.minus(7, ChronoUnit.DAYS), end)
+                    .flatMap { record -> record.samples.map { it to record.metadata.dataOrigin.packageName } }
+                    .filter { (sample, _) -> !sample.time.isAfter(end) }
+                    .maxByOrNull { (sample, _) -> sample.time }
+            } else kotlin.Result.success(null)
+            val heart = heartRead.getOrNull()
+            val heartMessage = when {
+                !hasHeart -> "Heart rate read permission is not allowed for this installed app."
+                heartRead.isFailure -> readFailure("Heart rate", heartRead.exceptionOrNull()!!)
+                heart == null -> "Permission allowed; no heart rate samples shared in the last 7 days. Allow Samsung Health to write Heart rate and sync the watch in Samsung Health."
+                else -> "Latest recorded sample; not a live watch reading."
+            }
+            heartRead.exceptionOrNull()?.let { recordError(heartMessage) }
+            val distance = if (HealthPermission.getReadPermission(DistanceRecord::class) in granted) healthRead {
                 client.aggregate(AggregateRequest(setOf(DistanceRecord.DISTANCE_TOTAL), dayFilter))[DistanceRecord.DISTANCE_TOTAL]?.inMeters
-            }.getOrNull()
-
-            val calorieRead = healthRead {
-                val combined = client.aggregate(AggregateRequest(setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), dayFilter))
-                val origins = combined.dataOrigins
+            }.getOrNull() else null
+            val calories = if (HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class) in granted) healthRead {
+                val combinedCalories = client.aggregate(AggregateRequest(setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), dayFilter))
+                val origins = combinedCalories.dataOrigins
                 if (origins.size > 1) {
-                    // Calorie aggregates do not reliably deduplicate multiple writers.
-                    val samsung = origins.firstOrNull { it.packageName == HealthConnectPackages.SAMSUNG_HEALTH }
-                    if (samsung == null) null else {
-                        val value = client.aggregate(AggregateRequest(
-                            setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), filter, setOf(samsung),
-                        ))[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
-                        value?.let { it to "Samsung Health" }
-                    }
-                } else combined[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.let {
+                    val samsungOrigin = origins.firstOrNull { it.packageName == HealthConnectPackages.SAMSUNG_HEALTH }
+                    samsungOrigin?.let { origin -> client.aggregate(AggregateRequest(
+                        setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), dayFilter, setOf(origin)
+                    ))[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.let { it to "Samsung Health" } }
+                } else combinedCalories[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.let {
                     it to origins.firstOrNull()?.packageName.orEmpty()
                 }
-            }.getOrNull()
-            val calories = calorieRead?.first
-
-            val activeFromExercise = healthRead {
-                client.aggregate(AggregateRequest(setOf(ExerciseSessionRecord.EXERCISE_DURATION_TOTAL), filter))[ExerciseSessionRecord.EXERCISE_DURATION_TOTAL]?.toMinutes()?.coerceIn(0L, 1440L)?.toInt() ?: 0
-            }.getOrDefault(0)
-
-            clearErrorIfSleepOnly()
-            val label = when {
-                stepsPerm.isNotBlank() && stepsPerm !in granted && steps == 0 && bpm == null ->
-                    "Fitness permission needed"
-                steps == 0 && bpm == null && activeFromExercise == 0 ->
-                    "Health Connect (no fitness data)"
-                else -> "Health Connect"
-            }
-            HealthSnapshot(
-                steps = steps,
-                heartRateBpm = bpm,
-                activeMinutes = activeFromExercise,
-                sourceLabel = label,
-                distanceMeters = distance?.takeIf { it > 0 },
-                caloriesBurned = calories?.takeIf { it > 0 },
-                caloriesSourceLabel = calorieRead?.second,
-                stepSync = stepSync,
-            )
-        } catch (e: SecurityException) {
-            HealthSnapshot(
-                steps = 0,
-                heartRateBpm = null,
-                activeMinutes = 0,
-                sourceLabel = "Fitness permission needed",
-                    stepSync = StepSyncSnapshot(null, null, emptyList(), System.currentTimeMillis(), "Fitness permission needed"),
-            )
-        } catch (e: CancellationException) {
-            throw e
+            }.getOrNull() else null
+            val active = if (HealthPermission.getReadPermission(ExerciseSessionRecord::class) in granted) healthRead {
+                client.aggregate(AggregateRequest(setOf(ExerciseSessionRecord.EXERCISE_DURATION_TOTAL), dayFilter))[ExerciseSessionRecord.EXERCISE_DURATION_TOTAL]
+                    ?.toMinutes()?.coerceIn(0L, 1440L)?.toInt() ?: 0
+            }.getOrDefault(0) else 0
+            HealthSnapshot(total ?: 0, heart?.first?.beatsPerMinute?.toInt(), active,
+                sourceLabel = if (combined == null && samsung != null) "Samsung Health via Health Connect" else "Health Connect",
+                distanceMeters = distance, caloriesBurned = calories?.first, caloriesSourceLabel = calories?.second,
+                stepSync = stepSync, heartRateRecordedAtMillis = heart?.first?.time?.toEpochMilli(),
+                heartRateSource = heart?.second, heartRateStatus = heartMessage, permissionSummary = summary)
+        } catch (e: CancellationException) { throw e
         } catch (e: Exception) {
-            recordMeaningfulError("latestFitness: ${e.message ?: e.javaClass.simpleName}")
-            HealthSnapshot(
-                steps = 0,
-                heartRateBpm = null,
-                activeMinutes = 0,
-                sourceLabel = "Fitness read unavailable",
-                    stepSync = StepSyncSnapshot(null, null, emptyList(), System.currentTimeMillis(), "Fitness read unavailable"),
-            )
+            val message = readFailure("Health Connect", e)
+            recordError(message)
+            HealthSnapshot(0, null, 0, message,
+                stepSync = StepSyncSnapshot(null, null, emptyList(), end.toEpochMilli(), message),
+                heartRateStatus = message, permissionSummary = "Could not check permissions; refresh.")
         }
     }
 
     override suspend fun latestSleep(): SleepSnapshot {
+        if (availabilityStatus() != HealthConnectStatus.AVAILABLE)
+            return SleepSnapshot(0f, "—", "Health Connect unavailable")
         return try {
-            if (availabilityStatus() != HealthConnectStatus.AVAILABLE) {
-                return SleepSnapshot(
-                    hours = 0f,
-                    qualityLabel = "—",
-                    sourceLabel = "Health Connect unavailable",
-                )
-            }
-            val client = HealthConnectClient.getOrCreate(context)
-            val granted = healthRead {
-                client.permissionController.getGrantedPermissions()
-            }.getOrDefault(emptySet())
-            val sleepPerm = sleepReadPermission()
-            if (sleepPerm.isNotBlank() && sleepPerm !in granted) {
-                // Soft: do not set lastError — sleep must not block fitness UI.
-                return SleepSnapshot(
-                    hours = 0f,
-                    qualityLabel = "—",
-                    sourceLabel = "Sleep permission needed",
-                )
-            }
-
-            val end = Instant.now()
-            val start = end.minus(2, ChronoUnit.DAYS)
-            val sessions = client.readRecords(
-                ReadRecordsRequest(
-                    SleepSessionRecord::class,
-                    TimeRangeFilter.between(start, end),
-                ),
-            ).records
-
-            val latest = sessions.maxByOrNull { it.endTime }
-            if (latest == null) {
-                return SleepSnapshot(
-                    hours = 0f,
-                    qualityLabel = "No data",
-                    sourceLabel = "Health Connect (no sessions)",
-                )
-            }
-            val minutes = ChronoUnit.MINUTES.between(latest.startTime, latest.endTime)
-                .toInt().coerceAtLeast(0)
-            val hours = minutes / 60f
-            val quality = "Recorded session duration"
-            SleepSnapshot(hours = hours, qualityLabel = quality, sourceLabel = "Health Connect")
-        } catch (e: SecurityException) {
-            SleepSnapshot(
-                hours = 0f,
-                qualityLabel = "—",
-                sourceLabel = "Sleep permission needed",
-            )
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // Soft failure — never crash UI; do not overwrite fitness lastError.
-            recordMeaningfulError(
-                "latestSleep: ${e.message ?: e.javaClass.simpleName}",
-                soft = true,
-            )
-            SleepSnapshot(
-                hours = 0f,
-                qualityLabel = "—",
-                sourceLabel = "Sleep read unavailable",
-            )
-        }
+            val client = testClient ?: HealthConnectClient.getOrCreate(context)
+            if (sleepReadPermission() !in client.permissionController.getGrantedPermissions())
+                return SleepSnapshot(0f, "—", "Sleep read permission is not allowed for this installed app.")
+            val end = now()
+            val latest = readAll<SleepSessionRecord>(client, end.minus(14, ChronoUnit.DAYS), end)
+                .filter { !it.endTime.isAfter(end) && it.endTime.isAfter(it.startTime) }
+                .maxByOrNull { it.endTime }
+                ?: return SleepSnapshot(0f, "No data",
+                    "Permission allowed; no sleep sessions shared in the last 14 days. Allow Samsung Health to write Sleep, open Samsung Health and sync the watch.")
+            val recent = !latest.endTime.isBefore(end.minus(36, ChronoUnit.HOURS))
+            SleepSnapshot(ChronoUnit.SECONDS.between(latest.startTime, latest.endTime) / 3600f,
+                if (recent) "Recorded session duration" else "Older session — not last night's sleep",
+                latest.metadata.dataOrigin.packageName.ifBlank { "Health Connect" },
+                latest.endTime.toEpochMilli(), recent)
+        } catch (e: CancellationException) { throw e
+        } catch (e: Exception) { SleepSnapshot(0f, "—", readFailure("Sleep", e)) }
     }
+
 }
 
 class FakeHealthDataRepository : HealthDataRepository {
