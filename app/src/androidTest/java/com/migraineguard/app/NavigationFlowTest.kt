@@ -6,6 +6,7 @@ import com.migraineguard.app.core.domain.ThemeMode
 import java.io.File
 import android.content.Context
 import androidx.compose.ui.test.*
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -76,14 +77,14 @@ class NavigationFlowTest {
             compose.onNodeWithText("Enter MigraineGuard").performClick()
             for (label in listOf("Migraine", "Fitness", "Food", "Coach", "Insights", "Home")) {
                 awaitText(label)
-                compose.onNode(hasText(label) and hasClickAction()).performClick().assertIsSelected()
+                compose.onNode(hasText(label) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performClick().assertIsSelected()
                 if (label == "Fitness") { awaitText("Move, rest, recover."); capture("fitness-light") }
                 if (label == "Home") capture("home-light")
             }
             runBlocking { container.preferencesRepository.setThemeMode(ThemeMode.DARK) }
             compose.waitForIdle()
             capture("home-dark")
-            compose.onNode(hasText("Fitness") and hasClickAction()).performClick()
+            compose.onNode(hasText("Fitness") and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performClick()
             awaitText("Move, rest, recover.")
             capture("fitness-dark")
         }
