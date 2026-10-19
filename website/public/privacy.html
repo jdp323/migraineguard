@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="How MigraineGuard uses your profile, journal, Health Connect readings, optional AI requests and private Google Drive app-data backup.">
+<meta name="theme-color" content="#101424"><title>Privacy policy · MigraineGuard</title>
+<link rel="icon" href="/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/styles.css"></head>
+
+<body><a class="skip" href="#main">Skip to content</a>
+<header><a class="brand" href="/"><img src="/mark.svg" width="36" height="36" alt="">MigraineGuard</a>
+<nav aria-label="Main navigation"><a href="/#features">Explore</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></nav>
+</header>
+
+<main id="main">
+<article class="document"><span class="eyebrow">MIGRAINEGUARD · YOUR INFORMATION</span>
+<h1>Privacy policy</h1>
+
+<p class="date">Last updated: October 19, 2026 · Applies to Android v1.7.0 and this website</p>
+
+<p class="intro">MigraineGuard helps you track your wellbeing. This policy explains what stays on your phone, what optional features send to other services, and how you control that data.</p>
+
+<div class="notice"><strong>The important choices</strong>
+<p>Google sign-in, Health Connect permission and Drive backup are separate decisions. Cloud AI uses your own API keys. Drive backups include those keys in portable form; they are not separately password-encrypted.</p>
+</div>
+
+<h2>Who operates the app</h2>
+
+<p>MigraineGuard is an independent Android project maintained by the developer identified as <strong>jdp323</strong>. Samsung, Google, Fitbit, Groq and OpenRouter do not operate this app. For privacy requests, use the developer support email displayed on MigraineGuard's Google authorization screen. Do not include API keys or health records in an initial support message.</p>
+
+<h2>Information the app handles</h2>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Information</th><th>Why it is used</th></tr>
+</thead>
+
+<tbody>
+<tr><td>Google account email and display name</td><td>Sign in, separate accounts and check that a Drive backup belongs to the selected account.</td></tr>
+
+<tr><td>Profile, birthday, height, weight, preferences and goals</td><td>Personalize your account and calculations, and restore settings if you choose backup.</td></tr>
+
+<tr><td>Migraine episodes, symptoms, triggers, medications, meals, water, workouts, weight entries and AI conversations</td><td>Provide the journal, tracking, local insights and requested coaching features.</td></tr>
+
+<tr><td>Health Connect steps, heart rate, sleep, exercise, distance and calorie records, including permitted history</td><td>Show permissioned phone health readings and context. Workout saving can write an exercise record when the relevant permission is granted.</td></tr>
+
+<tr><td>Gemini, Groq and OpenRouter API keys</td><td>Authenticate requests to your selected cloud AI providers; optionally restore your keys from your own Drive backup.</td></tr>
+
+<tr><td>Chosen meal photos and approximate location</td><td>Optional food-photo analysis and local weather. Location sent for weather is rounded to two decimal places.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Storage on your phone</h2>
+
+<p>Account data is stored in separate local databases and preference files. API key values in local settings are encrypted using Android Keystore. This does not mean that every journal database field is separately encrypted by the app; Android's device protection remains important. OAuth access tokens used for Drive are kept in memory. Signing out does not erase your saved local account data.</p>
+
+<h2>Health Connect and connected devices</h2>
+
+<p>The app reads Health Connect only after Android grants the relevant permissions. Samsung Health or another source app must first share its records with Health Connect. The app does not directly stream watch sensors, log in to Samsung Health or read your whole Google Fit account. You can revoke each health permission in Android Settings. Health Connect's underlying readings are not copied into the Drive backup.</p>
+
+<p>Health data is used for your tracking and requested wellness features. MigraineGuard does not sell health data, use it for advertising, or send it to an advertising network. It is not used to make eligibility decisions about employment, credit or insurance.</p>
+
+<h2>Optional Google Drive backup</h2>
+
+<p>When you authorize backup, MigraineGuard requests <code>drive.appdata</code> and account-email access. It stores one current account backup in Google's hidden application-data folder. This permission is for this application's app-data storage; it does not request general access to your ordinary Drive documents.</p>
+
+<p>The snapshot includes your profile and birthday, measurements, goals, preferences, setup status, all three configured AI API keys, and the seven journal categories: migraine, nutrition, water, workouts, weights, medications and AI sessions. Photo files are not included; local photo references may not work on another phone. This can include sensitive information you entered into journal or conversation text.</p>
+
+<p>Backup uses HTTPS and Google's account/storage protections. To allow restoration on another phone, API keys are stored as portable values inside the backup JSON. <strong>The cloud backup is not separately password-encrypted or end-to-end encrypted by MigraineGuard.</strong> Anyone able to access the backup through your account or a compromised app authorization could obtain its contents and keys. Restored keys are encrypted again in that phone's local settings.</p>
+
+<p>Authorized backup observes saved changes and attempts to save before sign-out. Network failure, Android process termination, quotas or account restrictions can prevent completion; use the completed Back up now status to check. It is one snapshot, not a guaranteed archival or multi-device synchronization service. Standard and Preview builds using the same Google OAuth project should not be assumed to have independent cloud backups.</p>
+
+<h2>Optional AI providers</h2>
+
+<p>With a configured key, your submitted chat message or food description is sent directly from the phone to the configured provider. Requests can fall back in this order: Google Gemini, Groq, OpenRouter, then the on-device assistant, depending on configured keys and availability. OpenRouter may route a request to a model provider. Each external provider handles requests under its own terms and retention rules.</p>
+
+<p>The chat's health-summary sharing checkbox is off by default. Turning it on includes the app's health context for that request. Text you type can itself disclose health information, even with that checkbox off. Choosing Send photo to Gemini sends the selected food image to Google after image preparation that removes the original file metadata. Merely attaching a photo does not authorize its upload. Automatically generated Insights use the on-device assistant.</p>
+
+<p>MigraineGuard does not run a developer-hosted AI relay or use your records to train its own model. External providers may retain or use requests according to their current policies and your account/product settings; the app cannot promise deletion or no training by every provider. Review <a href="https://ai.google.dev/gemini-api/terms">Gemini's terms</a>, <a href="https://groq.com/privacy-policy/">Groq's privacy policy</a>, and <a href="https://openrouter.ai/privacy">OpenRouter's privacy policy</a> before sharing sensitive content.</p>
+
+<h2>Other network activity</h2>
+
+<p>If you allow location for weather, rounded coordinates are sent to Open-Meteo to request a forecast. Network services also receive connection metadata such as your IP address. Notifications and reminders use Android capabilities. This static Firebase-hosted website has no analytics scripts, advertising pixels, account forms or client-side health-data collection; Google may process hosting request metadata under its own service policies.</p>
+
+<h2>Your controls, retention and deletion</h2>
+
+<ul>
+<li>Review or revoke Health Connect permissions in Android Settings. Health records retained by Samsung Health or Health Connect are controlled in those services.</li>
+
+<li>Pause Drive backup in the app to stop its current backup session. Pause does not delete the cloud snapshot or permanently revoke Google authorization; signing in or reconnecting may check it again.</li>
+
+<li>To remove the cloud snapshot, first pause backup, then use Google Drive's Settings → Manage apps → MigraineGuard → Options → Delete hidden app data, if available. Disconnect/revoke MigraineGuard in your Google account's connected-app settings. Revoking access alone may leave stored app data; Google's available controls govern removal.</li>
+
+<li>Clear app storage or uninstall the relevant Standard/Preview package to remove its local account files. Signing out alone retains them. Local and cloud copies must be removed separately.</li>
+
+<li>Journal restore merges entries and currently has no deletion tombstones. A locally deleted entry can return from an existing cloud snapshot. To remove it across copies, stop backup and remove the cloud snapshot as well; check other devices before reconnecting.</li>
+
+<li>Revoke or rotate AI keys with the provider if you no longer want them usable. Removing a local key or cloud snapshot does not revoke the provider's key.</li>
+
+<li>Manual exported documents and data already sent to AI providers remain at those destinations until you remove them or follow the provider's deletion process.</li>
+</ul>
+
+<p>Local data and the current Drive snapshot remain until removed using these controls. There is no developer-operated central health-record database. The developer cannot retrieve your local journal or privately access your Drive account to answer a support request.</p>
+
+<h2>Google user-data commitments</h2>
+
+<p>MigraineGuard's use and transfer of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including its Limited Use requirements. Google account data is used to provide the requested account and backup features. Authorizing backup does not make the backup public or grant other MigraineGuard users access to it.</p>
+
+<h2>Children and changes</h2>
+
+<p>The current test app is intended for adults, not directed to children under 18. Do not create an account or submit data if you are under 18. We may update this policy as features change and will update the date on this page; review it before enabling new cloud features.</p>
+
+<p>See <a href="/support.html">Help &amp; data controls</a> for setup, limitations and troubleshooting.</p>
+</article>
+</main>
+
+<footer><a class="brand" href="/">MigraineGuard</a>
+<p>A clearer view of your everyday wellbeing.</p>
+
+<div><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a><a href="/support.html">Help &amp; data controls</a></div>
+<small>Independent Android app. Not affiliated with Samsung, Google, or Fitbit.</small></footer>
+</body></html>
