@@ -2,9 +2,19 @@
 
 Android app for migraine journaling, hydration, Health Connect fitness/sleep, meals, weight, medications, weather and AI coaching.
 
-**Version:** 1.6.3 (code 10) · Android 8+ · target SDK 35.
+**Version:** 1.6.5 (code 12) · Android 8+ · target SDK 35.
 
 Download builds from [GitHub Releases](https://github.com/jdp323/migraineguard/releases). Use **MigraineGuard Preview** to test alongside an older install without removing its records. Standard APK updates retain the package `com.migraineguard.app`; Preview uses `com.migraineguard.app.preview`. Both use the persistent test signing certificate.
+
+## What changed in v1.6.5
+
+Welcome and sign-in now display the actual installed build version. The Android navigation test checks both version labels so a hardcoded older release cannot be shown again.
+
+## What changed in v1.6.4
+
+First-run setup now uses the same corrected sign-in/profile screens as Settings. Unit changes convert measurements, medication taken state follows midnight/timezone date changes, and unavailable steps/sleep remain unknown in Home, Insights and local AI. New regression tests cover these cases and a hosted Android test walks through local setup and all six main tabs.
+
+See [the v1.6.4 source/access supplement](docs/UPDATE_1_6_4.md).
 
 ## Current improvements
 
@@ -14,7 +24,7 @@ Download builds from [GitHub Releases](https://github.com/jdp323/migraineguard/r
 - Real optional weather, profile unit conversion, offline coaching and a separate Preview install.
 - CI checks compilation, unit tests, lint, APK certificates and Android emulator migration/backup/key-storage/startup tests before publishing.
 
-Google sign-in still requires access to the configured Google Cloud project and registration of the installed package/certificate. **Continue locally** works without Google. Watch/Fitbit data depends on what its companion app exports to Health Connect; real-device sync and cloud AI responses require phone testing.
+Google sign-in now uses a registered Web audience and both APK package/certificate clients in the accessible owned project, in Testing mode for the approved tester account. Install v1.6.4 or newer and allow Google changes to propagate before retrying. Actual phone login remains to be tested. **Continue locally** works without Google. Watch/Fitbit data depends on what its companion app exports to Health Connect; real-device sync and cloud AI responses require phone testing.
 
 See [feature status](docs/FEATURE_STATUS.md), [phone testing](docs/PHONE_TESTING.md) and [source audit](docs/PROJECT_AUDIT.md).
 

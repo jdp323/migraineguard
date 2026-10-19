@@ -24,9 +24,13 @@ Both APKs are signed with the retained test certificate. The original temporary 
 | Cloud files | Android file picker can save the encrypted backup to an available Drive provider | Manual user-selected export; no automatic background synchronization |
 | Key storage | User API keys encrypted with Android Keystore; legacy plaintext values migrated | Android on-disk encryption and round-trip test |
 | APK publishing | Tests, lint, signature verification and Android emulator tests gate Releases | GitHub Actions results and certificate reports |
-| Google sign-in | Explicit account picker and actual installed-certificate diagnostics | Needs project access and OAuth registration; current account lacks old project access |
+| Google sign-in | Explicit account picker and actual installed-certificate diagnostics | Web/Standard/Preview clients registered in the accessible project; approved tester configured; real phone login pending |
 | Watch app | Watch data reaches the phone via Samsung Health / Fitbit and Health Connect | No separate Wear OS application or direct live watch sensor stream |
 
 Backups exclude API keys, photo files and imported Health Connect records. They contain the local journal data you choose to export and require the password to restore. Photos remain in their original app/provider storage.
 
 The all-in-one phone app is a working development build, not a validated medical device. The Android emulator cannot verify a real Samsung/Google device data pipeline or a user's cloud credentials.
+
+## v1.6.4 follow-up
+
+The first-run wizard reuses the corrected shared sign-in/profile screens. Medication daily state now follows a date Flow without a database write. Health snapshots preserve unavailable steps/sleep through dashboard, Insights and offline AI. See [the file/function supplement](UPDATE_1_6_4.md) for exact changes and current access checks. Google OAuth is now registered in an accessible project after explicit approval. The original project remains inaccessible, while actual phone login still requires testing.

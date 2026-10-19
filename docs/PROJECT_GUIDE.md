@@ -1,5 +1,7 @@
 # MigraineGuard — complete project guide
 
+Current update: [v1.6.4 changes, new files/functions and access checks](UPDATE_1_6_4.md). The detailed source-line reference below preserves the v1.6.3 baseline.
+
 Documentation baseline: **v1.6.3**, application source commit `61cc34b3a7c9614fe6ee20944a0ab0de058b0dfa`, reviewed 2026-10-08. Documentation commits may be newer than this application baseline.
 
 Read this guide for architecture and end-to-end behavior. Read [FILE_REFERENCE.md](FILE_REFERENCE.md) for every tracked file, declarations, functions, inputs and important implementation details. [FEATURE_STATUS.md](FEATURE_STATUS.md) distinguishes implemented features from remaining integrations. [PHONE_TESTING.md](PHONE_TESTING.md) covers installation and signing. [PROJECT_AUDIT.md](PROJECT_AUDIT.md) preserves the initial source audit; its earlier findings are a historical baseline.

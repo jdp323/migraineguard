@@ -1,5 +1,13 @@
 # Phone testing and persistent signing
 
+## Current Google sign-in setup (v1.6.4)
+
+Google Auth is configured in the accessible existing project gen-lang-client-0426132502. Standard and Preview are both registered with the retained FB:67 signing certificate, and the APK uses their matching Web audience. Testing mode is retained for the approved Google account. Install the new APK and use that account; do not create a new API key for Google login. Old shipped Web-client overrides migrate automatically while custom settings are preserved.
+
+Google client changes may take five minutes to a few hours to propagate. The old APK still points to the earlier project until updated. A cancellation message alone does not prove the picker was dismissed. Phone login still needs real-device verification. See [the current source/setup supplement](UPDATE_1_6_4.md).
+
+The sections below also preserve earlier signing and troubleshooting history.
+
 The test release workflow verifies unit tests, lint and APK compilation before publishing to GitHub Releases. Publishing requires the repository Actions secret `MG_DEBUG_KEYSTORE_BASE64`. It contains the retained local Android debug keystore (alias `androiddebugkey`, test password `android`). The private key and its base64 value are excluded from Git and must never be committed.
 
 Push and manual checks may use that secret. Pull-request checks do not restore it and cannot publish. The publishing job verifies the APK signature against the retained test certificate before publishing; an absent secret runs checks only. Existing version tags are not overwritten.
