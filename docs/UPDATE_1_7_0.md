@@ -30,7 +30,7 @@ flowchart TD
 5. A completed restored profile skips the birthday/measurements/key forms and checks this phone's Health Connect permissions. Health permission/device opt-in is never copied from another phone. New accounts with no backup continue through normal setup.
 6. Room table invalidations and portable preference changes trigger a backup after four quiet seconds. Before saving, the app inspects/merges the remote copy again. A stable data fingerprint excludes export timestamps, avoiding repeated uploads when data is unchanged. Existing ETags use If-Match; HTTP 412 leaves local data intact and reports the conflict.
 7. Sign-out waits for a final backup attempt when connected. Failure gives a visible choice to keep the session or sign out retaining the local copy. App backgrounding makes a best-effort save in the account scope. Android may kill the process before a background network request completes; there is no claim of an always-running service. Back up now gives an explicit completed-save status.
-8. Access tokens live only in memory. Already granted access is refreshed silently for later saves; if permission needs a new prompt, Settings offers reconnect. Pausing retains the cloud file. Offline, denial, malformed files and quota failures preserve local data and do not display successful backup.
+8. Access tokens live only in memory. Already granted access is refreshed silently for later saves; if permission needs a new prompt, Settings offers reconnect. Pausing retains the cloud file. A new app/sign-in restore check or explicit reconnect can enable backup again; pause is not a permanent revocation of the Google grant. Offline, denial, malformed files and quota failures preserve local data and do not display successful backup.
 
 The configured Google Cloud project has the Drive API enabled and saved non-sensitive app-data/email declarations. Auth remains in Testing mode for allowed accounts. The phone must still grant native Drive consent; developer-console configuration is not a grant to read a user’s Drive.
 
@@ -94,10 +94,39 @@ All Kotlin application paths below are relative to app/src/main/java/com/migrain
 - HealthReadingTest (Android): adds zero-aggregate Samsung raw recovery at an exact-midnight boundary, cross-midnight clipping and daily heart buckets with future-sample exclusion; also checks empty page token completion, paging, previous-day data, individual permissions, empty/error states and cancellation.
 - NavigationFlowTest (Android): actual first-run unit conversion and all six tabs, then Home/Fitness screenshots in explicit light/dark themes on a narrow emulator.
 
-Local JVM tests, lint, Standard/test APK compilation and hosted Android execution must pass before publishing. Retained FB:67 signatures and package/version metadata are checked on downloaded build artifacts. The release evidence below will be appended after the hosted run finishes. Live native Google consent/Drive transfer, Samsung watch transport and cloud AI calls still require the user's phone; simulated remote tests do not prove those external services worked.
+Local JVM tests, lint, Standard/test APK compilation and hosted Android execution must pass before publishing. Retained FB:67 signatures and package/version metadata are checked on downloaded build artifacts. The completed release evidence follows below. Live native Google consent/Drive transfer, Samsung watch transport and cloud AI calls still require the user's phone; simulated remote tests do not prove those external services worked.
 
 ## Phone acceptance checks
 
 Update the same package without uninstalling. Sign in to the account containing your existing details. Allow private Drive backup, save any missing fields/keys once, then use Settings → Back up now and wait for the completed status before switching accounts. A different account must show only its own profile. Return to the original account; saved birthday/measurements/keys should appear without setup forms. A fresh installation can restore only a backup previously completed for that same Google account/application.
 
 Health permissions belong to this phone. After restore, approve/verify the installed app's Health Connect access. In Fitness try Samsung Health first, compare its aggregate/raw status, and use Copy sync report if steps/BPM/sleep remain unavailable despite actual records visible in Health Connect. Please supply the report rather than another permission-only screenshot. No real measurements can be verified from this development VM.
+
+## Published release and verified evidence
+
+[Download v1.7.0](https://github.com/jdp323/migraineguard/releases/tag/v1.7.0-debug). Source commit: f4fb93d095aa968d19f48c9faa56257dca19c64d. [Successful GitHub run](https://github.com/jdp323/migraineguard/actions/runs/39308657223). Both build, Android runtime and publish jobs succeeded on 2026-10-19.
+
+- 49 hosted JVM tests, zero failures/errors. Local compilation/lint/Standard/test APK checks also succeeded; lint has no errors and retains existing non-blocking warnings.
+- 18 Android tests passed on API 35: account isolation (1), migrations/encrypted exports/key storage (5), Drive restore (2), health readings (9), first-run/navigation (1). Runtime output: OK (18 tests).
+- Both downloaded APKs report versionName 1.7.0 / versionCode 14 and the retained FB:67 signing identity. GitHub artifact ZIP digests and published release asset digests were independently compared to the downloaded bytes.
+
+| APK | Package | SHA-256 |
+| --- | --- | --- |
+| Standard | com.migraineguard.app | ce38bc4210efab34cc70a26c028f06b2908f27f5b8180e32556eaa959fb3a3c4 |
+| Preview | com.migraineguard.app.preview | 055730bbc877d33a10606032af5f887f98ed6a51c526d4d419ae5fbcaf0368a3 |
+
+### Inspected UI captures
+
+These are unedited synthetic emulator screenshots at 900×1600 / density 420 (about 343 dp wide). No personal account, real health records or live API keys appear. Home was inspected in light/dark; Fitness was inspected in light. The runtime file named fitness-dark.png captured a Home transition frame, so it is used only as Home visual evidence, not proof of the dark Fitness screen. All six tabs were selected/asserted during the navigation test. At this narrow width the final letter of the Migraine label can clip; the route and accessibility label remain Migraine. Wider-phone appearance and larger font settings still need phone review.
+
+| Home light | Home dark |
+| --- | --- |
+| ![Home light](images/v1.7.0-home-light.png) | ![Home dark](images/v1.7.0-home-dark.png) |
+
+![Fitness light](images/v1.7.0-fitness-light.png)
+
+### Management and remaining external checks
+
+Source publishing is authenticated through the connected GitHub app. Local Git tracks the same commit/tree, and a verified Git bundle/source archive provides an independent recovery path. Native Git network authentication is not claimed. Repository visibility remains private; private keys, local properties, APKs and verification downloads are ignored. The latest published tag is verified independently of main, which remains the review base for draft PR #1.
+
+Live Google Drive authorization/transfer and the user's Samsung/watch data were not exercised by the emulator. The native phone grant and real record comparison are the remaining acceptance checks. Continue with the phone steps above; if readings differ, the new local sync report contains the relevant evidence.
