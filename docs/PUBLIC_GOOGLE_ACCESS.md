@@ -36,7 +36,7 @@ Private local proof is in verification/firebase (ignored by Git): in-production.
 
 ## Distribution
 
-The existing GitHub repository remains private. Friends without repository access cannot download private releases. Firebase Spark blocks APK hosting; do not rename/disguise APKs to bypass this or upgrade billing without user authorization. Distribution remains a separate task from Google OAuth audience publishing. The verified APK stays at the v1.7.0-debug release in the private repository.
+As checked October 20, 2026, the GitHub repository is public and [v1.8.0](https://github.com/jdp323/migraineguard/releases/tag/v1.8.0-debug) is published. Friends can use [the public latest-release link](https://github.com/jdp323/migraineguard/releases/latest) without a repository invitation. This distribution change is separate from each user's private Google authorization. Firebase Spark still hosts only static information; APK assets stay on GitHub. See [publication review and historical limitations](PUBLICATION_AUDIT.md).
 
 ## Primary references
 

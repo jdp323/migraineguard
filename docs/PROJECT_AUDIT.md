@@ -75,7 +75,7 @@ The inventory includes source, resources, build configuration, wrapper binaries 
 | [.gitignore](../.gitignore) | Generated/sensitive-file exclusions |
 | [README.md](../README.md) | Project documentation |
 | [app/build.gradle.kts](../app/build.gradle.kts) | Build/dependency tooling |
-| [app/google-services.json](../app/google-services.json) | Public Firebase client configuration (not a Gemini key) |
+| app/google-services.json (historical file; removed from current source) | Public Firebase client configuration (not a Gemini key) |
 | [app/proguard-rules.pro](../app/proguard-rules.pro) | Project configuration |
 | [app/src/main/AndroidManifest.xml](../app/src/main/AndroidManifest.xml) | Permissions and Android components |
 | [app/src/main/java/com/migraineguard/app/MainActivity.kt](../app/src/main/java/com/migraineguard/app/MainActivity.kt) | Application entry point |

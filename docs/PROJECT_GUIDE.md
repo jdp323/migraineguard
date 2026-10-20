@@ -1,3 +1,5 @@
+> Public v1.8.0 entry points: [user guide](USER_GUIDE.md), [troubleshooting](TROUBLESHOOTING.md), [current architecture summary](HOW_IT_WORKS.md) and [publication audit](PUBLICATION_AUDIT.md). The sections below retain their stated historical source baseline; current release evidence is in UPDATE_1_8_0.md.
+
 > Current v1.8.0: [interface, navigation, verified setup and changed-file/function reference](UPDATE_1_8_0.md).
 
 > Current v1.7.0: [Drive account restore, Samsung query fixes, UI and complete changed-file/function supplement](UPDATE_1_7_0.md). This supersedes the older cloud-backup placeholder and current-version descriptions below; historical source references remain pinned to their stated baselines.
@@ -206,7 +208,7 @@ Restore reads a bounded file, decrypts/authenticates and validates before writin
 
 Individual delete actions remove the selected row. Cloud providers may have their own retention; deleting local AI/food history does not retract an already-sent request. Automatic Android cloud backup and device-transfer inclusion are disabled/excluded. Do not uninstall an old signing-incompatible app containing important records.
 
-The GitHub repository remains private. The original configuration/history contains Firebase client configuration and commit metadata that has not been sanitized for public release. Firebase client config is not a user Gemini credential, but the user's stricter no-personal-info/no-key publication condition has not been met. Signing keys, local properties, backups, verification downloads, APKs and runtime data are ignored. Do not commit files from .local-android or private device exports.
+The repository is public as checked October 20, 2026. The unused legacy Firebase configuration is removed from current source, but historical copies and author metadata remain. This is not a claim of fully sanitized history; see PUBLICATION_AUDIT.md for the limited scan, original-project restriction/revocation follow-up and publication boundaries. Signing keys, local properties, backups, verification downloads, APKs and runtime data stay ignored. Do not commit private device exports.
 
 ## 13. Build, test and release operations
 

@@ -64,4 +64,32 @@ HealthSetupEvidenceTest adds five JVM cases: grants without records, manual/demo
 
 NavigationFlowTest keeps unit-conversion/persistence assertions, verifies skipped Health/AI on the review screen, walks all six tabs in light/dark, and captures setup, hydration and settings. Captures use the current Compose root after idle, avoiding an earlier system-screenshot transition race. Setup actions first scroll their controls into view and assert visibility; failures save a diagnostic capture. Test data is synthetic; no real account, medical records or keys are used.
 
-Local compilation, JVM tests, lint and test/APK assembly plus hosted Android execution and retained certificate verification must pass before release. Results and inspected screenshots will be added once verification completes. Real watch sync, native Google consent and live provider requests still require phone acceptance.
+Completed: [run 39370737632](https://github.com/jdp323/migraineguard/actions/runs/39370737632) succeeded for exact application source **9a425749460ff052e23718eeec4c2af720ca7bb3**. Published [v1.8.0-debug](https://github.com/jdp323/migraineguard/releases/tag/v1.8.0-debug) targets that source. Local compilation/lint/assembly and hosted checks completed; hosted results are **54 JVM tests, zero failures/errors; 20 Android tests passed; lint zero errors (94 non-blocking warnings)**. Both APKs report version 1.8.0 / code 15 and the retained FB:67 signer. Released asset digests match the downloaded verified artifacts.
+
+| APK | SHA-256 |
+| --- | --- |
+| Standard, com.migraineguard.app | cb2ca4a6d7271c791bb1ed73cf1c738ba5af95f00478be70286f3548a2507688 |
+| Preview, com.migraineguard.app.preview | 5f0505d6dd9dfae489172db0105b9131ccb14d0ca4cf34ab279f1973fe18736e |
+
+All eighteen current-root captures were visually reviewed. They cover the actual selected six tabs in both themes, setup welcome/health/profile/review, water and Settings. Content scrolls below the narrow viewport where needed. Fixture names/DOB/goals are synthetic. This visual review does not establish animation frame rate, all font scales or every phone layout.
+
+Real watch sync, native Google consent, friend-account Drive transfer and live provider requests still require phone acceptance. Runtime Drive tests use simulated transport; runtime health tests use controlled record fixtures. No real user key or watch record was needed.
+
+## Screenshot gallery
+
+Each link opens the full unedited capture from the successful runtime artifact.
+
+| Screen | Light | Dark |
+| --- | --- | --- |
+| Home | [View](images/v1.8.0/home-light.png) | [View](images/v1.8.0/home-dark.png) |
+| Migraine | [View](images/v1.8.0/migraine-light.png) | [View](images/v1.8.0/migraine-dark.png) |
+| Fitness | [View](images/v1.8.0/fitness-light.png) | [View](images/v1.8.0/fitness-dark.png) |
+| Coach | [View](images/v1.8.0/coach-light.png) | [View](images/v1.8.0/coach-dark.png) |
+| Food | [View](images/v1.8.0/food-light.png) | [View](images/v1.8.0/food-dark.png) |
+| Insights | [View](images/v1.8.0/insights-light.png) | [View](images/v1.8.0/insights-dark.png) |
+
+Setup: [Welcome](images/v1.8.0/setup-welcome.png), [Health](images/v1.8.0/setup-health.png), [Profile](images/v1.8.0/setup-profile.png), [Review](images/v1.8.0/setup-review.png). Additional tools: [Water](images/v1.8.0/water-dark.png), [Settings](images/v1.8.0/settings-dark.png).
+
+## Public documentation follow-up
+
+The repository was already public at review time. The default-branch documentation now links the latest signed release, user manual, troubleshooting and current architecture summary. The unused legacy Firebase client config is removed from current source; historical copies and author metadata remain documented in [the publication audit](PUBLICATION_AUDIT.md). Documentation/unused-config cleanup does not replace the tested v1.8.0 binary or change its source provenance.

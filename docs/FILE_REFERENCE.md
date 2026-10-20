@@ -23,7 +23,7 @@ A `suspend fun` may wait without blocking its caller thread; repositories use it
 | [.github/workflows/android.yml](../.github/workflows/android.yml) | 8511 bytes | 0 |
 | [.gitignore](../.gitignore) | 730 bytes | 0 |
 | [app/build.gradle.kts](../app/build.gradle.kts) | 4620 bytes | 1 |
-| [app/google-services.json](../app/google-services.json) | 2035 bytes | 0 |
+| app/google-services.json (historical file; removed from current source) | 2035 bytes | 0 |
 | [app/proguard-rules.pro](../app/proguard-rules.pro) | 151 bytes | 0 |
 | [app/schemas/com.migraineguard.app.core.data.db.AppDatabase/4.json](../app/schemas/com.migraineguard.app.core.data.db.AppDatabase/4.json) | 11186 bytes | 0 |
 | [app/src/androidTest/java/com/migraineguard/app/AppReliabilityTest.kt](../app/src/androidTest/java/com/migraineguard/app/AppReliabilityTest.kt) | 6858 bytes | 4 |
@@ -165,7 +165,7 @@ A `suspend fun` may wait without blocking its caller thread; repositories use it
 
 ### app/google-services.json
 
-[Open source](../app/google-services.json) · 2035 bytes · 65 lines
+Open source (historical file; removed from current source) · 2035 bytes · 65 lines
 
 **Purpose and behavior.** Existing Firebase/Google client configuration used to identify the original project and OAuth clients. It is client configuration, not the user's Gemini key. Project access and OAuth registration remain external requirements; do not copy its values into AI settings or publish unsanitized repository history.
 
@@ -2263,3 +2263,7 @@ This document is the reference itself. It describes 114 files and 385 named func
 ## Accuracy and extension rules
 
 The source is authoritative. This is a reviewed source reference, not a Kotlin compiler/AST specification; anonymous lambdas, getters and generated synthetic methods are explained within their enclosing classes/files rather than counted as separate named functions. Refer to the linked declaration/body for exact overload/visibility/type bounds. File sizes/line numbers describe this baseline. Runtime verification applies to the documented release and test scope, not every feature/OEM/provider.
+
+## Public documentation and unused config cleanup (2026-10-20)
+
+USER_GUIDE.md documents installation and every user workflow; TROUBLESHOOTING.md maps errors to checks/remedies; HOW_IT_WORKS.md provides the current system/code map; PUBLICATION_AUDIT.md records a limited source/history review and historical limitations. Current screenshots are under docs/images/v1.8.0 and are synthetic emulator captures. website/public/support.html links the public release and guide. The historical app/google-services.json entry above no longer describes a current tracked file: it was unused by Gradle/OAuth and removed from the latest source. Old commits/tags still contain it.

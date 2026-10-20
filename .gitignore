@@ -67,3 +67,6 @@ lint/tmp/
 verification/
 dist/
 .kotlin/
+
+# Unused legacy Firebase client configuration; current sign-in uses OAuth IDs
+app/google-services.json
