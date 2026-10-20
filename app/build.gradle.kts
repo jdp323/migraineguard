@@ -33,8 +33,8 @@ android {
         manifestPlaceholders["appLabel"] = if (preview) "@string/preview_app_name" else "@string/app_name"
         minSdk = 26
         targetSdk = 35
-        versionCode = 14
-        versionName = "1.7.0"
+        versionCode = 15
+        versionName = "1.8.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -138,4 +138,5 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.6.2")
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

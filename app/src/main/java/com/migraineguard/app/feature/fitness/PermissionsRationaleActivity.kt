@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.fitness
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -41,7 +43,7 @@ class PermissionsRationaleActivity : ComponentActivity() {
             MigraineGuardTheme(themeMode = ThemeMode.SYSTEM, dynamicColor = false) {
                 Scaffold(
                     topBar = {
-                        TopAppBar(title = { Text(stringResource(R.string.health_connect_rationale_title)) })
+                        AppTopBar(title = { Text(stringResource(R.string.health_connect_rationale_title)) })
                     },
                 ) { padding ->
                     Column(

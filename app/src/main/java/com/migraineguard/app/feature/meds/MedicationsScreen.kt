@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.meds
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.migraineguard.app.core.ui.FeatureHeader
 import com.migraineguard.app.core.ui.SectionCard
 import kotlinx.coroutines.launch
 
@@ -52,7 +55,7 @@ fun MedicationsScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
+            AppTopBar(
                 title = { Text("Medications & supplements") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -70,6 +73,7 @@ fun MedicationsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            FeatureHeader("Keep your routine close.", "A personal log of medications and supplements.", Icons.Filled.Medication, eyebrow = "Your routine")
             SectionCard(title = "Add", icon = Icons.Filled.Medication) {
                 OutlinedTextField(
                     value = name,

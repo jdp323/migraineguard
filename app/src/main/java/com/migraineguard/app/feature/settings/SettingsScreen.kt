@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.settings
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import android.Manifest
 import android.content.Intent
 import android.net.Uri
@@ -70,6 +72,7 @@ import com.migraineguard.app.core.data.prefs.UserPreferences
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
 import com.migraineguard.app.core.domain.ThemeMode
 import com.migraineguard.app.core.domain.WaterUnit
+import com.migraineguard.app.core.ui.FeatureHeader
 import com.migraineguard.app.core.ui.SectionCard
 import com.migraineguard.app.feature.fitness.HealthDataRepository
 import com.migraineguard.app.feature.reminders.ReminderWorker
@@ -152,7 +155,7 @@ fun SettingsScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
+            AppTopBar(
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -170,6 +173,7 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            FeatureHeader("Make it yours.", "Your profile, connections and everyday preferences.", Icons.Filled.Person, eyebrow = "Your settings")
             driveRepository?.let { DriveBackupCard(it, onConnectDrive) }
 
             SectionCard(title = "Google Sign-In", icon = Icons.Filled.Key) {

@@ -1,5 +1,21 @@
 package com.migraineguard.app.feature.setup
 
+import com.migraineguard.app.core.ui.AppTopBar
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.heightIn
+import com.migraineguard.app.core.ui.CheckState
+import com.migraineguard.app.core.ui.VerificationRow
+import com.migraineguard.app.core.ui.FeatureHeader
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -107,7 +123,11 @@ fun SetupWizardScreen(
     val authState by authRepository.authState.collectAsStateWithLifecycle()
     val loadedPrefs by preferencesRepository.preferences.collectAsStateWithLifecycle<UserPreferences?>(null)
     val prefs = loadedPrefs ?: return
-    var step by remember { mutableStateOf(if (authState.isSignedIn) WizardStep.HEALTH else WizardStep.WELCOME) }
+    var step by rememberSaveable { mutableStateOf(if (authState.isSignedIn) WizardStep.HEALTH else WizardStep.WELCOME) }
+    var healthResult by rememberSaveable { mutableStateOf(CheckState.WAITING) }
+    var aiResult by rememberSaveable { mutableStateOf(CheckState.WAITING) }
+    var finishing by remember { mutableStateOf(false) }
+    var finishError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
 
@@ -118,78 +138,61 @@ fun SetupWizardScreen(
         }
     }
 
-    val progress = (step.index + 1).toFloat() / WizardStep.entries.size
-
-    Scaffold(
-        modifier = modifier,
-        snackbarHost = { SnackbarHost(snackbar) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Setup · ${step.title}")
-                        LinearProgressIndicator(
-                            progress = { progress },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                        )
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        when (step) {
-            WizardStep.WELCOME -> WelcomeStep(
-                modifier = Modifier.padding(padding),
-                onNext = { step = WizardStep.SIGN_IN },
-            )
-            WizardStep.SIGN_IN -> SignInStep(
-                modifier = Modifier.padding(padding),
-                authRepository = authRepository,
-                onNeedGoogleSetup = {
-                    scope.launch {
-                        snackbar.showSnackbar(
-                            "Google sign-in needs project setup. Continue locally while it is configured.",
-                        )
-                    }
-                },
-            )
-            WizardStep.HEALTH -> HealthConnectStep(
-                modifier = Modifier.padding(padding),
-                healthDataRepository = healthDataRepository,
-                snackbar = snackbar,
-                onNext = { step = WizardStep.GEMINI },
-                onSkip = {
-                    scope.launch {
+    val checks = listOf(
+        SetupCheck("Welcome", "Introduction reviewed", if (step != WizardStep.WELCOME) CheckState.VERIFIED else CheckState.WAITING),
+        SetupCheck("Account", if (authState.isDemo) "Local profile selected; Google backup is off." else "Google account signed in.", if (authState.isSignedIn) CheckState.VERIFIED else CheckState.WAITING),
+        SetupCheck("Health", if (healthResult == CheckState.VERIFIED) "Requested permissions checked; see Fitness for individual readings." else "Optional connection; readings may still be unavailable.", healthResult),
+        SetupCheck("AI", if (aiResult == CheckState.VERIFIED) "Gemini answered the connection test." else "Cloud connection not verified; on-device assistant remains available.", aiResult),
+        SetupCheck("Profile", "Your validated details are saved on this account.", if (prefs.bodyProfile.profileComplete) CheckState.VERIFIED else CheckState.WAITING),
+    )
+    val canGoBack = step in listOf(WizardStep.SIGN_IN, WizardStep.GEMINI, WizardStep.PROFILE, WizardStep.DONE)
+    fun goBack() { step = when (step) {
+        WizardStep.SIGN_IN -> WizardStep.WELCOME
+        WizardStep.GEMINI -> WizardStep.HEALTH
+        WizardStep.PROFILE -> WizardStep.GEMINI
+        WizardStep.DONE -> WizardStep.PROFILE
+        else -> step
+    } }
+    BackHandler(enabled = canGoBack && !finishing) { goBack() }
+    Scaffold(modifier = modifier, snackbarHost = { SnackbarHost(snackbar) }, topBar = {
+        Column {
+            AppTopBar(title = { Text(if (step == WizardStep.DONE) "Setup review" else "Setup · " + step.title) },
+                navigationIcon = { if (canGoBack) IconButton(onClick = { goBack() }, enabled = !finishing) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Previous setup step")
+                } })
+            SetupProgressHeader(checks, step.index.coerceAtMost(4))
+        }
+    }) { padding ->
+        AnimatedContent(step, modifier = Modifier.padding(padding), label = "setup step",
+            transitionSpec = { (fadeIn(tween(240)) + slideInHorizontally(tween(240)) { it / 12 }) togetherWith fadeOut(tween(100)) }) { current ->
+            when (current) {
+                WizardStep.WELCOME -> WelcomeStep(onNext = { step = WizardStep.SIGN_IN })
+                WizardStep.SIGN_IN -> SignInStep(authRepository = authRepository, onNeedGoogleSetup = {
+                    scope.launch { snackbar.showSnackbar("Google sign-in is unavailable. You can continue locally.") }
+                })
+                WizardStep.HEALTH -> HealthConnectStep(healthDataRepository, snackbar,
+                    onNext = { step = WizardStep.GEMINI },
+                    onSkip = { scope.launch {
                         preferencesRepository.setHealthConnectSkipped(true)
-                        step = WizardStep.GEMINI
-                    }
-                },
-            )
-            WizardStep.GEMINI -> GeminiStep(
-                modifier = Modifier.padding(padding),
-                preferencesRepository = preferencesRepository,
-                aiClient = aiClient,
-                onNext = { step = WizardStep.PROFILE },
-                onSkip = { step = WizardStep.PROFILE },
-            )
-            WizardStep.PROFILE -> ProfileStep(
-                modifier = Modifier.padding(padding),
-                preferencesRepository = preferencesRepository,
-                prefilledName = authState.user?.displayName ?: prefs.bodyProfile.displayName,
-                initial = prefs.bodyProfile,
-                onNext = { step = WizardStep.DONE },
-            )
-            WizardStep.DONE -> DoneStep(
-                modifier = Modifier.padding(padding),
-                onFinish = {
+                        healthResult = CheckState.SKIPPED; step = WizardStep.GEMINI
+                    } }, onVerificationChanged = { healthResult = it })
+                WizardStep.GEMINI -> GeminiStep(preferencesRepository, aiClient,
+                    onNext = { verified -> aiResult = if (verified) CheckState.VERIFIED else CheckState.ATTENTION; step = WizardStep.PROFILE },
+                    onSkip = { aiResult = CheckState.SKIPPED; step = WizardStep.PROFILE },
+                    onVerificationChanged = { aiResult = it })
+                WizardStep.PROFILE -> ProfileStep(preferencesRepository,
+                    authState.user?.displayName ?: prefs.bodyProfile.displayName, prefs.bodyProfile,
+                    onNext = { step = WizardStep.DONE })
+                WizardStep.DONE -> DoneStep(checks = checks.drop(1), busy = finishing, error = finishError, onFinish = {
                     scope.launch {
-                        preferencesRepository.setSetupComplete(true)
-                        onFinished()
+                        finishing = true; finishError = null
+                        try { preferencesRepository.setSetupComplete(true); onFinished() }
+                        catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                        catch (_: Exception) { finishError = "Setup could not be saved. Please try again." }
+                        finally { finishing = false }
                     }
-                },
-            )
+                })
+            }
         }
     }
 }
@@ -265,253 +268,6 @@ private fun SignInStep(
 }
 
 @Composable
-fun HealthConnectStep(
-    healthDataRepository: HealthDataRepository,
-    snackbar: SnackbarHostState,
-    onNext: () -> Unit,
-    onSkip: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val activity = context.findActivity()
-    val launchContext = activity ?: context
-    val scope = rememberCoroutineScope()
-    var sdkName by remember { mutableStateOf("—") }
-    var permitted by remember { mutableStateOf(false) }
-    var googleInstalled by remember { mutableStateOf(false) }
-    var samsungInstalled by remember { mutableStateOf(false) }
-    var lastError by remember { mutableStateOf("") }
-
-    fun refreshStatus() {
-        val d = healthDataRepository.diagnostics(launchContext)
-        sdkName = d.sdkStatusName
-        googleInstalled = d.googleHcInstalled
-        samsungInstalled = d.samsungHealthInstalled
-        lastError = d.lastError
-        scope.launch { permitted = healthDataRepository.hasAllPermissions() }
-    }
-
-    LaunchedEffect(Unit) { refreshStatus() }
-
-    fun handleGranted(granted: Set<String>) {
-        scope.launch {
-            refreshStatus()
-            permitted = healthDataRepository.hasAllPermissions()
-            when {
-                granted.isNotEmpty() && permitted ->
-                    snackbar.showSnackbar("Permissions granted — MigraineGuard should appear in Connected apps.")
-                granted.isNotEmpty() ->
-                    snackbar.showSnackbar("Some permissions granted. You can grant the rest anytime.")
-                else ->
-                    snackbar.showSnackbar("No permissions granted. Try again or open Health Connect settings.")
-            }
-        }
-    }
-
-    val providerLauncher = rememberLauncherForActivityResult(
-        contract = PermissionController.createRequestPermissionResultContract(
-            providerPackageName = HealthConnectPackages.GOOGLE,
-        ),
-    ) { granted -> handleGranted(granted) }
-
-    val fallbackLauncher = rememberLauncherForActivityResult(
-        contract = PermissionController.createRequestPermissionResultContract(),
-    ) { granted -> handleGranted(granted) }
-
-    fun startIntents(intents: List<Intent>, alsoSamsung: Boolean = false) {
-        var opened = false
-        for (intent in intents) {
-            try {
-                launchContext.startHealthActivity(intent)
-                opened = true
-                break
-            } catch (e: Exception) {
-                healthDataRepository.recordError("${e::class.simpleName}: ${e.message ?: e}")
-            }
-        }
-        if (alsoSamsung) {
-            healthDataRepository.openSamsungHealthSettingsIntent()?.let { samsung ->
-                runCatching { launchContext.startHealthActivity(samsung) }
-            }
-        }
-        if (!opened) {
-            scope.launch { snackbar.showSnackbar("Could not open Health Connect / Play Store") }
-        }
-        refreshStatus()
-    }
-
-    fun launchPermissions(perms: Set<String>) {
-        try {
-            providerLauncher.launch(perms)
-        } catch (e: ActivityNotFoundException) {
-            try {
-                fallbackLauncher.launch(perms)
-            } catch (e2: Exception) {
-                val msg = "${e2::class.simpleName}: ${e2.message ?: e2}"
-                healthDataRepository.recordError(msg)
-                scope.launch { snackbar.showSnackbar(msg) }
-                startIntents(healthDataRepository.manageHealthPermissionsIntents(launchContext.packageName))
-            }
-        } catch (e: Exception) {
-            val msg = "${e::class.simpleName}: ${e.message ?: e}"
-            healthDataRepository.recordError(msg)
-            scope.launch { snackbar.showSnackbar(msg) }
-            startIntents(healthDataRepository.manageHealthPermissionsIntents(launchContext.packageName))
-        }
-    }
-
-    fun connectHealth() {
-        Toast.makeText(launchContext, "Checking Health Connect…", Toast.LENGTH_SHORT).show()
-        scope.launch {
-            healthDataRepository.allowDeviceHealth()
-            snackbar.showSnackbar("Checking Health Connect…")
-            val raw = healthDataRepository.sdkStatusRaw(launchContext)
-            refreshStatus()
-            when (raw) {
-                HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> {
-                    snackbar.showSnackbar("Health Connect needs install/update — opening Play Store…")
-                    startIntents(healthDataRepository.playStoreUpdateIntents(), alsoSamsung = true)
-                }
-                HealthConnectClient.SDK_AVAILABLE -> {
-                    val perms = healthDataRepository.requiredPermissions()
-                    if (perms.isEmpty()) {
-                        startIntents(healthDataRepository.manageHealthPermissionsIntents(launchContext.packageName))
-                    } else {
-                        snackbar.showSnackbar("Opening Health Connect permissions…")
-                        launchPermissions(perms)
-                    }
-                }
-                else -> {
-                    snackbar.showSnackbar("Health Connect ${healthDataRepository.sdkStatusName(raw)}")
-                    startIntents(
-                        healthDataRepository.openHealthConnectInstallOrSettingsIntents(),
-                        alsoSamsung = true,
-                    )
-                }
-            }
-        }
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Icon(
-            Icons.Filled.Watch,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .size(48.dp)
-                .align(Alignment.CenterHorizontally),
-        )
-        Text(
-            "Health Connect / Samsung",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        )
-        Text(
-            "Health Connect belongs to this phone, independently of Google login. Connect only if the phone and watch records are yours. Skip anytime.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        IllustratedStep(
-            number = 1,
-            title = "Install / open Health Connect",
-            body = "If Health Connect isn’t installed, open Play Store. On many Samsung phones it’s a system app.",
-        ) {
-            OutlinedButton(
-                onClick = {
-                    startIntents(
-                        healthDataRepository.playStoreUpdateIntents() +
-                            healthDataRepository.openHealthConnectInstallOrSettingsIntents(),
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Install / open Health Connect") }
-        }
-
-        IllustratedStep(
-            number = 2,
-            title = "Tap Connect / grant permissions",
-            body = "Allow steps, heart rate, sleep, exercise, distance, and calories. Sleep is optional.",
-        ) {
-            Button(
-                onClick = { connectHealth() },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Connect / grant permissions") }
-        }
-
-        IllustratedStep(
-            number = 3,
-            title = "Enable Samsung Health → Health Connect sharing",
-            body = "In Samsung Health: Settings → Health Connect → allow data sharing so Galaxy Watch data flows here.",
-        ) {
-            OutlinedButton(
-                onClick = {
-                    val samsung = healthDataRepository.openSamsungHealthSettingsIntent()
-                    if (samsung != null) {
-                        runCatching { launchContext.startHealthActivity(samsung) }
-                    } else {
-                        scope.launch {
-                            snackbar.showSnackbar(
-                                "Samsung Health not installed. Skip or install from Play Store.",
-                            )
-                        }
-                        startIntents(
-                            listOf(
-                                Intent(
-                                    Intent.ACTION_VIEW,
-                                    Uri.parse("market://details?id=${HealthConnectPackages.SAMSUNG_HEALTH}"),
-                                ),
-                            ),
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (samsungInstalled) "Open Samsung Health" else "Open Samsung Health (or Play Store)")
-            }
-        }
-
-        IllustratedStep(
-            number = 4,
-            title = "Confirm status",
-            body = "SDK: $sdkName · Permissions: ${if (permitted) "granted ✓" else "needed"} · " +
-                "HC installed: ${if (googleInstalled) "yes" else "no"} · Samsung: ${if (samsungInstalled) "yes" else "no"}",
-        ) {
-            OutlinedButton(
-                onClick = { refreshStatus() },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Refresh status") }
-            if (lastError.isNotBlank()) {
-                Text(
-                    lastError,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-        }
-
-        Button(
-            onClick = onNext,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) { Text(if (permitted) "Continue" else "Continue anyway") }
-        TextButton(onClick = onSkip, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            Text("Skip Health Connect for now")
-        }
-    }
-}
-
-@Composable
 private fun IllustratedStep(
     number: Int,
     title: String,
@@ -553,9 +309,10 @@ private fun IllustratedStep(
 private fun GeminiStep(
     preferencesRepository: UserPreferencesRepository,
     aiClient: FallbackAiClient,
-    onNext: () -> Unit,
+    onNext: (Boolean) -> Unit,
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
+    onVerificationChanged: (CheckState) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -563,6 +320,9 @@ private fun GeminiStep(
     var busy by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf<String?>(null) }
     var statusIsError by remember { mutableStateOf(false) }
+    var checkedKey by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) { onVerificationChanged(CheckState.WAITING); key = preferencesRepository.getGeminiApiKey() }
+    val verified = checkedKey != null && checkedKey == key.trim()
 
     Column(
         modifier = modifier
@@ -627,7 +387,7 @@ private fun GeminiStep(
         ) {
             OutlinedTextField(
                 value = key,
-                onValueChange = { key = it },
+                onValueChange = { key = it; checkedKey = null; status = null; statusIsError = false; onVerificationChanged(CheckState.WAITING) },
                 label = { Text("Paste Gemini API key") },
                 visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
@@ -647,20 +407,30 @@ private fun GeminiStep(
                         busy = true
                         status = "Saving & testing…"
                         statusIsError = false
+                        checkedKey = null
+                        onVerificationChanged(CheckState.CHECKING)
+                        try {
                         preferencesRepository.setGeminiApiKey(trimmed)
                         when (val r = aiClient.testGemini { preferencesRepository.getGeminiApiKey() }) {
                             is Result.Success -> {
                                 statusIsError = false
                                 status = "Connected — Gemini OK"
                                 busy = false
-                                onNext()
+                                checkedKey = trimmed
+                                onVerificationChanged(CheckState.VERIFIED)
                             }
                             is Result.Error -> {
                                 statusIsError = true
+                                onVerificationChanged(CheckState.ATTENTION)
                                 status = "Saved, but test failed: ${r.message}. Fix later in Settings, or continue with OfflineHealthBrain."
                                 busy = false
                             }
                         }
+                        } catch (e: kotlinx.coroutines.CancellationException) { throw e
+                        } catch (_: Exception) {
+                            onVerificationChanged(CheckState.ATTENTION)
+                            statusIsError = true; status = "Could not save or verify the key. Retry, or continue offline."
+                        } finally { busy = false }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -670,6 +440,9 @@ private fun GeminiStep(
                 else Text("Save & Test")
             }
         }
+        VerificationRow("Gemini connection", if (verified) "Verified response received. Your key is saved." else if (busy) "Testing your key with Gemini…" else "Save & Test checks an actual response before showing a checkmark.",
+            when { busy -> CheckState.CHECKING; verified -> CheckState.VERIFIED; statusIsError -> CheckState.ATTENTION; else -> CheckState.WAITING })
+        if (verified) Button(onClick = { onNext(true) }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text("Continue with verified Gemini") }
         status?.let {
             Text(
                 it,
@@ -688,7 +461,7 @@ private fun GeminiStep(
             Text("Skip — use offline brain only")
         }
         if (statusIsError) {
-            OutlinedButton(onClick = onNext, modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = { onNext(false) }, modifier = Modifier.fillMaxWidth()) {
                 Text("Continue anyway")
             }
         }
@@ -714,37 +487,20 @@ private fun ProfileStep(
 }
 
 @Composable
-private fun DoneStep(onFinish: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            Icons.Filled.CheckCircle,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(64.dp),
-        )
-        Spacer(Modifier.height(16.dp))
-        Text("You’re all set", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "You can edit profile, Health Connect, and Gemini anytime in Settings. " +
-                "AI tips remain educational — not medical advice.",
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(28.dp))
-        Button(
-            onClick = onFinish,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) { Text("Enter MigraineGuard") }
+private fun DoneStep(checks: List<SetupCheck>, busy: Boolean, error: String?, onFinish: () -> Unit,
+    modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        FeatureHeader("Your space is ready.", "Here is what was saved or checked. Optional connections can be finished later.",
+            Icons.Filled.CheckCircle, eyebrow = "Setup review")
+        SectionCard("Your setup checklist") {
+            checks.forEach { VerificationRow(it.title, if (it.state == CheckState.SKIPPED) "Skipped for now. You can connect in Settings." else it.detail, it.state) }
+        }
+        Text("A permission check does not guarantee watch records have synced. Fitness shows the actual readings. AI is educational and does not replace professional care.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        Button(onClick = onFinish, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp)) {
+            Text(if (busy) "Saving setup…" else "Enter MigraineGuard")
+        }
     }
 }

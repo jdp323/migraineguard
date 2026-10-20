@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.profile
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -69,6 +71,7 @@ fun ProfileSetupScreen(
     }
     var activity by remember { mutableStateOf(initial.activityLevel ?: ActivityLevel.MODERATE) }
     var error by remember { mutableStateOf<String?>(null) }
+    var saving by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     fun changeUnits(metric: Boolean) {
@@ -91,7 +94,7 @@ fun ProfileSetupScreen(
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text("Complete your profile") }) },
+        topBar = { AppTopBar(title = { Text("Complete your profile") }) },
     ) { padding ->
         Column(
             Modifier
@@ -229,25 +232,31 @@ fun ProfileSetupScreen(
                         else -> {
                             error = null
                             scope.launch {
-                                preferencesRepository.saveBodyProfile(
-                                    BodyProfile(
-                                        displayName = name.trim(),
-                                        dateOfBirthIso = dob.trim(),
-                                        sex = sex,
-                                        heightCm = hCm,
-                                        weightKg = wKg,
-                                        activityLevel = activity,
-                                        useMetric = useMetric,
-                                        profileComplete = true,
-                                    ),
-                                )
-                                onComplete()
+                                saving = true
+                                try {
+                                    preferencesRepository.saveBodyProfile(
+                                        BodyProfile(
+                                            displayName = name.trim(),
+                                            dateOfBirthIso = dob.trim(),
+                                            sex = sex,
+                                            heightCm = hCm,
+                                            weightKg = wKg,
+                                            activityLevel = activity,
+                                            useMetric = useMetric,
+                                            profileComplete = true,
+                                        ),
+                                    )
+                                    onComplete()
+                                } catch (e: kotlinx.coroutines.CancellationException) { throw e
+                                } catch (_: Exception) { error = "Your profile could not be saved. Please try again."
+                                } finally { saving = false }
                             }
                         }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Save & continue") }
+                enabled = !saving,
+            ) { Text(if (saving) "Saving profile…" else "Save & continue") }
             Spacer(Modifier.height(24.dp))
         }
     }

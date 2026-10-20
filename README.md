@@ -1,12 +1,16 @@
 # MigraineGuard
 
-## Latest update: v1.7.0 (code 14)
+## Latest update: v1.8.0 (code 15)
+
+Refreshed light/dark screens, illustrated habit cards, dashboard shortcuts, readable navigation labels and short page transitions. Setup now shows checkmarks based on actual connection responses, separates health permissions from received records, marks skipped optional steps honestly and ends with a review. See [every changed file/function and verification](docs/UPDATE_1_8_0.md).
+
+## Account and backup update: v1.7.0 (code 14)
 
 Per-account Google Drive app-data backup/restore now includes profile, birthday, measurements, settings, personal AI keys and journals. Sign-in checks Drive before profile setup; returning profiles check only phone health permissions. Samsung-first steps, conservative raw-record recovery, daily heart-bucket reads and clearer diagnostics address records visible in Health Connect but missing in the app. Home/Fitness and shared light/dark UI are refreshed. See [implementation, every changed file/function and limitations](docs/UPDATE_1_7_0.md).
 
 Android app for migraine journaling, hydration, Health Connect fitness/sleep, meals, weight, medications, weather and AI coaching.
 
-**Version:** 1.7.0 (code 14) · Android 8+ · target SDK 35.
+**Version:** 1.8.0 (code 15) · Android 8+ · target SDK 35.
 
 Download builds from [GitHub Releases](https://github.com/jdp323/migraineguard/releases). Use **MigraineGuard Preview** to test alongside an older install without removing its records. Standard APK updates retain the package `com.migraineguard.app`; Preview uses `com.migraineguard.app.preview`. Both use the persistent test signing certificate.
 

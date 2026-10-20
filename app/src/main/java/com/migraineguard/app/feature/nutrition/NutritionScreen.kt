@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.nutrition
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import android.content.Intent
 import android.Manifest
 import android.content.pm.PackageManager
@@ -48,6 +50,8 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.migraineguard.app.core.domain.NutritionScanResult
+import com.migraineguard.app.core.ui.FeatureHeader
+import androidx.compose.material.icons.filled.LocalDining
 import com.migraineguard.app.core.ui.SectionCard
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -112,7 +116,7 @@ fun NutritionScreen(
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text("Food") }) },
+        topBar = { AppTopBar(title = { Text("Food") }) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -121,6 +125,7 @@ fun NutritionScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            item { FeatureHeader("Eat with awareness.", "A simple place for meals, photos and nutrition estimates.", Icons.Filled.LocalDining, eyebrow = "Your nutrition") }
             item {
                 Text(
                     "Describe your meal for an optional AI estimate. Photos stay local unless you choose to send one to Gemini. " +

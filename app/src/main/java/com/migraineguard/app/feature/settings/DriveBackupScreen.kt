@@ -22,6 +22,9 @@ import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.common.api.Scope
 import com.migraineguard.app.core.ui.SectionCard
+import com.migraineguard.app.core.ui.CheckState
+import com.migraineguard.app.core.ui.VerificationRow
+import com.migraineguard.app.core.ui.FeatureHeader
 import com.migraineguard.app.feature.fitness.findActivity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -67,6 +70,8 @@ fun DriveBackupScreen(
     var pending by remember { mutableStateOf<android.app.PendingIntent?>(null) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var userInitiated by remember { mutableStateOf(false) }
+    var verified by remember { mutableStateOf(false) }
 
     fun accept(result: AuthorizationResult) {
         scope.launch {
@@ -74,7 +79,7 @@ fun DriveBackupScreen(
             try {
                 val token = result.accessToken ?: kotlin.error("Google did not return Drive authorization.")
                 repository.connect(token, email, refresh = { silentDriveToken(client, email) })
-                onContinue()
+                if (userInitiated) verified = true else onContinue()
             } catch (e: CancellationException) { throw e
             } catch (e: Exception) { error = e.message ?: "Drive is unavailable. Local records are preserved."
             } finally { busy = false }
@@ -106,8 +111,7 @@ fun DriveBackupScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.height(36.dp))
-        Icon(Icons.Default.CloudDone, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
-        Text("Your space, restored", style = MaterialTheme.typography.headlineLarge)
+        FeatureHeader("Your space, restored.", "Bring your saved profile and journal with you.", Icons.Default.CloudDone, eyebrow = "Private backup")
         Text(email, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         SectionCard("One account. All your progress.") {
             Text("Restore your profile, birthday, body measurements, goals, API keys and journal from your private Google Drive app data.")
@@ -119,15 +123,19 @@ fun DriveBackupScreen(
             CircularProgressIndicator()
             Text(state.message)
         }
+        VerificationRow("Google Drive connection", if (verified) "Account identity and private app data were checked successfully." else state.message,
+            when { busy || state.busy -> CheckState.CHECKING; verified -> CheckState.VERIFIED; error != null -> CheckState.ATTENTION; else -> CheckState.WAITING })
+        if (verified) Button(onClick = onContinue, modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp)) { Text("Continue with verified Drive") }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Button(onClick = {
+            userInitiated = true; verified = false
             val intent = pending
             if (intent != null) { pending = null; busy = true; resolution.launch(IntentSenderRequest.Builder(intent.intentSender).build()) }
             else authorize()
-        }, enabled = !busy && !state.busy, modifier = Modifier.fillMaxWidth().height(54.dp)) {
+        }, enabled = !busy && !state.busy && !verified, modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp)) {
             Text(if (pending != null) "Allow private Drive backup" else "Check Drive again")
         }
-        TextButton(onClick = onContinue, enabled = !busy && !state.busy) { Text("Continue with local data") }
+        if (!verified) TextButton(onClick = onContinue, enabled = !busy && !state.busy) { Text("Continue with local data") }
     }
 }
 
@@ -136,7 +144,8 @@ fun DriveBackupCard(repository: DriveSyncRepository, onConnect: () -> Unit) {
     val state by repository.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     SectionCard("Google Drive backup", icon = Icons.Default.CloudDone) {
-        Text(state.message)
+        VerificationRow("Drive account", state.message,
+            when { state.busy -> CheckState.CHECKING; state.connected -> CheckState.VERIFIED; else -> CheckState.WAITING })
         state.lastSavedMillis?.let {
             Text("Last verified: " + java.time.format.DateTimeFormatter.ofPattern("MMM d, HH:mm")
                 .withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(it)),

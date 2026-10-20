@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.insights
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.migraineguard.app.core.ai.FallbackAiClient
 import com.migraineguard.app.core.domain.InsightReport
 import com.migraineguard.app.core.ui.EmptyState
+import com.migraineguard.app.core.ui.FeatureHeader
 import com.migraineguard.app.core.ui.SectionCard
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -97,7 +100,7 @@ fun InsightsScreen(
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text("Insights") }) },
+        topBar = { AppTopBar(title = { Text("Insights") }) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -107,6 +110,7 @@ fun InsightsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            FeatureHeader("See the bigger picture.", "Reflect on your journal, habits and recorded trends.", Icons.Filled.Insights, eyebrow = "Your insights")
             Text(
                 "Modes for migraines, food, water, fitness, sleep, and weather. AI via ${aiClient.providerNames().joinToString(" → ")}.",
                 style = MaterialTheme.typography.bodyMedium,

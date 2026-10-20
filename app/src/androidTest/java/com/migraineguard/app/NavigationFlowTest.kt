@@ -1,6 +1,7 @@
 package com.migraineguard.app
 
 import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.test.platform.app.InstrumentationRegistry
 import com.migraineguard.app.core.domain.ThemeMode
 import java.io.File
@@ -34,9 +35,9 @@ class NavigationFlowTest {
         compose.waitForIdle()
         val context = ApplicationProvider.getApplicationContext<Context>()
         val directory = File(context.getExternalFilesDir(null), "verification").apply { mkdirs() }
-        val image = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        val image = compose.onRoot().captureToImage().asAndroidBitmap()
         File(directory, name + ".png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
-        image.recycle()
+        // Compose owns the captured bitmap; do not recycle shared image storage.
     }
 
     @Test fun onboardingPreservesWeightAndMainTabsOpen() {
@@ -58,11 +59,14 @@ class NavigationFlowTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             awaitText("Start setup")
             compose.onNodeWithText("MigraineGuard v${BuildConfig.VERSION_NAME}").assertIsDisplayed()
+            capture("setup-welcome")
             compose.onNodeWithText("Start setup").performClick()
             awaitText("Continue locally")
             compose.onNodeWithText("MigraineGuard v${BuildConfig.VERSION_NAME}").assertIsDisplayed()
             compose.onNodeWithText("Continue locally").performClick()
             awaitText("Skip Health Connect for now")
+            compose.waitUntil(10_000) { compose.onAllNodesWithText("Connection check completed").fetchSemanticsNodes().isNotEmpty() }
+            capture("setup-health")
             compose.onNodeWithText("Skip Health Connect for now").performScrollTo().performClick()
             awaitText("Skip — use offline brain only")
             compose.onNodeWithText("Skip — use offline brain only").performScrollTo().performClick()
@@ -70,23 +74,38 @@ class NavigationFlowTest {
             compose.onNodeWithText("Imperial (ft/in · lb)").performScrollTo().performClick()
             compose.onNodeWithText("154.3").assertExists()
             compose.onNodeWithText("Metric (cm / kg)").performScrollTo().performClick()
+            capture("setup-profile")
             compose.onNodeWithText("Save & continue").performScrollTo().performClick()
             awaitText("Enter MigraineGuard")
+            compose.onNodeWithTag("verification-Health").assert(hasAnyDescendant(hasContentDescription("Skipped")))
+            compose.onNodeWithTag("verification-AI").assert(hasAnyDescendant(hasContentDescription("Skipped")))
+            capture("setup-review")
             val saved = runBlocking { container.preferencesRepository.preferences.first() }
             assertEquals(70f, saved.bodyProfile.weightKg!!, 0.1f)
             compose.onNodeWithText("Enter MigraineGuard").performClick()
-            for (label in listOf("Migraine", "Fitness", "Food", "Coach", "Insights", "Home")) {
-                awaitText(label)
-                compose.onNode(hasText(label) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performClick().assertIsSelected()
-                if (label == "Fitness") { awaitText("Move, rest, recover."); capture("fitness-light") }
-                if (label == "Home") capture("home-light")
+            val pages = listOf("Migraine" to "Make space to check in.", "Fitness" to "Move, rest, recover.",
+                "Food" to "Eat with awareness.", "Coach" to "A little guidance.",
+                "Insights" to "See the bigger picture.", "Home" to "Find your rhythm.")
+            for ((theme, suffix) in listOf(ThemeMode.LIGHT to "light", ThemeMode.DARK to "dark")) {
+                runBlocking { container.preferencesRepository.setThemeMode(theme) }
+                for ((label, heading) in pages) {
+                    awaitText(label)
+                    compose.onNode(hasText(label) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected))
+                        .performClick().assertIsSelected()
+                    awaitText(heading)
+                    compose.onNodeWithText(heading).assertIsDisplayed()
+                    capture(label.lowercase() + "-" + suffix)
+                }
             }
-            runBlocking { container.preferencesRepository.setThemeMode(ThemeMode.DARK) }
-            compose.waitForIdle()
-            capture("home-dark")
-            compose.onNode(hasText("Fitness") and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performClick()
-            awaitText("Move, rest, recover.")
-            capture("fitness-dark")
+            compose.onAllNodesWithText("Add water").onFirst().performScrollTo().performClick()
+            awaitText("One sip at a time.")
+            capture("water-dark")
+            compose.onNodeWithContentDescription("Back").performClick()
+            awaitText("Find your rhythm.")
+            compose.onNodeWithContentDescription("Settings").performClick()
+            awaitText("Make it yours.")
+            capture("settings-dark")
+
         }
     }
 }

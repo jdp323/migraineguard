@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.water
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
@@ -34,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
 import com.migraineguard.app.core.domain.WaterUnit
 import com.migraineguard.app.core.ui.ProgressRing
+import com.migraineguard.app.core.ui.FeatureHeader
 import com.migraineguard.app.core.ui.SectionCard
 import kotlinx.coroutines.launch
 
@@ -43,6 +47,7 @@ fun WaterScreen(
     repository: WaterIntakeRepository,
     preferencesRepository: UserPreferencesRepository,
     modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
 ) {
     val cups by repository.cupsToday.collectAsStateWithLifecycle(initialValue = 0)
     val prefs by preferencesRepository.preferences.collectAsStateWithLifecycle(
@@ -60,7 +65,11 @@ fun WaterScreen(
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text("Water") }) },
+        topBar = { AppTopBar(title = { Text("Water") }, navigationIcon = {
+            onBack?.let { back -> androidx.compose.material3.IconButton(onClick = back) {
+                androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowBack, "Back")
+            } }
+        }) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -70,6 +79,8 @@ fun WaterScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            FeatureHeader("One sip at a time.", "Keep your hydration close throughout the day.", Icons.Filled.WaterDrop, eyebrow = "Your hydration")
+            Spacer(Modifier.height(24.dp))
             ProgressRing(progress = progress, label = "$cups")
             Spacer(Modifier.height(8.dp))
             Text(display, style = MaterialTheme.typography.titleMedium)

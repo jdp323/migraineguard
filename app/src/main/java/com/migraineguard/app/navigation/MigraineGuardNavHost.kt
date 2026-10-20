@@ -1,5 +1,17 @@
 package com.migraineguard.app.navigation
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.State
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
@@ -171,17 +183,30 @@ fun MigraineGuardNavHost(container: AppContainer) {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
             if (currentRoute !in hideBottom) {
-                NavigationBar(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).clip(RoundedCornerShape(28.dp)),
-                    containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp,
-                ) {
-                    bottomItems.forEach { item ->
-                        NavigationBarItem(
-                            selected = currentRoute == item.dest.route,
-                            onClick = { goBottom(item.dest.route) },
-                            icon = { Icon(item.icon, contentDescription = item.dest.label) },
-                            label = { Text(item.dest.label, style = MaterialTheme.typography.labelSmall, fontSize = 10.sp, letterSpacing = 0.sp, maxLines = 1) },
-                        )
+                Column(Modifier.navigationBarsPadding().padding(horizontal = 8.dp, vertical = 6.dp)) {
+                    Surface(shape = RoundedCornerShape(26.dp), color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .65f)),
+                        shadowElevation = 3.dp) {
+                        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 8.dp)) {
+                            bottomItems.forEach { item ->
+                                val selected = currentRoute == item.dest.route
+                                val fill by animateColorAsState(if (selected) MaterialTheme.colorScheme.primaryContainer
+                                    else MaterialTheme.colorScheme.surface, tween(180), label = "tab background")
+                                val tint by animateColorAsState(if (selected) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant, tween(180), label = "tab tint")
+                                Column(Modifier.weight(1f).clip(RoundedCornerShape(18.dp))
+                                    .selectable(selected = selected, role = Role.Tab, onClick = { goBottom(item.dest.route) })
+                                    .padding(vertical = 4.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Box(Modifier.size(width = 44.dp, height = 30.dp).clip(RoundedCornerShape(13.dp))
+                                        .background(fill), contentAlignment = Alignment.Center) {
+                                        Icon(item.icon, null, Modifier.size(21.dp), tint = tint)
+                                    }
+                                    Text(item.dest.label, color = tint, style = MaterialTheme.typography.labelSmall,
+                                        fontSize = 10.sp, letterSpacing = 0.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -191,8 +216,10 @@ fun MigraineGuardNavHost(container: AppContainer) {
             navController = navController,
             startDestination = Routes.Home,
             modifier = Modifier.padding(innerPadding),
-            enterTransition = { fadeIn(tween(180)) },
-            exitTransition = { fadeOut(tween(120)) },
+            enterTransition = { fadeIn(tween(240)) + slideInHorizontally(tween(240)) { it / 14 } },
+            exitTransition = { fadeOut(tween(140)) },
+            popEnterTransition = { fadeIn(tween(240)) + slideInHorizontally(tween(240)) { -it / 14 } },
+            popExitTransition = { fadeOut(tween(140)) },
         ) {
             composable(Routes.Home) {
                 HomeScreen(
@@ -232,6 +259,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
                 WaterScreen(
                     repository = container.waterIntakeRepository,
                     preferencesRepository = container.preferencesRepository,
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable(Routes.Insights) {

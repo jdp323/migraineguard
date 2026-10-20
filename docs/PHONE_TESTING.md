@@ -1,3 +1,11 @@
+> Current v1.8.0: [interface, navigation, verified setup and changed-file/function reference](UPDATE_1_8_0.md).
+
+## v1.8.0 interface acceptance
+
+Update Standard over the same retained-signature package without uninstalling. Check all six tabs, the Home action cards, visible Water Back, light/dark themes and a larger Android font setting. Existing completed profiles should not be forced through setup again. To inspect a fresh setup without disturbing Standard, use the separate Preview installation and Continue locally.
+
+Setup should show a permission check separately from actual received steps/BPM/sleep. Merely opening Samsung Health must not mark sharing complete. Skip optional Health/AI and verify the final review says Skipped. A successful Save & Test key check should remain visible until Continue; editing the key must clear its check. Native Drive success should likewise be visible after a manual connection, while already-granted automatic restore should continue as before. No real provider/health connection is proved by the synthetic emulator tests.
+
 > Current v1.7.0: [Drive account restore, Samsung query fixes, UI and complete changed-file/function supplement](UPDATE_1_7_0.md). This supersedes the older cloud-backup placeholder and current-version descriptions below; historical source references remain pinned to their stated baselines.
 
 ## v1.7.0 Drive restore and Samsung checks

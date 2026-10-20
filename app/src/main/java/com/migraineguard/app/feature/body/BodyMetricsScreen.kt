@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.body
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.migraineguard.app.core.data.prefs.UserPreferences
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
 import com.migraineguard.app.core.domain.WeightEntry
+import com.migraineguard.app.core.ui.FeatureHeader
 import com.migraineguard.app.core.ui.SectionCard
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -65,7 +68,7 @@ fun BodyMetricsScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
+            AppTopBar(
                 title = { Text("Body metrics") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -83,6 +86,7 @@ fun BodyMetricsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            FeatureHeader("Progress at your pace.", "Record measurements and reflect on your own trend.", Icons.Filled.MonitorWeight, eyebrow = "Your body")
             prefs.bodyProfile.bmi?.let { bmi ->
                 SectionCard(title = "BMI", icon = Icons.Filled.MonitorWeight) {
                     Text("%.1f · %s".format(bmi, prefs.bodyProfile.bmiLabel), style = MaterialTheme.typography.titleLarge)

@@ -1,11 +1,14 @@
 package com.migraineguard.app.feature.home
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import com.migraineguard.app.core.ui.ActionTile
 import com.migraineguard.app.core.ui.DailyOverview
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +31,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.LocalDining
+import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
@@ -164,7 +169,7 @@ fun HomeScreen(
     val stepProgress = ((health?.observedSteps ?: 0).toFloat() / stepGoal).coerceAtMost(1f)
     val sleepGoal = prefs.sleepGoalHours.coerceAtLeast(1f)
     val sleepProgress = (((sleep?.recordedHours ?: 0f) / sleepGoal).coerceAtMost(1f))
-    val streak = remember(waterHistory, health) {
+    val streak = remember(waterHistory, health, cups, today) {
         var s = 0
         var d = today
         val waterDates = waterHistory.filter { it.cups > 0 }.map { it.dateIso }.toSet()
@@ -186,8 +191,8 @@ fun HomeScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
-            TopAppBar(
-                title = { Text("Home") },
+            AppTopBar(
+                title = { Text("MigraineGuard") },
                 actions = {
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")
@@ -204,7 +209,7 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("$greeting,\n$displayName", style = MaterialTheme.typography.headlineLarge)
+            Text("$greeting, $displayName", style = MaterialTheme.typography.headlineSmall)
             Text(
                 today.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d")) + " · " + streak + " day streak",
                 style = MaterialTheme.typography.bodyMedium,
@@ -218,6 +223,15 @@ fun HomeScreen(
                 OutlinedButton(onClick = onOpenWater, modifier = Modifier.weight(1f).height(52.dp)) { Text("Add water") }
             }
 
+            Text("Make time for you", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 10.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ActionTile("Meals", "Food & nutrition", Icons.Filled.LocalDining, onOpenFood, Modifier.weight(1f))
+                ActionTile("Movement", "Fitness & sleep", Icons.Filled.FitnessCenter, onOpenFitness, Modifier.weight(1f))
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ActionTile("Body", "Weight & progress", Icons.Filled.MonitorWeight, onOpenBody, Modifier.weight(1f))
+                ActionTile("Medication", "Your daily log", Icons.Filled.Medication, onOpenMeds, Modifier.weight(1f))
+            }
             if (bmi != null) {
                 SectionCard(title = "BMI", icon = Icons.Filled.MonitorWeight) {
                     Text("%.1f · %s".format(bmi, prefs.bodyProfile.bmiLabel), style = MaterialTheme.typography.titleMedium)
@@ -246,7 +260,7 @@ fun HomeScreen(
                 }
             }
 
-            SectionCard(title = "Migraine risk hint", icon = Icons.Filled.Healing) {
+            SectionCard(title = "Your daily check-in", icon = Icons.Filled.Healing) {
                 Text(riskHint)
                 Spacer(Modifier.height(8.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -258,28 +272,18 @@ fun HomeScreen(
                 }
             }
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionCard(title = "Steps", modifier = Modifier.weight(1f), icon = Icons.Filled.DirectionsWalk) {
-                    val h = health
-                    Text(h?.observedSteps?.toString() ?: "—")
-                    Text("Goal $stepGoal · ${(stepProgress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
-                    Text(h?.sourceLabel ?: "", style = MaterialTheme.typography.bodySmall)
-                }
-                SectionCard(title = "Sleep", modifier = Modifier.weight(1f), icon = Icons.Filled.Bedtime) {
-                    val s = sleep
-                    Text(s?.recordedHours?.let { "%.1fh".format(it) } ?: "—", style = MaterialTheme.typography.headlineSmall)
-                    Text(s?.qualityLabel ?: "", style = MaterialTheme.typography.bodySmall)
-                }
-            }
-
             SectionCard(title = "Weather", icon = Icons.Filled.Thermostat) {
                 val w = weather
                 if (w != null) {
                     Text("${w.condition} · ${w.temperatureC}°C")
                     Text("${w.pressureHpa} hPa · ${w.humidityPercent}% humidity")
                     Text(w.locationLabel, style = MaterialTheme.typography.bodySmall)
-                } else Text(if (weatherLoading) "Loading weather…" else "Weather unavailable. Enable location or refresh when online.")
-                if (w?.isCachedOrFake == true) Text("Last available reading; excluded from current risk hints.")
+                } else {
+                    Text(if (weatherLoading) "Loading weather…" else "Weather unavailable. Enable location or refresh when online.")
+                }
+                if (w?.isCachedOrFake == true) {
+                    Text("Last available reading; excluded from current risk hints.")
+                }
                 Text("Local weather shares approximate coordinates with Open-Meteo.", style = MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick = {
                     locationLauncher.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION))
@@ -306,17 +310,7 @@ fun HomeScreen(
                 }
             }
 
-            SectionCard(title = "Quick actions", icon = Icons.Filled.FitnessCenter) {
-                Text("Use the bottom bar for Migraine, Fitness, Coach, Food, and Insights. Water is on Home.")
-                Spacer(Modifier.height(8.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    AssistChip(onClick = onAskCoach, label = { Text("Coach") })
-                    AssistChip(onClick = onOpenFitness, label = { Text("Fitness hub") })
-                    AssistChip(onClick = onOpenWater, label = { Text("Water") })
-                    AssistChip(onClick = onOpenBody, label = { Text("Weight log") })
-                    AssistChip(onClick = onOpenMeds, label = { Text("Medications") })
-                }
-            }
+
         }
     }
 }

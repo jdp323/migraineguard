@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.track
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.widget.Toast
@@ -61,6 +63,7 @@ import com.migraineguard.app.core.domain.HealthSnapshot
 import com.migraineguard.app.core.domain.SleepSnapshot
 import com.migraineguard.app.core.domain.WorkoutEntry
 import com.migraineguard.app.core.domain.WorkoutType
+import com.migraineguard.app.core.ui.FeatureHeader
 import com.migraineguard.app.core.ui.ProgressRing
 import com.migraineguard.app.core.ui.SectionCard
 import com.migraineguard.app.feature.fitness.HealthConnectDiagnostics
@@ -353,7 +356,7 @@ fun TrackScreen(
     Scaffold(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbar) },
-        topBar = { TopAppBar(title = { Text("Fitness") }) },
+        topBar = { AppTopBar(title = { Text("Fitness") }) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -363,9 +366,7 @@ fun TrackScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Move, rest, recover.", style = MaterialTheme.typography.headlineMedium)
-            Text("Your watch and phone, connected to your day.", style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            FeatureHeader("Move, rest, recover.", "Your movement and recovery, in one view.", Icons.Filled.FitnessCenter, eyebrow = "Your activity")
             if (!prefs.deviceHealthEnabled) Button(onClick = { scope.launch {
                 healthDataRepository.allowDeviceHealth(); healthRefreshCoordinator?.refresh(force = true); connectHealth()
             } }, modifier = Modifier.fillMaxWidth()) { Text("Connect this phone's health data") }
@@ -389,10 +390,10 @@ fun TrackScreen(
                         size = 120.dp,
                         stroke = 12.dp,
                     )
-                    Column {
+                    Column(Modifier.weight(1f).padding(start = 12.dp)) {
                         Text("Goal $stepGoal", style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "${(stepProgress * 100).toInt()}% · ${fitness?.sourceLabel ?: ""}",
+                            if (observedSteps == null) "Waiting for steps" else "${(stepProgress * 100).toInt()}% · ${fitness?.sourceLabel ?: ""}",
                             style = MaterialTheme.typography.bodySmall,
                         )
                         fitness?.distanceMeters?.let {

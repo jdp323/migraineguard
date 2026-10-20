@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.migraine
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -76,6 +78,7 @@ import com.migraineguard.app.core.domain.MigraineSymptom
 import com.migraineguard.app.core.domain.MigraineTrigger
 import com.migraineguard.app.core.domain.PainMarker
 import com.migraineguard.app.core.ui.EmptyState
+import com.migraineguard.app.core.ui.FeatureHeader
 import com.migraineguard.app.core.ui.SectionCard
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -118,7 +121,7 @@ fun MigraineScreen(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
-            TopAppBar(
+            AppTopBar(
                 title = {
                     Text(
                         when (pane) {
@@ -255,6 +258,8 @@ fun MigraineScreen(
                         .padding(horizontal = 16.dp)
                         .verticalScroll(rememberScrollState()),
                 ) {
+                    FeatureHeader("Make space to check in.", "Record where it hurts and what you noticed.", Icons.Filled.Healing, eyebrow = "Your journal")
+                    Spacer(Modifier.height(16.dp))
                     Text(
                         "Rotate the 3D head (chevrons or swipe) and tap to place glowing pain markers. Right view mirrors the left image.",
                         style = MaterialTheme.typography.bodyMedium,

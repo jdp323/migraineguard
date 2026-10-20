@@ -1,6 +1,8 @@
 package com.migraineguard.app.feature.auth
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +61,7 @@ fun SignInScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(28.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -156,7 +159,7 @@ fun SignInScreen(
 
         Text(
             text = if (configured) {
-                "Google sign-in requires the app certificate to be registered. " +
+                "Your account, your own space. " +
                     "Each Google account has separate local records and API keys. Continue locally opens the original local profile and older records."
             } else {
                 "Google sign-in is not configured. You can continue locally."

@@ -1,5 +1,7 @@
 package com.migraineguard.app.feature.coach
 
+import com.migraineguard.app.core.ui.AppTopBar
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,13 +45,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.migraineguard.app.core.ai.AiPersona
 import com.migraineguard.app.core.ai.Personas
 import com.migraineguard.app.core.data.Result
+import com.migraineguard.app.core.ui.FeatureHeader
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.migraineguard.app.core.ui.SectionCard
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CoachScreen(
     coachRepository: AiCoachRepository,
@@ -101,7 +106,7 @@ fun CoachScreen(
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text("AI Coach") }) },
+        topBar = { AppTopBar(title = { Text("AI Coach") }) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -111,8 +116,9 @@ fun CoachScreen(
                 .verticalScroll(scroll),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            FeatureHeader("A little guidance.", "Explore your next small step with a coach or educational analyst.", Icons.Filled.AutoAwesome, eyebrow = "Your companion")
             Surface(
-                color = MaterialTheme.colorScheme.errorContainer,
+                color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
@@ -125,7 +131,7 @@ fun CoachScreen(
                     Text(
                         Personas.SAFETY_DISCLAIMER,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -144,7 +150,7 @@ fun CoachScreen(
             }
 
             SectionCard(title = "Persona", icon = Icons.Filled.Psychology) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = persona == AiPersona.COACH,
                         onClick = { persona = AiPersona.COACH },
@@ -167,7 +173,7 @@ fun CoachScreen(
             }
 
             SectionCard(title = "Quick actions", icon = Icons.Filled.AutoAwesome) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     AssistChip(
                         onClick = {
                             runPrompt(

@@ -113,7 +113,7 @@ jobs:
             adb shell am instrument -w com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-runtime-results.txt
             adb pull /sdcard/Android/data/com.migraineguard.app/files/verification ui-verification || true
             cat android-runtime-results.txt
-            grep -q 'OK (18 tests)' android-runtime-results.txt
+            grep -q 'OK (20 tests)' android-runtime-results.txt
             adb shell am start -n com.migraineguard.app/.MainActivity
             sleep 5
             adb exec-out screencap -p > android-startup.png
@@ -153,15 +153,15 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
-          Private Google Drive app-data backup now saves each Google account's profile, birthday, measurements, goals, settings, API keys and seven journal tables. At sign-in, the app checks/restores Drive before setup. Returning completed profiles proceed to a phone-specific Health Connect permission check. Allow the native Drive permission prompt once; previously granted access is checked automatically.
+          A refreshed interface across Home, Migraine, Fitness, Coach, Food, Insights, hydration, measurements and Settings: coordinated light/dark surfaces, expressive feature headers, colorful metric graphics, one-tap dashboard shortcuts, readable six-tab navigation and short page transitions. Existing records and permissions are preserved.
 
           Drive API keys use Google's transport and storage encryption; this is not a separately password-protected end-to-end backup. Keys are re-encrypted with Android Keystore on each phone. Backup status reflects completed HTTP requests. Local data remains available when offline, and sign-out attempts a final save.
 
           Samsung Health is the default steps source. You can choose combined Health Connect counts in Fitness. If aggregate counts are zero but raw records exist, a conservative per-writer estimate recovers them and is labeled. Heart queries include Samsung daily buckets ending tonight and exclude future samples; sleep searches completed sessions across fourteen days. The local sync report includes permissions, source and errors for phone diagnosis.
 
-          New light/dark palettes, rounded cards, animated daily habit rings, smoother navigation and a cleaner Fitness screen. Missing health readings stay unavailable instead of becoming invented zeroes.
+          Setup now displays verified checkmarks, skipped optional steps and a final review. Health Connect availability and permissions are checked independently from actual steps, dated heart rate and completed sleep. Samsung sharing is checked only from returned Samsung data. A successful Gemini or first-time Drive connection stays visible until Continue; failures do not get a success check.
 
-          Verified release checks include JVM tests, Android lint, retained signing certificates, and 18 Android emulator tests for account separation, migrations, encrypted exports, Drive restore with a simulated transport, health queries and all six tabs. UI screenshots are captured in light/dark themes on a narrow screen. Real Google Drive authorization, Samsung/watch transfer and live AI still require phone testing.
+          Verified release checks include JVM tests, Android lint, retained signing certificates, and 20 Android emulator tests for account separation, migrations, encrypted exports, Drive restore with a simulated transport, health queries and all six tabs. All six main screens are captured in light/dark themes on a narrow screen, plus setup, hydration and settings. Google OAuth is now In production for any account; each user still authorizes their own private app-data backup. Real Google Drive authorization, Samsung/watch transfer and live AI still require phone testing.
 
           Install Standard to update an installation signed with the retained FB:67 certificate. Preview installs alongside Standard with separate storage and package com.migraineguard.app.preview. Older unowned data remains under Continue locally; sign in to the original account before connecting Drive to back up its existing details.
           NOTES
