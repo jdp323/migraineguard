@@ -307,7 +307,7 @@ private fun GeminiStep(
             elevation = CardDefaults.cardElevation(0.dp),
         ) {
             Text(
-                "Cloud AI uses YOUR free Google AI Studio quota — never the app developer’s tokens. " +
+                "Cloud AI uses your Google AI Studio account; provider quotas and charges may apply. " +
                     "Google Sign-In does not grant Gemini. AI tips are educational, not medical advice.",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(14.dp),
@@ -381,7 +381,7 @@ private fun GeminiStep(
                             is Result.Error -> {
                                 statusIsError = true
                                 onVerificationChanged(CheckState.ATTENTION)
-                                status = "Saved, but test failed: ${r.message}. Fix later in Settings, or continue with OfflineHealthBrain."
+                                status = "Saved, but test failed: ${r.message}. Retry or continue without a verified cloud connection."
                                 busy = false
                             }
                         }
@@ -411,13 +411,13 @@ private fun GeminiStep(
             )
         }
         Text(
-            "Skip → OfflineHealthBrain only (on-device reports from your logs). Cloud AI needs your key.",
+            "With no saved keys, coaching stays on device. Skipping this test keeps any saved provider keys.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
         TextButton(onClick = onSkip, enabled = !busy) {
-            Text("Skip — use offline brain only")
+            Text("Skip verification for now")
         }
         if (statusIsError) {
             OutlinedButton(onClick = { onNext(false) }, modifier = Modifier.fillMaxWidth()) {
@@ -454,7 +454,7 @@ private fun DoneStep(checks: List<SetupCheck>, busy: Boolean, error: String?, on
         FeatureHeader("Your space is ready.", "Here is what was saved or checked. Optional connections can be finished later.",
             Icons.Filled.CheckCircle, eyebrow = "Setup review")
         SectionCard("Your setup checklist") {
-            checks.forEach { VerificationRow(it.title, if (it.state == CheckState.SKIPPED) "Skipped for now. You can connect in Settings." else it.detail, it.state) }
+            checks.forEach { VerificationRow(it.title, if (it.state == CheckState.SKIPPED) "Verification skipped. Existing settings and permissions are kept." else it.detail, it.state) }
         }
         Text("A permission check does not guarantee watch records have synced. Fitness shows the actual readings. AI is educational and does not replace professional care.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

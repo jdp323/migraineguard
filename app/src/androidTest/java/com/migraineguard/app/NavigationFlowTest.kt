@@ -69,8 +69,8 @@ class NavigationFlowTest {
             compose.waitUntil(10_000) { compose.onAllNodesWithText("Connection check completed").fetchSemanticsNodes().isNotEmpty() }
             capture("setup-health")
             compose.onNodeWithText("Skip Health Connect for now").performScrollTo().performClick()
-            awaitText("Skip — use offline brain only")
-            compose.onNodeWithText("Skip — use offline brain only").performScrollTo().performClick()
+            awaitText("Skip verification for now")
+            compose.onNodeWithText("Skip verification for now").performScrollTo().performClick()
             awaitText("Complete your profile")
             compose.onNodeWithText("Imperial (ft/in · lb)").performScrollTo().performClick()
             compose.onNodeWithText("154.3").assertExists()

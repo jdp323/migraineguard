@@ -20,7 +20,7 @@ Inspired by [Material 3](https://m3.material.io/) and [Android Compose motion gu
 - Samsung sharing: a returned source, positive Samsung aggregate, dated Samsung heart sample or completed Samsung sleep record identifies Samsung Health. Installing/opening Samsung Health is not proof of sharing.
 - Steps: a Health Connect step-sync result was received, including a real zero. A manual/demo count cannot prove a connection. Raw fallback remains labeled as an estimate.
 - Heart/sleep: a dated heart sample or positive completed sleep session was returned. Heart is not live; older sleep is explicitly identified. Permissions without records stay unverified.
-- Gemini: the saved key received a successful connection-test response. Changing the key clears that confirmation. Success stays on screen until Continue. Opening AI Studio is a manual instruction, not a completed check.
+- Gemini: the saved key received a successful connection-test response. Changing the key clears that confirmation. Skipping verification keeps existing keys and makes no claim that cloud AI is disabled; with no keys, the on-device fallback remains available. Success stays on screen until Continue. Opening AI Studio is a manual instruction, not a completed check.
 - Drive: the selected account identity and app-data lookup/restore completed. First-time manual connections show a success check and Continue. Previously granted automatic returning-user restore continues without adding a new stop.
 - Profile: validated details have been saved. Save failures show an error and do not advance.
 
