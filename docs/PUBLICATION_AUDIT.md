@@ -38,3 +38,7 @@ OAuth client IDs, Android package names, project IDs and public signing-certific
 Keep private health data, sync reports, screenshots of actual accounts, tokens, API keys and backup files out of public issues/commits. Use synthetic fixtures for documentation. Rotate an exposed provider credential at its issuer; deleting its text from the latest commit does not make the credential private again. Use GitHub's secret-protection facilities where available and review uploads before making a release.
 
 Removing the unused config was additionally checked by a successful local :app:assembleDebug run. No production source or OAuth registration was changed by that cleanup.
+
+## Final public access verification
+
+Both Standard and Preview v1.8.0 release assets returned HTTP 200 without account credentials and matched the tested SHA-256 values in UPDATE_1_8_0.md. The public main-branch README and four new guides returned HTTP 200 and matched local bytes. GitHub reports v1.8.0-debug as latest; PR #1 is merged. The static homepage/help update was deployed on existing Firebase Hosting with no permission/billing expansion, and all seven live public assets matched reviewed local bytes. No history rewrite or old-project key restriction is implied by these access checks.
