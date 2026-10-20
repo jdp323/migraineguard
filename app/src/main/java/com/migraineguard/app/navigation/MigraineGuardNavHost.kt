@@ -179,6 +179,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
@@ -215,7 +216,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
         NavHost(
             navController = navController,
             startDestination = Routes.Home,
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
             enterTransition = { fadeIn(tween(240)) + slideInHorizontally(tween(240)) { it / 14 } },
             exitTransition = { fadeOut(tween(140)) },
             popEnterTransition = { fadeIn(tween(240)) + slideInHorizontally(tween(240)) { -it / 14 } },

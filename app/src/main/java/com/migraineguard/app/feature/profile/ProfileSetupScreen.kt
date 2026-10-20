@@ -2,6 +2,8 @@ package com.migraineguard.app.feature.profile
 
 import com.migraineguard.app.core.ui.AppTopBar
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -49,6 +51,7 @@ fun ProfileSetupScreen(
     initial: BodyProfile,
     onComplete: () -> Unit,
     modifier: Modifier = Modifier,
+    embedded: Boolean = false,
 ) {
     var name by remember { mutableStateOf(initial.displayName.ifBlank { prefilledName }) }
     var dob by remember { mutableStateOf(initial.dateOfBirthIso) }
@@ -94,7 +97,8 @@ fun ProfileSetupScreen(
 
     Scaffold(
         modifier = modifier,
-        topBar = { AppTopBar(title = { Text("Complete your profile") }) },
+        topBar = { if (!embedded) AppTopBar(title = { Text("Complete your profile") }) },
+        contentWindowInsets = if (embedded) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
     ) { padding ->
         Column(
             Modifier
@@ -104,6 +108,7 @@ fun ProfileSetupScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (embedded) Text("Complete your profile", style = MaterialTheme.typography.titleLarge)
             Text(
                 "A few details unlock BMI, personalized goals, and better migraine insights. Google doesn’t share date of birth.",
                 style = MaterialTheme.typography.bodyMedium,

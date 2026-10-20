@@ -6,7 +6,7 @@ Version 1.8.0 / code 15. This extends the [project guide](PROJECT_GUIDE.md), [fi
 
 Coordinated light/dark backgrounds, Material surface-container colors, feature introductions, icon tiles and stronger headings now cover the main app and secondary screens. Home has an illustrated daily overview and a two-column action grid for meals, movement, measurements and medication. Duplicate Home metric and navigation sections were removed. Existing journal, health, AI and backup behavior remains available.
 
-The six destinations retain their names and routes. A compact custom tab bar gives each label its full column width, avoiding the old built-in item's horizontal padding that clipped Migraine at narrow sizes. Tabs expose selected state and role to accessibility/test tools. Existing back-stack save/restore remains; page entry/pop uses short fade/translation transitions. Water now has a visible Back control. Form and account data are not changed by appearance selection.
+The six destinations retain their names and routes. A compact custom tab bar gives each label its full column width, avoiding the old built-in item's horizontal padding that clipped Migraine at narrow sizes. Tabs expose selected state and role to accessibility/test tools. Existing back-stack save/restore remains; page entry/pop uses short fade/translation transitions. Water now has a visible Back control. Outer navigation consumes its padding once, so nested feature screens do not reserve duplicate system-bar space. Form and account data are not changed by appearance selection.
 
 Daily habit rings and standalone progress rings animate when values change; ring drawing is inset so rounded strokes are not clipped. Background illustrations are code-native Canvas shapes, with no image downloads, placeholder health values, remote fonts or additional graphics libraries. Unknown health readings remain unavailable. Cards no longer animate their entire height on every streamed AI chunk.
 
@@ -24,7 +24,7 @@ Inspired by [Material 3](https://m3.material.io/) and [Android Compose motion gu
 - Drive: the selected account identity and app-data lookup/restore completed. First-time manual connections show a success check and Continue. Previously granted automatic returning-user restore continues without adding a new stop.
 - Profile: validated details have been saved. Save failures show an error and do not advance.
 
-Setup has a five-part progress header and Back controls for editable earlier steps. The final review marks optional omissions as Skipped rather than turning everything green. It is a record of that setup run, not a permanent health/AI connectivity guarantee. Health checks rerun on resume/recheck and clear old evidence before reading; exceptions cannot leave previous green checks visible.
+Setup has a five-part progress header and Back controls for editable earlier steps. Welcome/sign-in use a compact layout with primary controls early in the content; longer forms scroll. Profile embeds into the wizard without a second toolbar. The final review marks optional omissions as Skipped rather than turning everything green. It is a record of that setup run, not a permanent health/AI connectivity guarantee. Health checks rerun on resume/recheck and clear old evidence before reading; exceptions cannot leave previous green checks visible.
 
 ## File and function reference
 
@@ -43,7 +43,7 @@ Application paths are relative to app/src/main/java/com/migraineguard/app/.
 | feature/setup/HealthConnectSetup.kt (new) | HealthConnectStep owns lifecycle/recheck jobs, generation guarding, native permission launch/fallback, optional continuation and individual result rows. No health permission is inferred from Google login. |
 | feature/setup/SetupProgressHeader.kt (new) | SetupCheck models each step's title/detail/state; SetupProgressHeader renders the five steps with truthful completion semantics. |
 | feature/setup/SetupWizardScreen.kt | Remembered step/status progress, optional Back handling, animated step changes and final result review. GeminiStep retains the tested-key identity until editing, exposes actual success, catches save/test errors and keeps failure distinct from skip. DoneStep summarizes verified/skipped states before persisting completion. |
-| feature/profile/ProfileSetupScreen.kt | Shared top bar; saving state prevents repeat submissions and catches persistence failure before onComplete. |
+| feature/profile/ProfileSetupScreen.kt | Embedded mode avoids a second toolbar inside the wizard. Shared top bar; saving state prevents repeat submissions and catches persistence failure before onComplete. |
 | feature/settings/DriveBackupScreen.kt | Shared feature intro and verified account rows. Manual connection success waits for Continue; silent auto-restore keeps its existing flow. DriveBackupCard shows connection work/result alongside actual save status. |
 | feature/auth/SignInScreen.kt | Scrollable small-screen sign-in and less developer-oriented account copy. |
 | feature/track/TrackScreen.kt | Feature header, width-aware metric text, waiting text for unknown steps and shared cards/chrome. Read/source/diagnostic logic retained. |
@@ -62,6 +62,6 @@ Application paths are relative to app/src/main/java/com/migraineguard/app/.
 
 HealthSetupEvidenceTest adds five JVM cases: grants without records, manual/demo values, genuine zero versus writer proof, Samsung heart/sleep without steps, and stale data with unavailable service. SetupVerificationTest adds two Android cases: permissions without data never show data checkmarks, and actual records check successfully then clear after revoked access/read failure.
 
-NavigationFlowTest keeps unit-conversion/persistence assertions, verifies skipped Health/AI on the review screen, walks all six tabs in light/dark, and captures setup, hydration and settings. Captures use the current Compose root after idle, avoiding an earlier system-screenshot transition race. Test data is synthetic; no real account, medical records or keys are used.
+NavigationFlowTest keeps unit-conversion/persistence assertions, verifies skipped Health/AI on the review screen, walks all six tabs in light/dark, and captures setup, hydration and settings. Captures use the current Compose root after idle, avoiding an earlier system-screenshot transition race. Setup actions first scroll their controls into view and assert visibility; failures save a diagnostic capture. Test data is synthetic; no real account, medical records or keys are used.
 
 Local compilation, JVM tests, lint and test/APK assembly plus hosted Android execution and retained certificate verification must pass before release. Results and inspected screenshots will be added once verification completes. Real watch sync, native Google consent and live provider requests still require phone acceptance.

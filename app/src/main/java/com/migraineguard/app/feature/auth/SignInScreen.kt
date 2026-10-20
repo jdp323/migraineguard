@@ -62,13 +62,13 @@ fun SignInScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(28.dp),
+            .padding(20.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
             modifier = Modifier
-                .size(96.dp)
+                .size(60.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center,
@@ -77,20 +77,20 @@ fun SignInScreen(
                 Icons.Filled.Healing,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(30.dp),
             )
         }
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(12.dp))
         Text(
             text = stringResource(R.string.app_version_label, BuildConfig.VERSION_NAME),
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
             text = stringResource(R.string.sign_in_subtitle),
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 12.dp, bottom = 28.dp),
+            modifier = Modifier.padding(top = 8.dp, bottom = 18.dp),
         )
 
         Card(
@@ -159,8 +159,7 @@ fun SignInScreen(
 
         Text(
             text = if (configured) {
-                "Your account, your own space. " +
-                    "Each Google account has separate local records and API keys. Continue locally opens the original local profile and older records."
+                "Each Google account has its own profile and keys. Continue locally opens your existing local records."
             } else {
                 "Google sign-in is not configured. You can continue locally."
             },

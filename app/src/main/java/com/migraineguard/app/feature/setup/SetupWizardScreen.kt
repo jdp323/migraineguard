@@ -199,58 +199,17 @@ fun SetupWizardScreen(
 
 @Composable
 private fun WelcomeStep(onNext: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(96.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                Icons.Filled.Healing,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(48.dp),
-            )
-        }
-        Spacer(Modifier.height(20.dp))
-        Text(
-            stringResource(R.string.app_version_label, BuildConfig.VERSION_NAME),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(
-            "MigraineGuard helps you map migraine episodes, hydrate with intention, " +
-                "pull fitness & sleep from Health Connect / Samsung Health, spot weather & food patterns, " +
-                "and chat with an AI coach — using only your own Gemini key when you want cloud AI.",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(
-            "Personal / educational tool — not a medical device. Not a substitute for professional care.",
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(28.dp))
-        Button(
-            onClick = onNext,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) { Text("Start setup") }
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        FeatureHeader("Your day, together.", "Migraine tracking, movement and everyday habits, in one place.",
+            Icons.Filled.Healing, eyebrow = "MigraineGuard")
+        Text(stringResource(R.string.app_version_label, BuildConfig.VERSION_NAME),
+            style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+        Button(onClick = onNext, modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp)) { Text("Start setup") }
+        Text("Choose your account, check your health connection and personalize your space. Cloud AI and backup are optional.",
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Personal and educational tracking. Not a medical device or a substitute for professional care.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -482,6 +441,7 @@ private fun ProfileStep(
         prefilledName = prefilledName,
         initial = initial,
         onComplete = onNext,
+        embedded = true,
         modifier = modifier,
     )
 }

@@ -57,13 +57,14 @@ class NavigationFlowTest {
         }
         container.authRepository.signOut()
         ActivityScenario.launch(MainActivity::class.java).use {
+            try {
             awaitText("Start setup")
             compose.onNodeWithText("MigraineGuard v${BuildConfig.VERSION_NAME}").assertIsDisplayed()
             capture("setup-welcome")
-            compose.onNodeWithText("Start setup").performClick()
+            compose.onNodeWithText("Start setup").performScrollTo().assertIsDisplayed().performClick()
             awaitText("Continue locally")
             compose.onNodeWithText("MigraineGuard v${BuildConfig.VERSION_NAME}").assertIsDisplayed()
-            compose.onNodeWithText("Continue locally").performClick()
+            compose.onNodeWithText("Continue locally").performScrollTo().assertIsDisplayed().performClick()
             awaitText("Skip Health Connect for now")
             compose.waitUntil(10_000) { compose.onAllNodesWithText("Connection check completed").fetchSemanticsNodes().isNotEmpty() }
             capture("setup-health")
@@ -82,7 +83,7 @@ class NavigationFlowTest {
             capture("setup-review")
             val saved = runBlocking { container.preferencesRepository.preferences.first() }
             assertEquals(70f, saved.bodyProfile.weightKg!!, 0.1f)
-            compose.onNodeWithText("Enter MigraineGuard").performClick()
+            compose.onNodeWithText("Enter MigraineGuard").performScrollTo().assertIsDisplayed().performClick()
             val pages = listOf("Migraine" to "Make space to check in.", "Fitness" to "Move, rest, recover.",
                 "Food" to "Eat with awareness.", "Coach" to "A little guidance.",
                 "Insights" to "See the bigger picture.", "Home" to "Find your rhythm.")
@@ -106,6 +107,10 @@ class NavigationFlowTest {
             awaitText("Make it yours.")
             capture("settings-dark")
 
+            } catch (failure: Throwable) {
+                runCatching { capture("failure") }
+                throw failure
+            }
         }
     }
 }
