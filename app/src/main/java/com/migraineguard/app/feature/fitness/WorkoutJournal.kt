@@ -60,6 +60,7 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
     var showHistory by rememberSaveable { mutableStateOf(false) }
+    var editGoal by rememberSaveable { mutableStateOf(false) }
     var goal by remember(prefs.weeklyWorkoutGoal) { mutableFloatStateOf(prefs.weeklyWorkoutGoal.toFloat()) }
     val metric = prefs.bodyProfile.useMetric
     val unit = if (metric) "kg" else "lb"
@@ -82,13 +83,20 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
     }
     val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (granted) takePhoto() else message = "Camera not allowed. Type a name or choose a gallery photo." }
 
-    SectionCard("Your training goal", icon = Icons.Default.FitnessCenter) {
-        Text(TrainingProgress.daysThisWeek(entries).toString()+" / "+prefs.weeklyWorkoutGoal+" active days this week", style = MaterialTheme.typography.titleMedium)
+    SectionCard("Your training goal") {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Text(TrainingProgress.daysThisWeek(entries).toString()+" / "+prefs.weeklyWorkoutGoal+" active days this week", modifier = Modifier.weight(1f))
+            TextButton(onClick = { goal = prefs.weeklyWorkoutGoal.toFloat(); editGoal = true }) { Text("Edit") }
+        }
         LinearProgressIndicator(progress = { (TrainingProgress.daysThisWeek(entries).toFloat()/prefs.weeklyWorkoutGoal).coerceIn(0f,1f) }, modifier = Modifier.fillMaxWidth())
-        Text("Goal: "+goal.toInt()+" days per week")
-        Slider(value = goal, onValueChange = { goal = it }, onValueChangeFinished = { scope.launch { preferences.setWeeklyWorkoutGoal(goal.toInt()) } }, valueRange = 1f..7f, steps = 5)
-        Text("Counts distinct days with saved exercise logs, not Health Connect sessions.", style = MaterialTheme.typography.bodySmall)
     }
+    if (editGoal) AlertDialog(onDismissRequest = { editGoal = false }, title = { Text("Weekly training goal") }, text = {
+        Column {
+            Text(goal.toInt().toString()+" active days per week")
+            Slider(value = goal, onValueChange = { goal = it }, valueRange = 1f..7f, steps = 5)
+            Text("Counts distinct days with saved exercise logs, not individual exercises or Health Connect sessions.")
+        }
+    }, confirmButton = { TextButton(onClick = { scope.launch { preferences.setWeeklyWorkoutGoal(goal.toInt()); editGoal = false } }) { Text("Save goal") } }, dismissButton = { TextButton(onClick = { editGoal = false }) { Text("Cancel") } })
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FilterChip(selected = !showHistory, onClick = { showHistory = false; onSectionChanged() }, label = { Text("Log exercise") })
         FilterChip(selected = showHistory, onClick = { showHistory = true; onSectionChanged() }, label = { Text("Training history") })

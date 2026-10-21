@@ -97,3 +97,7 @@ Local checks completed before upload: **72 JVM tests, zero failures/errors; lint
 Android tests extend preservation to old schema 4 workout rows, restore the new encrypted provider/goal/reminder fields through simulated Drive transport, verify confirmed snapshot size, and exercise named-set entry plus all four Settings categories. The successful hosted Android result, exact source SHA, released asset hashes and inspected screenshots will be recorded after that run completes. Twenty Android tests are required by the release gate.
 
 No live provider keys, personal health records or real Google tokens are test fixtures. Real machine-photo recognition, provider quota/model access, Samsung/Fitbit transfer, native friend-account Drive transfer, and notification timing on a phone remain acceptance checks.
+
+## v1.9.1 layout refinement
+
+Screenshot review showed the expanded weekly-goal editor pushing exercise entry below the initial narrow viewport. v1.9.1 / code 17 keeps the goal summary/progress compact and opens its slider in an Edit dialog. The history capture now scrolls to and asserts the saved named-exercise card, so the actual persisted sets are visible. No schema, permission or provider data-flow change is introduced by this refinement.

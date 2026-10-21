@@ -114,6 +114,7 @@ class NavigationFlowTest {
             val logged = runBlocking { container.workoutRepository.inRange(0,Long.MAX_VALUE) }.first { it.exerciseName == "Leg press fixture" }
             assertEquals(40f,logged.sets.single().weightKg,0.01f)
             assertEquals(8,logged.sets.single().reps)
+            compose.onNodeWithText("Leg press fixture").performScrollTo().assertIsDisplayed()
             capture("training-history")
             compose.onNode(hasText("Home") and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performClick()
             compose.onAllNodesWithText("Add water").onFirst().performScrollTo().performClick()
