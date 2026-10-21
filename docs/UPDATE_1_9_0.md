@@ -1,6 +1,6 @@
 # v1.9.0 — focused Home, training journal and connection controls
 
-Application version 1.9.0 / code 16. Extends [v1.8.0](UPDATE_1_8_0.md), the [complete project guide](PROJECT_GUIDE.md) and [file/function baseline](FILE_REFERENCE.md).
+Current application version **1.9.1 / code 17**; includes the v1.9.0 features below. Extends [v1.8.0](UPDATE_1_8_0.md), the [complete project guide](PROJECT_GUIDE.md) and [file/function baseline](FILE_REFERENCE.md).
 
 ## Use the reorganized app
 
@@ -88,16 +88,73 @@ Application paths below start at app/src/main/java/com/migraineguard/app/.
 | di/AppContainer.kt, MigraineGuardApp.kt | New provider routing, reactive reminder plan and durable account marker/cancellation on sign-out. |
 | MainActivity.kt, navigation/MigraineGuardNavHost.kt | Consume validated reminder destinations after sign-in/setup; consistent provider-settings links and new migraine shortcuts. |
 | AndroidManifest.xml, res/xml/file_paths.xml | Adds equipment-photo FileProvider path; removes unused precise-location and exercise-write permissions. |
-| app/build.gradle.kts, .github/workflows/android.yml | v1.9.0/code 16, tests/build/signing/runtime gates and accurate release notes. |
+| app/build.gradle.kts, .github/workflows/android.yml | v1.9.1/code 17, tests/build/signing/runtime gates and accurate release notes. |
 
 ## Verification status
 
 Local checks completed before upload: **72 JVM tests, zero failures/errors; lint zero errors (104 non-blocking warnings); Standard and Android-test APK assembly**. New JVM regressions cover protocol headers/secret placement/response parsing, prefix ambiguity, semantic updates/URL rejection, training date/volume/name policies and reminder windows/routes/toggles.
 
-Android tests extend preservation to old schema 4 workout rows, restore the new encrypted provider/goal/reminder fields through simulated Drive transport, verify confirmed snapshot size, and exercise named-set entry plus all four Settings categories. The successful hosted Android result, exact source SHA, released asset hashes and inspected screenshots will be recorded after that run completes. Twenty Android tests are required by the release gate.
+Android tests extend preservation to old schema 4 workout rows, restore the new encrypted provider/goal/reminder fields through simulated Drive transport, verify confirmed snapshot size, and exercise named-set entry plus all four Settings categories. The final hosted release run passed all 20 Android tests; evidence and hashes are below.
 
 No live provider keys, personal health records or real Google tokens are test fixtures. Real machine-photo recognition, provider quota/model access, Samsung/Fitbit transfer, native friend-account Drive transfer, and notification timing on a phone remain acceptance checks.
 
 ## v1.9.1 layout refinement
 
-Screenshot review showed the expanded weekly-goal editor pushing exercise entry below the initial narrow viewport. v1.9.1 / code 17 keeps the goal summary/progress compact and opens its slider in an Edit dialog. The history capture now scrolls to and asserts the saved named-exercise card, so the actual persisted sets are visible. No schema, permission or provider data-flow change is introduced by this refinement.
+Screenshot review showed the expanded weekly-goal editor pushing exercise entry below the initial narrow viewport. v1.9.1 / code 17 keeps the goal summary/progress compact and opens its slider in an Edit dialog. The history capture now scrolls to and asserts the saved named-exercise card, so the saved entry is confirmed; scroll within history to read its sets. No schema, permission or provider data-flow change is introduced by this refinement.
+
+## Published v1.9.1 verification and screenshots
+
+Published October 21, 2026: [release and downloads](https://github.com/jdp323/migraineguard/releases/tag/v1.9.1-debug), [successful CI run 39617745780](https://github.com/jdp323/migraineguard/actions/runs/39617745780). Built source: 3200db8ae39d7af5955cdd9fce4fa1e03a57b53c. Documentation-only commits follow without changing the APK.
+
+Hosted XML totals: 72 JVM tests, 0 failures/errors. Android API-35 runtime: OK (20 tests). Lint: 0 errors, 104 warnings. Standard and Preview both report 1.9.1/code 17, min SDK 26, target SDK 35. Both APK signatures verify against retained SHA-1 FB:67:0D:1D:96:C2:8B:9E:27:0D:36:F8:D6:57:53:E3:6B:30:8D:E8.
+
+Both released APKs were downloaded without GitHub authentication and matched the built files:
+
+| File | SHA-256 |
+| --- | --- |
+| MigraineGuard-v1.9.1-debug.apk | d877d5625076a6bea7ad91cd0b17d10418efba5f19bd209369c17b1993f5076f |
+| MigraineGuard-v1.9.1-preview.apk | 34c4a93b6fb4005780d55399f612e4ecc8a4cfefaafbd20d315d824718684ee1 |
+
+These screenshots were captured by the final hosted navigation test and visually inspected. They contain synthetic profiles/entries and no real health records or keys. Pages scroll; screenshots show one viewport, not every control. History confirms the named exercise; its set details are farther down.
+
+### home light
+
+<img src="images/v1.9.1/home-light.png" width="320" alt="home light with synthetic emulator data">
+
+### home dark
+
+<img src="images/v1.9.1/home-dark.png" width="320" alt="home dark with synthetic emulator data">
+
+### migraine light
+
+<img src="images/v1.9.1/migraine-light.png" width="320" alt="migraine light with synthetic emulator data">
+
+### fitness light
+
+<img src="images/v1.9.1/fitness-light.png" width="320" alt="fitness light with synthetic emulator data">
+
+### training overview
+
+<img src="images/v1.9.1/training-overview.png" width="320" alt="training overview with synthetic emulator data">
+
+### training set entry
+
+<img src="images/v1.9.1/training-set-entry.png" width="320" alt="training set entry with synthetic emulator data">
+
+### training history
+
+<img src="images/v1.9.1/training-history.png" width="320" alt="training history with synthetic emulator data">
+
+### settings ai
+
+<img src="images/v1.9.1/settings-ai.png" width="320" alt="settings ai with synthetic emulator data">
+
+### settings reminders
+
+<img src="images/v1.9.1/settings-reminders.png" width="320" alt="settings reminders with synthetic emulator data">
+
+### settings updates
+
+<img src="images/v1.9.1/settings-updates.png" width="320" alt="settings updates with synthetic emulator data">
+
+**Multiple-device backup compatibility:** update all devices before editing/restoring this backup. Older app versions can ignore and later overwrite newer training/provider/reminder fields. Avoid simultaneous edits; Drive snapshots are not conflict-free live sync.

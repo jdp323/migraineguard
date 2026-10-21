@@ -1,6 +1,6 @@
 # AI prompts, permissions and data flow
 
-Current implementation: v1.9.0 / code 16. This describes what the code sends and when. It is not a promise that a provider will always return accurate results. [User guide](USER_GUIDE.md) · [v1.9.0 implementation](UPDATE_1_9_0.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
+Current implementation: v1.9.1 / code 17. This describes what the code sends and when. It is not a promise that a provider will always return accurate results. [User guide](USER_GUIDE.md) · [v1.9.1 implementation](UPDATE_1_9_0.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
 
 ## Permissions and choices
 
@@ -20,7 +20,7 @@ Current implementation: v1.9.0 / code 16. This describes what the code sends and
 | Food/equipment photo upload checkbox | Explicit selected image-capable provider request. Selecting/capturing an image alone does not send it. | Image stays a local reference; manual name/description remains usable. |
 | Automatic update checking | Optional Reminders setting. Public GitHub metadata is refreshed at most daily while connected. | Manual Check for updates in App settings still works when online. |
 
-The unused fine-location and exercise-write permissions were removed in v1.9.0. Manual exercise entries stay in the account journal; this app does not export them to Health Connect. Health Connect, Google sign-in, Drive authorization, camera, location and notifications are independent choices.
+The unused fine-location and exercise-write permissions were removed in v1.9.1. Manual exercise entries stay in the account journal; this app does not export them to Health Connect. Health Connect, Google sign-in, Drive authorization, camera, location and notifications are independent choices.
 
 ## Where requests go
 

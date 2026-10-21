@@ -1,8 +1,8 @@
-> New controls and fixes: [v1.9.0 guide](UPDATE_1_9_0.md), [AI prompts and permissions](AI_AND_PERMISSIONS.md). Settings → App → Check for updates opens the current GitHub release.
+> New controls and fixes: [v1.9.1 guide](UPDATE_1_9_0.md), [AI prompts and permissions](AI_AND_PERMISSIONS.md). Settings → App → Check for updates opens the current GitHub release.
 
 # Troubleshooting MigraineGuard
 
-Applies to v1.9.0 (16). Check **Settings → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
+Applies to v1.9.1 (17). Check **Settings → App → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
 
 [User guide](USER_GUIDE.md) · [Latest download](https://github.com/jdp323/migraineguard/releases/latest) · [Technical guide](HOW_IT_WORKS.md)
 
@@ -11,7 +11,7 @@ Applies to v1.9.0 (16). Check **Settings → About** first. The Standard and Pre
 | Symptom | Likely cause | What to do |
 | --- | --- | --- |
 | Release link says 404 | Old/wrong link, an older private access state or a stale browser page | Open the public latest-release link above in a fresh tab. Repository visibility is public as checked October 21, 2026. Download from Assets, not a historical Actions run. |
-| Phone shows an older release | Cached page, old bookmark or an older installed APK | Open the specific v1.9.0-debug release and select its APK. Check installed Settings → About after updating. Source-code ZIPs are not installable APKs. |
+| Phone shows an older release | Cached page, old bookmark or an older installed APK | Open the specific v1.9.1-debug release and select its APK. Check installed Settings → App → About after updating. Source-code ZIPs are not installable APKs. |
 | App not installed / package conflicts | Different signing certificate, wrong package, unsupported Android or insufficient storage | Keep the existing app/data. Try Preview alongside it. Standard updates require the same package and retained signer. Ask for help before uninstalling an app with records. |
 | Android warns about installing from this source | APK is sideloaded rather than installed through Play | Review the GitHub URL and APK identity. Allow the specific browser/file manager only if you trust the file. Do not disable device-wide security controls. |
 | APK appears to download as a ZIP | You downloaded source code or an Actions artifact | Use the .apk release asset. Do not rename a source ZIP to .apk. |

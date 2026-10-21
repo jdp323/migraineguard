@@ -1,19 +1,19 @@
 # MigraineGuard user guide
 
-For Android v1.9.0 (version code 16). This candidate is being verified; the release record will confirm publication. Start here if a friend shared the app with you. No programming or Google Cloud setup is needed to use the published APK.
+For Android v1.9.1 (version code 17). Start here if a friend shared the app with you. No programming or Google Cloud setup is needed to use the published APK.
 
 [Download the latest release](https://github.com/jdp323/migraineguard/releases/latest) · [Troubleshooting](TROUBLESHOOTING.md) · [How it works](HOW_IT_WORKS.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
 
-The current feature-by-feature guide is [v1.9.0: training, reminder/AI/update settings and Drive size](UPDATE_1_9_0.md). Read [exact AI prompts and permissions](AI_AND_PERMISSIONS.md) to see what is sent and why.
+The current feature-by-feature guide is [v1.9.1: training, reminder/AI/update settings and Drive size](UPDATE_1_9_0.md). Read [exact AI prompts and permissions](AI_AND_PERMISSIONS.md) to see what is sent and why.
 
 ## 1. Install or update
 
 1. Open the release link on your Android phone. Expand **Assets** if needed.
-2. Download **MigraineGuard-v1.9.0-debug.apk** for the normal app. The word debug identifies the current signed test build; this is not a Play Store release.
+2. Download **MigraineGuard-v1.9.1-debug.apk** for the normal app. The word debug identifies the current signed test build; this is not a Play Store release.
 3. Open the downloaded APK. Android may ask whether your browser or file manager can install apps. Allow that source if you trust this download, install, then turn the source permission back off if you wish. Do not disable Play Protect or other device-wide protections.
 4. Updating the same Standard app with the retained certificate keeps its local data. Do not uninstall an existing app just to get past an installation conflict.
-5. For an incompatible older signing certificate, or to try a fresh setup beside your existing app, use **MigraineGuard-v1.9.0-preview.apk**. Preview is a separate app with its own records, permissions and setup. It does not automatically copy Standard's local data.
-6. Confirm **Settings → About** says **1.9.0 (16)** and the intended package: Standard is com.migraineguard.app; Preview ends in .preview.
+5. For an incompatible older signing certificate, or to try a fresh setup beside your existing app, use **MigraineGuard-v1.9.1-preview.apk**. Preview is a separate app with its own records, permissions and setup. It does not automatically copy Standard's local data.
+6. Confirm **Settings → App → About** says **1.9.1 (17)** and the intended package: Standard is com.migraineguard.app; Preview ends in .preview.
 
 The app supports Android 8 and later. Health Connect additionally depends on compatible Android/Google services and source health apps on the phone; an installable app does not guarantee every integration is available. This project contains a phone app, not a separate watch app or iPhone build.
 
@@ -57,11 +57,11 @@ The six labeled bottom tabs keep the main areas close. Home shortcuts open addit
 
 | Area | How to use it | How to interpret it |
 | --- | --- | --- |
-| Home | Check compact daily essentials, add water and open Train, Meals, Body or Coach. Migraine context and medication shortcuts are in the Migraine tab. | Rings reflect logged/received values and selected goals. An unavailable reading is not inactivity. |
+| Home | Check compact daily essentials, add water and open Train, Meals, Body or Coach. Migraine context and medication shortcuts are in the Migraine tab. | The summary reflects logged/received values and selected goals. An unavailable reading is not inactivity. |
 | Migraine | Select a head view with chips, arrows or swipe, tap pain points, choose intensity/symptoms/triggers, add notes and Save episode. Use the history icon to reopen entries. Undo point and Clear view correct unsaved markers. | The illustrated head uses stored points across views; it is not a diagnostic scan or a live anatomical model. Tagged triggers are your observations. |
 | Fitness | Health shows source readings. Training logs exercise/machine name, weights, reps, completed sets, duration, optional calories and notes; offers explicit machine-photo identification, previous-session reuse, history and weekly goals. | Manual workouts and Health Connect exercise may overlap. The weekly training goal counts distinct days with saved exercise logs. Manual steps are an explicit override, not proof that the watch connected. |
 | Coach | Choose a persona, type a question and decide whether to include the optional health summary. Review the returned response. | Cloud requests send the text you type; health context needs its sharing choice. Replies and prompts are saved to this account's journal. AI personas are educational, not clinicians. |
-| Food | Describe a meal/portion and Analyze description. Optionally select Camera/Gallery and explicitly enable sending the photo to Gemini. | Selecting a photo alone does not upload it. Estimates can be wrong or unavailable; missing calories/macros are not zero. Photo analysis is a separate Gemini/OpenAI/Claude request according to your selection. |
+| Food | Describe a meal/portion and Analyze description. Optionally select Camera/Gallery and explicitly enable sending the photo to your selected image-capable provider. | Selecting a photo alone does not upload it. Estimates can be wrong or unavailable; missing calories/macros are not zero. Photo analysis is a separate Gemini/OpenAI/Claude request according to your selection. |
 | Insights | Select the available mode/range and review local journal patterns and clearly labeled current snapshots. | Descriptive patterns do not prove causes. Current steps/weather are not historical averages. Opening Insights does not automatically upload a health summary. |
 | Water | Use plus/minus to adjust today's cup count and watch progress toward the goal. | The stored quantity is integer cups; changing the display unit does not turn it into a measured sensor volume. |
 | Body metrics | Save weight in the selected display unit and review history/trend. Edit profile for height, DOB and units. | Measurements are stored consistently; switching units converts them. |
@@ -103,3 +103,5 @@ Share [the public release page](https://github.com/jdp323/migraineguard/releases
 For problems, start with [Troubleshooting](TROUBLESHOOTING.md). A public GitHub issue should contain only the app version/package, Android version, general device model, steps, expected/actual behavior and a redacted error. Keep sync reports and medical screenshots private; crop/redact names, account emails, exact timestamps and any health detail you do not want published. Never attach API keys, tokens, a keystore, a Drive snapshot or a journal export.
 
 This remains a development wellness/tracking build. Automated emulator checks do not establish real watch synchronization, live cloud-provider availability or clinical accuracy.
+
+**Multiple-device backup compatibility:** update all devices before editing/restoring this backup. Older app versions can ignore and later overwrite newer training/provider/reminder fields. Avoid simultaneous edits; Drive snapshots are not conflict-free live sync.
