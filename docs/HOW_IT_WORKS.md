@@ -1,6 +1,6 @@
 # How MigraineGuard works
 
-Current behavior: v1.8.0 / code 15. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
+Current behavior: v1.9.1 / code 17. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
 
 ## From your device to the screen
 
@@ -21,7 +21,7 @@ Heart reads include recent record buckets but exclude future samples; the displa
 | Health Connect / source apps | Device health records | These remain controlled by Android and source apps; the app does not back up the full Health Connect database to Drive or GitHub. |
 | Optional Google Drive appDataFolder | Current account snapshot: settings/profile, portable provider keys and seven journal tables | Hidden app-specific storage authorized by that Google account. Google transport/storage protection; no separate password/end-to-end encryption for the portable keys. |
 | Optional manual encrypted file | Seven journal tables and optional profile/goals | Password-derived AES-GCM. Excludes provider keys, photo files and raw imported health records. |
-| Local/source image storage | Selected meal-photo references or camera files | Snapshots do not include photo bytes. A restored URI is not a cross-device photo backup. |
+| Local/source image storage | Selected meal/equipment-photo references or camera files | Snapshots do not include photo bytes. A restored URI is not a cross-device photo backup. |
 | GitHub / public website | Source, docs, synthetic test screenshots and signed test APKs | No user journal or user Drive backup is intentionally uploaded here. See the limited [public exposure audit](PUBLICATION_AUDIT.md). |
 
 Room Flow and DataStore updates drive Compose screens. Manual dependency construction is in AppContainer. MainActivity triggers foreground refresh; HealthRefreshCoordinator shares/debounces health reads. Active health screens also refresh periodically while resumed. Navigation saves/restores tab state, and persisted entries belong in repositories rather than only in a remembered form field.
@@ -38,19 +38,25 @@ Restore validates identity, format, size and records before importing. Journal i
 
 ## AI and privacy boundaries
 
-Text requests use the user's configured Gemini → Groq → OpenRouter → offline provider chain. Empty/error/timeout responses can permit fallback; cancellation does not start another transmission. The app ships empty developer-key defaults. Historical provider class names ending in Free do not guarantee current pricing.
+Text requests use the user's selected provider and then offline fallback. Optional legacy Auto retains Gemini → Groq → OpenRouter → offline. Settings → AI supports eleven services, separate encrypted keys/model IDs, non-authoritative prefix suggestions and explicit selected-endpoint tests. Empty/error/timeout responses can permit fallback; cancellation does not start another transmission. The app ships empty developer-key defaults. Historical provider class names ending in Free do not guarantee current pricing.
 
 A typed cloud prompt is sent to the selected provider. Including the local health summary requires the explicit sharing choice; it defaults off. AI sessions are saved locally under the account and may be included in its optional backup. Automatic Insights stays on-device.
 
-A food image is sent only when the user explicitly selects the Gemini photo option. The app downsamples/re-encodes the image, bounds size and drops original metadata before sending it with the user's Gemini key. A photo request does not silently fall through to another image provider. Unusable analysis leaves nutrition estimates unknown.
+Food/equipment images are sent only with the corresponding explicit user choice to a supported selected provider (Gemini/OpenAI/Claude); legacy Auto uses Gemini. Images are re-encoded/bounded before sending. Other selected services explain that images are not enabled; the request does not silently change providers. Unusable nutrition analysis leaves estimates unknown. Equipment classification only suggests an editable name. [Exact prompts and data fields](AI_AND_PERMISSIONS.md).
 
 Coach/Analyst are educational personas, not doctors. The illustrated pain map, correlations, exercise catalog and generated responses are not clinically validated diagnosis/treatment tools. Weather uses optional approximate coordinates sent to Open-Meteo; stale samples are labeled.
 
 ## Setup verification and UI
 
-Shared Material light/dark surfaces, code-native gradient illustrations, animated progress rings, dashboard shortcuts and six labeled tabs provide a consistent interface. Short fade/slide transitions use Compose APIs and the platform animation scale; no network graphics or remote fonts are needed.
+Shared Material light/dark surfaces, code-native illustrations and six labeled tabs provide a consistent interface. Home is a compact daily summary; Migraine owns its journal/context. Fitness separates Health and Training, including named exercises, sets/weights/reps/history and a weekly active-day goal. Short fade/slide transitions use Compose APIs and the platform animation scale; no network graphics or remote fonts are needed.
 
-Setup check states distinguish waiting, checking, verified, attention and skipped. Permissions alone cannot check Steps, Heart or Sleep. Manual/demo values cannot prove a device connection. A real zero step response can be valid evidence. Key editing clears its earlier Gemini test check. Saved-profile failures do not advance. The final review preserves optional skips rather than displaying universal success. Details and every changed file are in [v1.8.0](UPDATE_1_8_0.md).
+Setup check states distinguish waiting, checking, verified, attention and skipped. Permissions alone cannot check Steps, Heart or Sleep. Manual/demo values cannot prove a device connection. A real zero step response can be valid evidence. Key editing clears its earlier Gemini test check. Saved-profile failures do not advance. The final review preserves optional skips rather than displaying universal success. Setup details are in [v1.8.0](UPDATE_1_8_0.md); current changed files/functions are in [v1.9.0–1.9.1](UPDATE_1_9_0.md).
+
+## Reminder and update checks
+
+Settings → Reminders saves per-account toggles, intervals and active hours. Separate WorkManager jobs use a durable account marker to deliver generic notifications after process restart. Sign-out clears the marker, jobs and notifications. Food/water taps open their logs; no photo is taken automatically. Android timing is approximate.
+
+Settings → App checks public GitHub latest-release metadata, validates the repository URL and compares numeric versions. Optional background checks cache metadata for 24 hours and notify once per newer release during active hours. A tap opens GitHub downloads; nothing installs silently. Only ordinary request metadata reaches GitHub, not health records or provider keys. Account Settings measures the current Drive snapshot bytes, not total account usage/quota.
 
 ## Source map and detailed code documentation
 
@@ -62,11 +68,11 @@ Setup check states distinguish waiting, checking, verified, attention and skippe
 | feature/fitness and feature/track | Health queries, permission/ownership gate, source policy, shared refresh and Fitness UI | [v1.6.6](UPDATE_1_6_6.md), [v1.7.0](UPDATE_1_7_0.md) |
 | feature/setup and core/ui | Verified onboarding, progress review and shared visual components | [v1.8.0](UPDATE_1_8_0.md) |
 | Other feature folders and navigation | Journals/forms, home, coaching, meals, insights, water, body, medications, settings and routes | [File reference](FILE_REFERENCE.md), later version supplements |
-| app/src/test and app/src/androidTest | Pure JVM regressions and Android runtime/navigation/storage tests | [Release evidence](UPDATE_1_8_0.md#validation) |
+| app/src/test and app/src/androidTest | Pure JVM regressions and Android runtime/navigation/storage tests | [Release evidence](UPDATE_1_9_0.md#published-v191-verification-and-screenshots) |
 | .github/workflows/android.yml | Build, test, lint, signing/runtime gates and APK publishing | [Project guide](PROJECT_GUIDE.md#13-build-test-and-release-operations) |
 | website | Static Firebase homepage, policies and help; no user-data backend | [Website files/deploy](../website/README.md) |
 
-The file reference preserves a v1.6.3 source baseline with named functions, constructor fields and database details. Supplements v1.6.4, v1.6.6, v1.7.0 and v1.8.0 explain subsequent changed/new functions. Read those together; old pinned source-line references do not pretend to describe the latest line numbers.
+The file reference preserves a v1.6.3 source baseline with named functions, constructor fields and database details. Supplements v1.6.4, v1.6.6, v1.7.0 v1.8.0 and v1.9.0–1.9.1 explain subsequent changed/new functions. Read those together; old pinned source-line references do not pretend to describe the latest line numbers.
 
 ## Build and release
 
@@ -76,7 +82,7 @@ Run the unit/lint/Standard assembly tasks before making a release; build Preview
 
 The pipeline restores its signing key from a GitHub Actions secret for eligible push builds, checks the retained SHA-1, runs checks and builds both APKs. Pull requests do not receive that secret or publish. A release requires successful build and Android runtime jobs and the retained signer. Existing version tags are not overwritten; app binary changes need a new version/code.
 
-For v1.8.0, [run 39370737632](https://github.com/jdp323/migraineguard/actions/runs/39370737632) passed **54 JVM tests and 20 Android tests**, lint and signature checks. Released APK hashes match the inspected downloaded build artifacts. Tests use synthetic health/account data and simulated Drive transport. Real Samsung/Fitbit transfer, native authorization and live AI must still be tested on a phone; automated success is not proof of those external paths.
+For v1.9.1, [run 39617745780](https://github.com/jdp323/migraineguard/actions/runs/39617745780) passed **72 JVM tests and 20 Android tests**, lint and signature checks. Released APK hashes match the inspected downloaded build artifacts. Tests use synthetic health/account data and simulated Drive transport. Real Samsung/Fitbit transfer, native authorization and live AI must still be tested on a phone; automated success is not proof of those external paths.
 
 ## Current limits
 

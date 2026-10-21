@@ -23,3 +23,7 @@ Live at https://gen-lang-client-0426132502.web.app/ (2026-10-19). All seven depl
 ## v1.8.0 public distribution update (2026-10-20)
 
 Deployed the reviewed static files from source 6c7ca9dbcba573ca7b3f6488e5c892abda626906 using the existing authorized Cloud Shell and preinstalled Firebase CLI, Hosting only, with no billing/service expansion. All seven live files returned 200 and matched the local bytes; homepage and help navigation were visually checked. The homepage now links public GitHub APKs and the help page links the complete usage, architecture and troubleshooting guides. Both APK release assets and all four new guides were also downloaded without account credentials and matched expected bytes/hashes. Desktop visual proof and redacted verification JSON stay in ignored verification/public-audit.
+
+## v1.9.1 public distribution update (2026-10-21)
+
+Deployed reviewed static source 77f8e1032e6439ea96d1f38d932c450fe3fe3ea2 through the existing authorized Cloud Shell and preinstalled Firebase CLI, Hosting only. All seven live files returned 200 and matched local bytes, including CSP and nosniff headers. Homepage showed v1.9.1 and its setup/help link opened the current support page. A final support-link correction points release verification to the v1.9 guide and 72 JVM / 20 Android tests. No billing or service expansion; APKs remain on GitHub. Public screenshot and file hashes are retained in ignored verification/v1.9.1.
