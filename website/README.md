@@ -27,3 +27,7 @@ Deployed the reviewed static files from source 6c7ca9dbcba573ca7b3f6488e5c892abd
 ## v1.9.1 public distribution update (2026-10-21)
 
 Deployed reviewed static source 77f8e1032e6439ea96d1f38d932c450fe3fe3ea2 through the existing authorized Cloud Shell and preinstalled Firebase CLI, Hosting only. All seven live files returned 200 and matched local bytes, including CSP and nosniff headers. Homepage showed v1.9.1 and its setup/help link opened the current support page. A final support-link correction points release verification to the v1.9 guide and 72 JVM / 20 Android tests. No billing or service expansion; APKs remain on GitHub. Public screenshot and file hashes are retained in ignored verification/v1.9.1.
+
+## v1.10.0 update (2026-10-21)
+
+Deployed reviewed static source 0d6628c629f0b7d41961172517358522a1d8f752 via the existing authorized Cloud Shell and preinstalled Firebase CLI, Hosting only. All seven live files returned 200 and matched the local bytes; restrictive CSP remained present. Help/privacy now describe the remembered device-only identity, water quick actions and activity-specific metrics. APK distribution remains public GitHub, with no billing/service expansion. Exact file hashes and browser proof stay under ignored verification/v1.10.0.

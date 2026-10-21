@@ -25,7 +25,7 @@ A focused Home with daily essentials; a dedicated Migraine overview; Health/Trai
 
 Choose among eleven AI providers, use optional key-prefix suggestions, test the selected connection and change keys/models after setup. Set separate water/meal/medication/migraine intervals and active hours. Account shows measured Drive snapshot size. App can check GitHub for updates and open the download page; optional background notifications announce a newer release.
 
-<table><tr><td><img src="docs/images/v1.10.0/home-light.png" width="250" alt="Focused Home in light theme, synthetic emulator profile"></td><td><img src="docs/images/v1.10.0/training-set-entry.png" width="250" alt="Exercise weight, reps and completion controls"></td><td><img src="docs/images/v1.10.0/settings-updates.png" width="250" alt="Check for updates and open GitHub downloads"></td></tr></table>
+<table><tr><td><img src="docs/images/v1.10.0/training-cardio-picker.png" width="250" alt="Four distinct activity tiles"></td><td><img src="docs/images/v1.10.0/training-cardio-details.png" width="250" alt="Treadmill speed incline and distance fields"></td><td><img src="docs/images/v1.10.0/training-stretch-details.png" width="250" alt="Stretching hold seconds and rounds without weight fields"></td></tr></table>
 
 [Feature guide, inspected screenshots and changed-file/function reference](docs/UPDATE_1_10_0.md) · [Exact AI prompts and permissions](docs/AI_AND_PERMISSIONS.md). Screenshots use synthetic emulator data.
 

@@ -124,3 +124,7 @@ Captured on the hosted API-35 emulator with synthetic accounts and workout entri
 ### settings updates
 
 <img src="images/v1.10.0/settings-updates.png" width="320" alt="settings updates with synthetic emulator data">
+
+### Final capture check
+
+[Follow-up run 39691512159](https://github.com/jdp323/migraineguard/actions/runs/39691512159), test-source 5e11431028e91af398bad1496c43cc52589ebcc8, also passed all checks and 24 Android tests (78.118 seconds). Application source/build configuration is unchanged from the released source; the existing release was retained. The picker image above is from that run and shows all four tiles. A system notification-panel screenshot was unavailable in the hosted emulator, so none is published. Tests verify that Android accepts the posted notification and its PendingIntent → private receiver → worker applies one chosen quantity without duplicate or cross-account writes. Lock-screen/OEM appearance remains a phone check.
