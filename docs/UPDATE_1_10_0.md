@@ -1,6 +1,6 @@
 # v1.10.0 — water quick actions, activity-specific logs and remembered sign-in
 
-Application 1.10.0 / code 18. Extends [v1.9 features](UPDATE_1_9_0.md), [user guide](USER_GUIDE.md) and [AI prompts/permissions](AI_AND_PERMISSIONS.md). Hosted runtime/release evidence will be appended after verification.
+Application 1.10.0 / code 18. Extends [v1.9 features](UPDATE_1_9_0.md), [user guide](USER_GUIDE.md) and [AI prompts/permissions](AI_AND_PERMISSIONS.md). [Published APK release](https://github.com/jdp323/migraineguard/releases/tag/v1.10.0-debug).
 
 ## Water from a notification
 
@@ -64,8 +64,63 @@ Remembering this app session does not prove a Google credential is still valid r
 
 ## Verification and limits
 
-Local verification passed 75 JVM tests with zero failures/errors, lint with zero errors, and Standard/test APK assembly; the hosted API-35 suite must pass all 24 Android tests before publishing. Synthetic fixtures include no real Google credentials, health records or user API keys. Phone acceptance still covers Samsung Health transfer, actual Google permission refresh/revocation, lock-screen button behavior and Samsung background restrictions.
+Local verification passed 75 JVM tests with zero failures/errors, lint with zero errors, and Standard/test APK assembly; the hosted API-35 suite passed all 24 Android tests before publishing. Synthetic fixtures include no real Google credentials, health records or user API keys. Phone acceptance still covers Samsung Health transfer, actual Google permission refresh/revocation, lock-screen button behavior and Samsung background restrictions.
 
 **Backup compatibility:** update every editing device. Older versions can ignore and overwrite new details; snapshots are not conflict-free simultaneous-device sync. Photos and remembered sessions do not transfer through the portable backup.
 
 Implementation follows Android's [notification action](https://developer.android.com/develop/ui/compose/notifications/create-notification) and [private broadcast receiver](https://developer.android.com/develop/background-work/background-tasks/broadcasts) patterns. It uses fixed action buttons, not unrestricted text replies.
+
+## Published verification
+
+Release source: 3dd4447dbeff9e6a8fcaad8287989a5b71a18065. [Run 39685744572](https://github.com/jdp323/migraineguard/actions/runs/39685744572) passed build, 75 JVM tests (zero failures/errors), lint (zero errors), retained Standard/Preview signing and 24 Android runtime tests. Runtime output: OK (24 tests), 81.86 seconds. No external watch/Google/provider credential was a fixture.
+
+Both public assets were downloaded without authentication and matched the built APK bytes. Standard is com.migraineguard.app; Preview is com.migraineguard.app.preview. Both report 1.10.0/code18 and verify against retained SHA-1 FB:67:0D:1D:96:C2:8B:9E:27:0D:36:F8:D6:57:53:E3:6B:30:8D:E8.
+
+| APK | SHA-256 |
+| --- | --- |
+| MigraineGuard-v1.10.0-debug.apk | d2dd46a2976607c189d23123aaa027cc138dc490d9e3f64a04695ea56553c0ac |
+| MigraineGuard-v1.10.0-preview.apk | db4894d09c83c0a0f56dd6a4496b6ea92f473b468ca1b81f0dcbc21d57bf04b9 |
+
+## Inspected app screenshots
+
+Captured on the hosted API-35 emulator with synthetic accounts and workout entries. These are individual scrolling viewports, not full pages. No personal health records or keys are shown. The Android notification panel is included only when its actual action buttons can be captured; a launcher screenshot is not treated as notification evidence.
+
+### home light
+
+<img src="images/v1.10.0/home-light.png" width="320" alt="home light with synthetic emulator data">
+
+### home dark
+
+<img src="images/v1.10.0/home-dark.png" width="320" alt="home dark with synthetic emulator data">
+
+### migraine light
+
+<img src="images/v1.10.0/migraine-light.png" width="320" alt="migraine light with synthetic emulator data">
+
+### fitness light
+
+<img src="images/v1.10.0/fitness-light.png" width="320" alt="fitness light with synthetic emulator data">
+
+### training overview
+
+<img src="images/v1.10.0/training-overview.png" width="320" alt="training overview with synthetic emulator data">
+
+### training set entry
+
+<img src="images/v1.10.0/training-set-entry.png" width="320" alt="training set entry with synthetic emulator data">
+
+### training cardio picker
+
+<img src="images/v1.10.0/training-cardio-picker.png" width="320" alt="training cardio picker with synthetic emulator data">
+
+### training cardio details
+
+<img src="images/v1.10.0/training-cardio-details.png" width="320" alt="training cardio details with synthetic emulator data">
+
+### training stretch details
+
+<img src="images/v1.10.0/training-stretch-details.png" width="320" alt="training stretch details with synthetic emulator data">
+
+### settings updates
+
+<img src="images/v1.10.0/settings-updates.png" width="320" alt="settings updates with synthetic emulator data">

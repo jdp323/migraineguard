@@ -1,6 +1,6 @@
 # How MigraineGuard works
 
-Current behavior: v1.9.1 / code 17. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
+Current behavior: v1.10.0 / code 18. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
 
 ## From your device to the screen
 
@@ -16,7 +16,7 @@ Heart reads include recent record buckets but exclude future samples; the displa
 
 | Location | Contents | Boundaries |
 | --- | --- | --- |
-| Account-local Room database | Migraine episodes, food analysis records, water history, workouts, weight entries, medications and AI sessions | Seven tables. Google accounts and the preserved local profile use separate storage namespaces. This is not a claim that every journal column is encrypted. |
+| Account-local Room database | Migraine episodes, food analysis records, water history, workouts, weight entries, medications and AI sessions | Seven journal tables plus a local-only water-action receipt table. Google accounts and the preserved local profile use separate storage namespaces. This is not a claim that every journal column is encrypted. |
 | Account-local Preferences DataStore | Profile/DOB/units, goals, appearance, setup flags, connection choices and encrypted provider-key values | API key encryption uses device-bound Android Keystore; decrypted values are used only in app memory for configuration/requests. |
 | Health Connect / source apps | Device health records | These remain controlled by Android and source apps; the app does not back up the full Health Connect database to Drive or GitHub. |
 | Optional Google Drive appDataFolder | Current account snapshot: settings/profile, portable provider keys and seven journal tables | Hidden app-specific storage authorized by that Google account. Google transport/storage protection; no separate password/end-to-end encryption for the portable keys. |
@@ -28,7 +28,7 @@ Room Flow and DataStore updates drive Compose screens. Manual dependency constru
 
 ## Sign-in, account switching and restore
 
-Credential Manager selects a Google identity. Drive authorization separately grants narrow app-data access. Account identity determines the local storage namespace; the token identity and snapshot owner are checked before importing. Choosing a different account does not reuse the preceding person's profile or keys. Continue locally retains older unowned/local records instead of silently assigning them to a Google account.
+Credential Manager initially selects a Google identity. A device-encrypted local identity is remembered across process restarts; no Google password or API token is persisted. Explicit sign-out clears it. Completed accounts open Home without blocking on Drive/Health setup gates. Previously enabled Drive reconnects using already-granted authorization in the background, with reconnect errors visible in Account settings. Drive authorization separately grants narrow app-data access. Account identity determines the local storage namespace; the token identity and snapshot owner are checked before importing. Choosing a different account does not reuse the preceding person's profile or keys. Continue locally retains older unowned/local records instead of silently assigning them to a Google account.
 
 On an authorized login, the app checks Drive before presenting replacement profile/key forms. A completed restored profile can skip those forms. Health permission and account opt-in are checked on each phone because backup is not Android's health permission grant.
 
@@ -48,7 +48,7 @@ Coach/Analyst are educational personas, not doctors. The illustrated pain map, c
 
 ## Setup verification and UI
 
-Shared Material light/dark surfaces, code-native illustrations and six labeled tabs provide a consistent interface. Home is a compact daily summary; Migraine owns its journal/context. Fitness separates Health and Training, including named exercises, sets/weights/reps/history and a weekly active-day goal. Short fade/slide transitions use Compose APIs and the platform animation scale; no network graphics or remote fonts are needed.
+Shared Material light/dark surfaces, code-native illustrations and six labeled tabs provide a consistent interface. Home is a compact daily summary; Migraine owns its journal/context. Fitness separates Health and Training, including named exercises, sets/weights/reps/history, cardio speed/incline/distance, stretch holds/rounds and a weekly active-day goal. Short fade/slide transitions use Compose APIs and the platform animation scale; no network graphics or remote fonts are needed.
 
 Setup check states distinguish waiting, checking, verified, attention and skipped. Permissions alone cannot check Steps, Heart or Sleep. Manual/demo values cannot prove a device connection. A real zero step response can be valid evidence. Key editing clears its earlier Gemini test check. Saved-profile failures do not advance. The final review preserves optional skips rather than displaying universal success. Setup details are in [v1.8.0](UPDATE_1_8_0.md); current changed files/functions are in [v1.9.0–1.9.1](UPDATE_1_9_0.md).
 
@@ -57,6 +57,8 @@ Setup check states distinguish waiting, checking, verified, attention and skippe
 Settings → Reminders saves per-account toggles, intervals and active hours. Separate WorkManager jobs use a durable account marker to deliver generic notifications after process restart. Sign-out clears the marker, jobs and notifications. Food/water taps open their logs; no photo is taken automatically. Android timing is approximate.
 
 Settings → App checks public GitHub latest-release metadata, validates the repository URL and compares numeric versions. Optional background checks cache metadata for 24 hours and notify once per newer release during active hours. A tap opens GitHub downloads; nothing installs silently. Only ordinary request metadata reaches GitHub, not health records or provider keys. Account Settings measures the current Drive snapshot bytes, not total account usage/quota.
+
+Water notifications add three fixed glass actions. Immutable PendingIntents target a private receiver, which enqueues account-bound work. A receipt and water increment share one Room transaction, so each notification applies one choice. Invalid owner, expiry or disabled preferences reject the action. Receipts and the remembered session are excluded from journal exports/Drive. [Current changed files and limits](UPDATE_1_10_0.md).
 
 ## Source map and detailed code documentation
 
@@ -72,7 +74,7 @@ Settings → App checks public GitHub latest-release metadata, validates the rep
 | .github/workflows/android.yml | Build, test, lint, signing/runtime gates and APK publishing | [Project guide](PROJECT_GUIDE.md#13-build-test-and-release-operations) |
 | website | Static Firebase homepage, policies and help; no user-data backend | [Website files/deploy](../website/README.md) |
 
-The file reference preserves a v1.6.3 source baseline with named functions, constructor fields and database details. Supplements v1.6.4, v1.6.6, v1.7.0 v1.8.0 and v1.9.0–1.9.1 explain subsequent changed/new functions. Read those together; old pinned source-line references do not pretend to describe the latest line numbers.
+The file reference preserves a v1.6.3 source baseline with named functions, constructor fields and database details. Supplements v1.6.4, v1.6.6, v1.7.0 v1.8.0 and v1.9.0–1.9.1 and v1.10.0 explain subsequent changed/new functions. Read those together; old pinned source-line references do not pretend to describe the latest line numbers.
 
 ## Build and release
 
@@ -82,7 +84,7 @@ Run the unit/lint/Standard assembly tasks before making a release; build Preview
 
 The pipeline restores its signing key from a GitHub Actions secret for eligible push builds, checks the retained SHA-1, runs checks and builds both APKs. Pull requests do not receive that secret or publish. A release requires successful build and Android runtime jobs and the retained signer. Existing version tags are not overwritten; app binary changes need a new version/code.
 
-For v1.9.1, [run 39617745780](https://github.com/jdp323/migraineguard/actions/runs/39617745780) passed **72 JVM tests and 20 Android tests**, lint and signature checks. Released APK hashes match the inspected downloaded build artifacts. Tests use synthetic health/account data and simulated Drive transport. Real Samsung/Fitbit transfer, native authorization and live AI must still be tested on a phone; automated success is not proof of those external paths.
+For v1.10.0, [run 39685744572](https://github.com/jdp323/migraineguard/actions/runs/39685744572) passed **75 JVM tests and 24 Android tests**, lint and signature checks. Released APK hashes match the inspected downloaded build artifacts. Tests use synthetic health/account data and simulated Drive transport. Real Samsung/Fitbit transfer, native authorization and live AI must still be tested on a phone; automated success is not proof of those external paths.
 
 ## Current limits
 

@@ -2,14 +2,14 @@
 
 A native Android companion for migraine journaling, movement, sleep, hydration, meals, body measurements, medication check-ins and optional educational AI coaching.
 
-**Latest verified build: v1.9.1 (17)** · Android 8+ · Public signed test APKs
+**Latest verified build: v1.10.0 (18)** · Android 8+ · Public signed test APKs
 
 ## Download and share
 
 **[Download MigraineGuard](https://github.com/jdp323/migraineguard/releases/latest)** — share this link with friends. Open **Assets** and choose the Standard .apk. No GitHub repository invitation is needed.
 
-- [Standard v1.9.1 APK](https://github.com/jdp323/migraineguard/releases/download/v1.9.1-debug/MigraineGuard-v1.9.1-debug.apk): normal app, com.migraineguard.app. Update in place when the signing certificate matches; keep local records.
-- [Preview v1.9.1 APK](https://github.com/jdp323/migraineguard/releases/download/v1.9.1-debug/MigraineGuard-v1.9.1-preview.apk): separate installation beside Standard, with its own storage and permissions.
+- [Standard v1.10.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.10.0-debug/MigraineGuard-v1.10.0-debug.apk): normal app, com.migraineguard.app. Update in place when the signing certificate matches; keep local records.
+- [Preview v1.10.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.10.0-debug/MigraineGuard-v1.10.0-preview.apk): separate installation beside Standard, with its own storage and permissions.
 - [User guide](docs/USER_GUIDE.md): installation, checked setup, daily features, Google Drive restore and data controls.
 - [Troubleshooting](docs/TROUBLESHOOTING.md): possible errors, what they mean and how to resolve them.
 - [How it works](docs/HOW_IT_WORKS.md): device path, account isolation, AI/backup boundaries and code map.
@@ -17,15 +17,17 @@ A native Android companion for migraine journaling, movement, sleep, hydration, 
 
 Do not uninstall an old installation containing records to resolve a signature conflict. Use Preview or verify a recovery export first. These are development builds, distributed outside the Play Store; app updates are downloaded from Releases.
 
-## What's new in v1.9.1
+## What's new in v1.10.0
+
+Water notifications offer **1 / 2 / 3 glasses** (250 ml each) without opening the app. Training separates Strength, Cardio, Stretching and Other: treadmill speed/incline/distance and stretch hold/rounds use their own fields. A device-encrypted remembered session keeps returning users on Home after a restart; explicit sign-out still clears it. [Usage and changed-file/function reference](docs/UPDATE_1_10_0.md).
 
 A focused Home with daily essentials; a dedicated Migraine overview; Health/Training views with named exercises, optional machine photos, weight/reps/sets, completed-set checks, history and weekly goals. Settings now groups Account, AI, Reminders and App controls.
 
 Choose among eleven AI providers, use optional key-prefix suggestions, test the selected connection and change keys/models after setup. Set separate water/meal/medication/migraine intervals and active hours. Account shows measured Drive snapshot size. App can check GitHub for updates and open the download page; optional background notifications announce a newer release.
 
-<table><tr><td><img src="docs/images/v1.9.1/home-light.png" width="250" alt="Focused Home in light theme, synthetic emulator profile"></td><td><img src="docs/images/v1.9.1/training-set-entry.png" width="250" alt="Exercise weight, reps and completion controls"></td><td><img src="docs/images/v1.9.1/settings-updates.png" width="250" alt="Check for updates and open GitHub downloads"></td></tr></table>
+<table><tr><td><img src="docs/images/v1.10.0/home-light.png" width="250" alt="Focused Home in light theme, synthetic emulator profile"></td><td><img src="docs/images/v1.10.0/training-set-entry.png" width="250" alt="Exercise weight, reps and completion controls"></td><td><img src="docs/images/v1.10.0/settings-updates.png" width="250" alt="Check for updates and open GitHub downloads"></td></tr></table>
 
-[Feature guide, inspected screenshots and changed-file/function reference](docs/UPDATE_1_9_0.md) · [Exact AI prompts and permissions](docs/AI_AND_PERMISSIONS.md). Screenshots use synthetic emulator data.
+[Feature guide, inspected screenshots and changed-file/function reference](docs/UPDATE_1_10_0.md) · [Exact AI prompts and permissions](docs/AI_AND_PERMISSIONS.md). Screenshots use synthetic emulator data.
 
 ## Start in a few steps
 
@@ -45,7 +47,7 @@ Fitness shows Samsung and combined Health Connect alternatives, source/timestamp
 
 ## Accounts, backup and privacy
 
-Each Google account keeps its own local profile, settings, keys and journal. Continue locally preserves its own records. Optional Drive backup restores profile, DOB, measurements, goals, settings, personal provider keys and seven journal tables. Photos and the Health Connect database are excluded.
+A device-encrypted remembered identity restores the selected profile after restart, without storing Google API tokens. Explicit sign-out clears that session. Each Google account keeps its own local profile, settings, keys and journal. Continue locally preserves its own records. Optional Drive backup restores profile, DOB, measurements, goals, settings, personal provider keys and seven journal tables. Photos and the Health Connect database are excluded.
 
 Drive snapshots use Google's transport/storage protection; portable keys inside the JSON are **not separately password-encrypted or end-to-end encrypted**. Keys are encrypted with Android Keystore locally. Manual password-encrypted journal exports are a separate recovery format and exclude provider keys. Restore merges journals; deletion tombstones and conflict-free simultaneous-device sync are not implemented.
 
@@ -55,7 +57,7 @@ Cloud AI uses your selected provider/key, then offline fallback. Optional legacy
 
 ## Verification and remaining phone checks
 
-[Release run 39617745780](https://github.com/jdp323/migraineguard/actions/runs/39617745780) passed **72 JVM tests + 20 Android runtime tests**, compilation, lint (0 errors) and both APK signing checks. Ten inspected API-35 screenshots show the new Home, Migraine, Fitness, training and Settings flows. Both public APK downloads were fetched without authentication and their SHA-256 hashes match the built assets.
+[Release run 39685744572](https://github.com/jdp323/migraineguard/actions/runs/39685744572) passed **75 JVM tests + 24 Android runtime tests**, compilation, lint (0 errors) and both APK signing checks. Ten inspected API-35 screenshots show Home, Migraine, Fitness, strength/cardio/stretch training and Settings flows. Both public APK downloads were fetched without authentication and their SHA-256 hashes match the built assets.
 
 These tests use synthetic data and simulated Drive transport. Actual watch synchronization, friend-account native Drive transfer, live AI and OEM notification delivery still require phone acceptance. [Phone test checklist](docs/PHONE_TESTING.md) · [Feature status](docs/FEATURE_STATUS.md)
 

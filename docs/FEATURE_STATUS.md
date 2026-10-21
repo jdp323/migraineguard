@@ -1,8 +1,10 @@
+> Current v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
+
 > v1.9.0: [focused Home, structured training, reminder/update controls, AI providers and Drive size](UPDATE_1_9_0.md). [Exact prompts and permissions](AI_AND_PERMISSIONS.md).
 
-> Current v1.8.0: [interface, navigation, verified setup and changed-file/function reference](UPDATE_1_8_0.md).
+> Historical v1.8.0: [interface, navigation, verified setup and changed-file/function reference](UPDATE_1_8_0.md).
 
-> Current v1.7.0: [Drive account restore, Samsung query fixes, UI and complete changed-file/function supplement](UPDATE_1_7_0.md). This supersedes the older cloud-backup placeholder and current-version descriptions below; historical source references remain pinned to their stated baselines.
+> Historical v1.7.0: [Drive account restore, Samsung query fixes, UI and complete changed-file/function supplement](UPDATE_1_7_0.md). This supersedes the older cloud-backup placeholder and current-version descriptions below; historical source references remain pinned to their stated baselines.
 
 > v1.6.6 adds separate Google-account databases/preferences/API keys, safe sign-out, preserved older local records and per-account phone-health opt-in. Health reads now show individual permission/empty/error states and dated heart/sleep records. See [implementation and tests](UPDATE_1_6_6.md). Samsung/watch transport still needs phone verification.
 

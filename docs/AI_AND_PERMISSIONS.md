@@ -140,7 +140,7 @@ A successful nonempty provider response proves only that this small text request
 
 Optional Drive snapshots restore account profile/DOB/measurements, preferences/goals/reminder choices, configured keys/models and seven journal tables. Structured exercise names/sets are included. Photo bytes/references and the Health Connect source database are excluded from portable snapshots. Snapshot size in Settings is confirmed from uploaded/downloaded bytes, not a quota query. An old snapshot can restore a locally deleted journal entry because deletion tombstones are not implemented.
 
-The update checker calls only GitHub's public latest-release metadata endpoint for jdp323/migraineguard, without a GitHub token or app health payload. GitHub receives ordinary network metadata. The release URL is checked against that exact repository/tag, and download/install requires your browser/Android action. Background work uses a persisted account marker and cached public release metadata; sign-out cancels reminders and does not silently restore an authenticated account.
+The update checker calls only GitHub's public latest-release metadata endpoint for jdp323/migraineguard, without a GitHub token or app health payload. GitHub receives ordinary network metadata. The release URL is checked against that exact repository/tag, and download/install requires your browser/Android action. Background work uses a persisted account marker and cached public release metadata; explicit sign-out clears the remembered identity and cancels reminders. A chosen identity is restored on a later app process start only while its device-encrypted remembered session remains; Google APIs still require independent authorization.
 
 ## Official protocol and design references
 

@@ -1,8 +1,8 @@
-> New controls and fixes: [v1.9.1 guide](UPDATE_1_9_0.md), [AI prompts and permissions](AI_AND_PERMISSIONS.md). Settings → App → Check for updates opens the current GitHub release.
+> New controls and fixes: [v1.10.0 guide](UPDATE_1_9_0.md), [AI prompts and permissions](AI_AND_PERMISSIONS.md). Settings → App → Check for updates opens the current GitHub release.
 
 # Troubleshooting MigraineGuard
 
-Applies to v1.9.1 (17). Check **Settings → App → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
+Applies to v1.10.0 (18). Check **Settings → App → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
 
 [User guide](USER_GUIDE.md) · [Latest download](https://github.com/jdp323/migraineguard/releases/latest) · [Technical guide](HOW_IT_WORKS.md)
 
@@ -11,7 +11,7 @@ Applies to v1.9.1 (17). Check **Settings → App → About** first. The Standard
 | Symptom | Likely cause | What to do |
 | --- | --- | --- |
 | Release link says 404 | Old/wrong link, an older private access state or a stale browser page | Open the public latest-release link above in a fresh tab. Repository visibility is public as checked October 21, 2026. Download from Assets, not a historical Actions run. |
-| Phone shows an older release | Cached page, old bookmark or an older installed APK | Open the specific v1.9.1-debug release and select its APK. Check installed Settings → App → About after updating. Source-code ZIPs are not installable APKs. |
+| Phone shows an older release | Cached page, old bookmark or an older installed APK | Open the specific v1.10.0-debug release and select its APK. Check installed Settings → App → About after updating. Source-code ZIPs are not installable APKs. |
 | App not installed / package conflicts | Different signing certificate, wrong package, unsupported Android or insufficient storage | Keep the existing app/data. Try Preview alongside it. Standard updates require the same package and retained signer. Ask for help before uninstalling an app with records. |
 | Android warns about installing from this source | APK is sideloaded rather than installed through Play | Review the GitHub URL and APK identity. Allow the specific browser/file manager only if you trust the file. Do not disable device-wide security controls. |
 | APK appears to download as a ZIP | You downloaded source code or an Actions artifact | Use the .apk release asset. Do not rename a source ZIP to .apk. |
@@ -92,3 +92,15 @@ Use this template in a [GitHub issue](https://github.com/jdp323/migraineguard/is
 - Does it still happen after a refresh/reopen?
 
 Do not attach keys, tokens, full sync reports, exact private health records, a Drive snapshot, journal export or signing keystore to a public issue. Use the developer contact displayed on Google's authorization screen for private follow-up.
+
+## Returning user sees setup or sign-in repeatedly
+
+Confirm v1.10.0/code 18 under Settings → App → About. Older builds did not remember the selected identity across process restarts. After installing, sign in/complete setup once on the intended account. Reopen without signing out: Home should appear. An incomplete new account or cleared app storage still needs setup. Explicit sign-out intentionally clears the remembered session. If Android Keystore cannot decrypt it, sign in again; local records stay separate and retained. Offline Drive/revoked authorization should show reconnect in Settings → Account instead of restarting setup.
+
+## Water notification buttons are missing or do not add
+
+Expand the notification; Android/OEMs may hide actions in the collapsed view or require unlocking. Enable master notifications and Drinking water in Settings → Reminders and grant Android notifications. The latest reminder has 1/2/3-glass alternatives; choose one. Repeated taps and the other buttons on that same reminder do not add more. A newer reminder, sign-out/account switch, disabled reminders or a 24-hour expiry invalidates old actions. Open Water to log/correct manually; each glass is 250 ml. Android may defer queued work, so check the journal after the device is awake.
+
+## Exercise form shows the wrong inputs
+
+Use Fitness → Training → Log exercise and choose the matching tile. Cardio → Treadmill exposes speed/incline/distance; Stretching uses duration/hold/rounds with no lifting fields. Strength exposes weight/reps/completed sets. Optional empty values remain unknown. Change metric/imperial under your profile to convert speed/distance and weight; incline is percent in either system. Speed is not pace in minutes/km.

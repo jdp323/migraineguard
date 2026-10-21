@@ -1,6 +1,8 @@
+> Current v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
+
 > v1.9.0: [focused Home, structured training, reminder/update controls, AI providers and Drive size](UPDATE_1_9_0.md). [Exact prompts and permissions](AI_AND_PERMISSIONS.md).
 
-> Current v1.8.0: [interface, navigation, verified setup and changed-file/function reference](UPDATE_1_8_0.md).
+> Historical v1.8.0: [interface, navigation, verified setup and changed-file/function reference](UPDATE_1_8_0.md).
 
 ## v1.8.0 interface acceptance
 
@@ -8,7 +10,7 @@ Update Standard over the same retained-signature package without uninstalling. C
 
 Setup should show a permission check separately from actual received steps/BPM/sleep. Merely opening Samsung Health must not mark sharing complete. Skip optional Health/AI and verify the final review says Skipped. A successful Save & Test key check should remain visible until Continue; editing the key must clear its check. Native Drive success should likewise be visible after a manual connection, while already-granted automatic restore should continue as before. No real provider/health connection is proved by the synthetic emulator tests.
 
-> Current v1.7.0: [Drive account restore, Samsung query fixes, UI and complete changed-file/function supplement](UPDATE_1_7_0.md). This supersedes the older cloud-backup placeholder and current-version descriptions below; historical source references remain pinned to their stated baselines.
+> Historical v1.7.0: [Drive account restore, Samsung query fixes, UI and complete changed-file/function supplement](UPDATE_1_7_0.md). This supersedes the older cloud-backup placeholder and current-version descriptions below; historical source references remain pinned to their stated baselines.
 
 ## v1.7.0 Drive restore and Samsung checks
 
@@ -85,3 +87,10 @@ Reference: https://android.googlesource.com/platform/packages/modules/HealthFitn
 - With two accounts, confirm provider/model, training/reminder choices and journals stay separate; complete Drive save/restore and compare the displayed snapshot bytes.
 - Enable Android notifications and each desired type, choose a 15-minute test interval and active hours, background the app, then test taps to Water/Food/Migraine/Medication. Force-stop and OEM battery policy can suppress work; do not describe approximate WorkManager jobs as exact alarms. Sign out and confirm prior-account reminders stop.
 - App → Check for updates: verify current/newer/offline/rate-limit messages, notes and the GitHub download page. A new release notification requires a future version after installing this checking feature; no silent installation should occur.
+
+## v1.10.0 acceptance
+
+1. Update Standard in place; confirm 1.10.0/code18 and retained profile/key/history. Sign in once after upgrading, close/reopen and restart the phone: completed accounts should open Home. Try offline; Drive must not block Home. Explicitly sign out and choose a different account: data and keys remain separate.
+2. Enable water reminders, wait through the selected interval/active window, expand notification and choose 1/2/3 glasses. Confirm 250/500/750 ml in Water. Test on the lock screen and after closing the app. Repeating another button must not duplicate the same reminder. Old-account buttons must stop after sign-out.
+3. Log one strength session, treadmill speed/incline/distance, and stretching duration/hold/rounds. Confirm only relevant fields, metric/imperial conversions, history and Use as next session. Back up and restore on another updated installation; metrics transfer, photos do not.
+4. Disable notifications and verify no reminders. Keep any real records; use separate fixture accounts/Preview for destructive reset tests.
