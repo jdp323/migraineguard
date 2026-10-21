@@ -47,6 +47,11 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
     val context = LocalContext.current
     var name by rememberSaveable { mutableStateOf("") }
     var minutes by rememberSaveable { mutableStateOf("30") }
+    var speed by rememberSaveable { mutableStateOf("") }
+    var incline by rememberSaveable { mutableStateOf("") }
+    var distance by rememberSaveable { mutableStateOf("") }
+    var hold by rememberSaveable { mutableStateOf("") }
+    var rounds by rememberSaveable { mutableStateOf("") }
     var calories by rememberSaveable { mutableStateOf("") }
     var notes by rememberSaveable { mutableStateOf("") }
     var typeName by rememberSaveable { mutableStateOf(WorkoutType.STRENGTH.name) }
@@ -68,6 +73,8 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
     LaunchedEffect(metric) {
         if (draftMetric != metric) {
             setsJson = Json.encodeToString(sets.map { draft -> draft.weight.toFloatOrNull()?.let { value -> draft.copy(weight = "%.2f".format(java.util.Locale.US, if (metric) value / 2.2046226f else value * 2.2046226f)) } ?: draft })
+            fun convert(value: String) = value.toFloatOrNull()?.let { "%.2f".format(java.util.Locale.US, if(metric) it*1.609344f else it/1.609344f) } ?: value
+            speed = convert(speed); distance = convert(distance)
             draftMetric = metric
         }
     }
@@ -108,17 +115,19 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
                 Text(Instant.ofEpochMilli(e.timestampMillis).atZone(ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("MMM d, HH:mm"))+" · "+e.durationMinutes+" min")
                 e.sets.forEachIndexed { i, set -> Text((i+1).toString()+". "+"%.1f".format(if (metric) set.weightKg else set.weightKg*2.2046226f)+" "+unit+" × "+set.reps+if(set.completed) " ✓" else " · not completed") }
                 if (e.sets.isNotEmpty()) Text("Completed volume: "+"%.0f".format(TrainingProgress.volumeKg(e)*(if(metric)1.0 else 2.2046226))+" "+unit+"·reps")
+                WorkoutMetricSummary(e.details,metric).takeIf { it.isNotBlank() }?.let { Text(it) }
                 if (e.notes.isNotBlank()) Text(e.notes)
                 e.equipmentPhotoUri?.let { AsyncImage(model = it, contentDescription = "Saved equipment reference", modifier = Modifier.fillMaxWidth().height(140.dp)) }
-                OutlinedButton(onClick = { name = e.exerciseName.ifBlank { e.type.label }; typeName = e.type.name; minutes = e.durationMinutes.toString(); setsJson = Json.encodeToString(e.sets.map { SetDraft("%.1f".format(java.util.Locale.US, if(metric)it.weightKg else it.weightKg*2.2046226f), it.reps.toString(), false) }.ifEmpty { List(3){SetDraft()} }); showHistory = false }) { Text("Use as next session") }
+                OutlinedButton(onClick = { name = e.exerciseName.ifBlank { e.type.label }; typeName = e.type.name; minutes = e.durationMinutes.toString(); setsJson = Json.encodeToString(e.sets.map { SetDraft("%.1f".format(java.util.Locale.US, if(metric)it.weightKg else it.weightKg*2.2046226f), it.reps.toString(), false) }.ifEmpty { List(3){SetDraft()} }); speed = e.details.speedKmh?.let { "%.2f".format(java.util.Locale.US,if(metric) it else it/1.609344f) }.orEmpty(); incline = e.details.inclinePercent?.toString().orEmpty(); distance = e.details.distanceKm?.let { "%.2f".format(java.util.Locale.US,if(metric) it else it/1.609344f) }.orEmpty(); hold = e.details.holdSeconds?.toString().orEmpty(); rounds = e.details.rounds?.toString().orEmpty(); notes = e.notes; photo = e.equipmentPhotoUri; allowPhoto = false; showHistory = false; onSectionChanged() }) { Text("Use as next session") }
             }
         }
     } else {
-        SectionCard("Exercise or machine") {
+        ActivityPicker(type) { typeName = it.name; message = "" }
+        SectionCard(if(type.isMobility) "Stretch or movement" else "Exercise or machine") {
             OutlinedTextField(value = name, onValueChange = { name = it.take(120); message = "" }, label = { Text("Exercise name") }, modifier = Modifier.fillMaxWidth().testTag("exercise-name"), singleLine = true)
             val suggestions = GymExerciseNames.filter { name.isNotBlank() && it.contains(name, true) && !it.equals(name,true) }.take(4)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { suggestions.forEach { suggestion -> SuggestionChip(onClick = { name = suggestion }, label = { Text(suggestion) }) } }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { WorkoutType.entries.forEach { t -> FilterChip(selected = type == t, onClick = { typeName = t.name }, label = { Text(t.label) }) } }
+            if (!type.isMobility) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { gallery.launch(arrayOf("image/*")) }, enabled = !busy) { Text("Machine photo") }
                 OutlinedButton(onClick = { cameraPermission.launch(Manifest.permission.CAMERA) }, enabled = !busy) { Text("Camera") }
@@ -139,10 +148,11 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
                 } }, enabled = allowPhoto && !busy) { Text(if (busy) "Analyzing…" else "Identify machine") }
                 TextButton(onClick = { photo = null; allowPhoto = false }) { Text("Remove photo") }
             }
-            Text("A photo never determines a safe weight or technique. Confirm the machine name yourself.", style = MaterialTheme.typography.bodySmall)
+            Text("Check photo suggestions against the equipment label.", style = MaterialTheme.typography.bodySmall)
+            }
         }
         previous?.let { e -> SectionCard("Last time") { Text(e.exerciseName+" · "+e.sets.count { it.completed }+" completed sets · "+e.durationMinutes+" min"); e.sets.take(8).forEach { Text("%.1f".format(if(metric)it.weightKg else it.weightKg*2.2046226f)+" "+unit+" × "+it.reps) } } }
-        SectionCard(if (type == WorkoutType.STRENGTH) "Sets, weight & reps" else "Session details") {
+        SectionCard(when { type == WorkoutType.STRENGTH -> "Sets, weight & reps"; type.isMobility -> "Time & holds"; type.isCardio -> "Pace & distance"; else -> "Session details" }) {
             OutlinedTextField(value = minutes, onValueChange = { minutes = it.filter(Char::isDigit).take(4) }, label = { Text("Duration (minutes)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
             if (type == WorkoutType.STRENGTH) {
                 Text("Use 0 for bodyweight. Check each set you completed.", style = MaterialTheme.typography.bodySmall)
@@ -159,6 +169,16 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
                     TextButton(onClick = { setsJson = Json.encodeToString(sets.dropLast(1)) }, enabled = sets.size > 1) { Text("Remove last set") }
                 }
             }
+            if (type.isCardio) {
+                MetricInput(speed,{speed=it},if(metric) "Speed (km/h, optional)" else "Speed (mph, optional)","cardio-speed")
+                if(type == WorkoutType.TREADMILL) MetricInput(incline,{incline=it},"Incline (%, optional)","cardio-incline",signed=true)
+                MetricInput(distance,{distance=it},if(metric) "Distance (km, optional)" else "Distance (mi, optional)","cardio-distance")
+            }
+            if (type.isMobility) {
+                Text("Log your own stretch or mobility session. Weight and lifting sets are not used.",style=MaterialTheme.typography.bodySmall)
+                MetricInput(hold,{hold=it},"Hold per stretch (seconds, optional)","stretch-hold",integer=true)
+                MetricInput(rounds,{rounds=it},"Rounds (optional)","stretch-rounds",integer=true)
+            }
             OutlinedTextField(value = calories, onValueChange = { calories = it.filter(Char::isDigit).take(6) }, label = { Text("Calories (optional)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = notes, onValueChange = { notes = it.take(2000) }, label = { Text("Notes (optional)") }, modifier = Modifier.fillMaxWidth())
             Button(onClick = { scope.launch {
@@ -172,8 +192,15 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
                         ExerciseSet(if (metric) weight else weight/2.2046226f, reps, draft.completed).also { it.validate() }
                     } else emptyList()
                     require(parsed.isEmpty() || parsed.any { it.completed }) { "Check at least one completed set before saving." }
+                    fun decimal(value: String): Float? = if(value.isBlank()) null else value.toFloatOrNull() ?: error("Enter valid numeric activity details.")
+                    fun whole(value: String): Int? = if(value.isBlank()) null else value.toIntOrNull() ?: error("Enter whole seconds and rounds.")
+                    val details = when {
+                        type.isCardio -> WorkoutDetails(speedKmh=decimal(speed)?.let{if(metric)it else it*1.609344f},inclinePercent=if(type==WorkoutType.TREADMILL)decimal(incline) else null,distanceKm=decimal(distance)?.let{if(metric)it else it*1.609344f})
+                        type.isMobility -> WorkoutDetails(holdSeconds=whole(hold),rounds=whole(rounds))
+                        else -> WorkoutDetails()
+                    }.also { it.validate() }
                     repository.save(WorkoutEntry(timestampMillis = System.currentTimeMillis(), type = type, durationMinutes = duration,
-                        calories = calories.takeIf { it.isNotBlank() }?.toIntOrNull(), notes = notes, exerciseName = name.trim(), sets = parsed, equipmentPhotoUri = photo))
+                        calories = calories.takeIf { it.isNotBlank() }?.toIntOrNull(), notes = notes, exerciseName = name.trim(), sets = parsed, equipmentPhotoUri = if(type.isMobility) null else photo, details = details))
                     message = "Exercise saved ✓"; showHistory = true; onSectionChanged(); notes = ""; calories = ""
                     setsJson = Json.encodeToString(sets.map { it.copy(completed = false) })
                 } catch (e: CancellationException) { throw e } catch (e: Exception) { message = e.message ?: "Could not save. Your draft is kept." } finally { busy = false }

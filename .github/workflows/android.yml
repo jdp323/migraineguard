@@ -113,7 +113,7 @@ jobs:
             adb shell am instrument -w com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-runtime-results.txt
             adb pull /sdcard/Android/data/com.migraineguard.app/files/verification ui-verification || true
             cat android-runtime-results.txt
-            grep -q 'OK (20 tests)' android-runtime-results.txt
+            grep -q 'OK (24 tests)' android-runtime-results.txt
             adb shell am start -n com.migraineguard.app/.MainActivity
             sleep 5
             adb exec-out screencap -p > android-startup.png
@@ -153,19 +153,17 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
-          Home is now a compact daily overview. Migraine history, symptoms, medication shortcuts, energy and weather context are grouped in the Migraine tab. Fitness separates Health from Training.
+          Water notifications now offer 1 glass, 2 glasses and 3 glasses. Each glass logs 250 ml without opening the app. A notification accepts one choice; repeated taps, expired actions and another account's notifications cannot add extra water. Android controls notification display and background timing.
 
-          Training logs an exercise or machine name, completed sets, weight in kg/lb, reps, duration and notes. Add a local equipment photo or explicitly ask an image-capable AI to suggest its name. Review previous sessions, reuse a log and track distinct active days against a weekly goal. Existing workouts are preserved by the database v4-to-v5 migration; photo files are excluded from portable backups.
+          Training has separate Strength, Cardio, Stretching and Other tiles. Strength uses weight/reps/completed sets. Treadmill uses duration, speed, incline and distance. Walk/run/cycling/rowing/elliptical use pace/distance; stretching/yoga use duration, hold seconds and rounds. Optional metrics stay unknown when blank. History, reuse and backups preserve the new details. Existing records migrate from database v5 to v6 without deletion.
 
-          Settings is organized into Account, AI, Reminders and App. AI has a provider dropdown, masked per-account keys, editable model IDs, format suggestions and a real selected-provider test. Services include Gemini, OpenAI, Claude, Groq, OpenRouter, DeepSeek, xAI, Mistral, Perplexity, Together and Fireworks. Prefix hints are not verification and keys are never probed across services. Optional images use Gemini/OpenAI/Claude only; other selections explain their limitation. Live provider access, availability and charges depend on your account.
+          Returning users keep a device-encrypted remembered session across app restarts and updates. Explicit sign-out clears it. A completed account opens Home without repeating setup or blocking on Drive/Health Connect prompts. Previously enabled Drive reconnects silently when Google allows it; consent/network errors are shown in Account settings. New users/devices still complete sign-in/restore/setup, and no permission or Google API token is fabricated or carried between accounts.
 
-          Water, meal-photo, medication and migraine check-ins have independent toggles/intervals and active hours. Notification taps open the relevant journal. Android schedules these approximately; they are not exact dose alarms. The new daily public GitHub check can notify about newer versions and open their release page, and Settings has a manual Check for updates button. Nothing installs automatically.
+          Includes the v1.9 features: focused Home, separate Migraine overview, eleven AI choices, adjustable reminders, Drive snapshot size and GitHub version checks. The exact fields, changed files, data boundaries and phone test steps are documented in docs/UPDATE_1_10_0.md.
 
-          Account Settings shows the confirmed size of this app's current Drive snapshot, not total Drive account usage. Portable provider keys in optional Drive JSON use Google's transport/storage protection but are not separately password-encrypted/end-to-end encrypted. Local keys use Android Keystore. No broader Drive scope is requested.
+          Release gates include unit tests, lint, retained Standard/Preview signing and 24 Android tests. Emulator fixtures cover session restore/account isolation, one-tap notification actions, named strength/cardio/stretch logs, schema preservation and simulated Drive restore. Live watch transfer, actual Google authorization and OEM notification timing still need phone acceptance.
 
-          Release gates include unit tests, lint, retained Standard/Preview signing and 20 Android tests, including named-set entry, old-schema preservation, account restore and the main Settings categories. Runtime fixtures simulate health/Drive data; live watch transfer, real cloud requests and OEM notification timing require phone acceptance.
-
-          Use Standard to update com.migraineguard.app with the retained FB:67 certificate, or Preview alongside it with separate records/permissions. Keep an existing app with records if its signing certificate differs. See docs/UPDATE_1_9_0.md and docs/AI_AND_PERMISSIONS.md for usage, exact prompts, data flows and test limits.
+          Use Standard to update com.migraineguard.app with the retained FB:67 certificate, or Preview alongside it with separate records/permissions. Do not uninstall an older installation with records to solve a signing conflict.
           NOTES
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists; it will not be overwritten."

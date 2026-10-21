@@ -22,7 +22,7 @@ class AppReliabilityTest {
     private val context get() = ApplicationProvider.getApplicationContext<Context>()
 
     @Test fun migrationsPreserveOldJournalAndWater() = runBlocking {
-        for (version in 1..4) {
+        for (version in 1..5) {
             val name = "migration-fixture-$version-${UUID.randomUUID()}.db"
             val path = context.getDatabasePath(name).apply { parentFile?.mkdirs() }
             SQLiteDatabase.openOrCreateDatabase(path, null).use { old ->
@@ -35,7 +35,12 @@ class AppReliabilityTest {
                     old.execSQL("CREATE TABLE weight_entries (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, timestampMillis INTEGER NOT NULL, weightKg REAL NOT NULL, notes TEXT NOT NULL)")
                     old.execSQL("CREATE TABLE medications (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT NOT NULL, dose TEXT NOT NULL, timeLabel TEXT NOT NULL, takenToday INTEGER NOT NULL, lastTakenMillis INTEGER NOT NULL, takenDateIso TEXT NOT NULL)")
                 }
-                if (version == 4) old.execSQL("CREATE TABLE ai_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, title TEXT NOT NULL, personaId TEXT NOT NULL, summary TEXT NOT NULL, fullResponse TEXT NOT NULL, userPrompt TEXT NOT NULL, timestampMillis INTEGER NOT NULL)")
+                if (version >= 4) old.execSQL("CREATE TABLE ai_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, title TEXT NOT NULL, personaId TEXT NOT NULL, summary TEXT NOT NULL, fullResponse TEXT NOT NULL, userPrompt TEXT NOT NULL, timestampMillis INTEGER NOT NULL)")
+                if (version >= 5) {
+                    old.execSQL("ALTER TABLE workouts ADD COLUMN exerciseName TEXT NOT NULL DEFAULT ''")
+                    old.execSQL("ALTER TABLE workouts ADD COLUMN setsJson TEXT NOT NULL DEFAULT '[]'")
+                    old.execSQL("ALTER TABLE workouts ADD COLUMN equipmentPhotoUri TEXT")
+                }
                 if (version >= 2) old.execSQL("INSERT INTO workouts(timestampMillis,typeName,durationMinutes,calories,notes,fromExerciseOfDay) VALUES(1000,'STRENGTH',20,NULL,'old workout',0)")
                 old.execSQL("INSERT INTO migraine_episodes (timestampMillis,overallIntensity,notes,symptoms,markers" +
                     (if (version >= 3) ",triggers" else "") + ") VALUES (1000,6,'migration record','[]','[]'" +
@@ -49,7 +54,7 @@ class AppReliabilityTest {
                 assertEquals("migration record", db.migraineDao().inRange(0, 2000).single().notes)
                 assertEquals(7, db.waterHistoryDao().get("2026-10-01")!!.cups)
                 assertTrue(db.backupDao().sessions().isEmpty())
-                if (version >= 2) { val oldWorkout = db.workoutDao().inRange(0,2000).single().toDomain(); assertEquals("old workout",oldWorkout.notes); assertTrue(oldWorkout.sets.isEmpty()); assertEquals("",oldWorkout.exerciseName) }
+                if (version >= 2) { val oldWorkout = db.workoutDao().inRange(0,2000).single().toDomain(); assertEquals("old workout",oldWorkout.notes); assertTrue(oldWorkout.sets.isEmpty()); assertEquals("",oldWorkout.exerciseName); assertEquals(com.migraineguard.app.core.domain.WorkoutDetails(),oldWorkout.details) }
             } finally { db.close(); context.deleteDatabase(name) }
         }
     }

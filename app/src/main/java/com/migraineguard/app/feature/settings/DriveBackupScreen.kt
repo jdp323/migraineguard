@@ -52,6 +52,20 @@ private suspend fun silentDriveToken(client: AuthorizationClient, email: String)
         }
     }
 
+/** Returning profiles never wait on Drive consent, connectivity, or token refresh to open Home. */
+@Composable
+fun SilentDriveReconnect(repository: DriveSyncRepository, email: String) {
+    val context = LocalContext.current
+    LaunchedEffect(repository,email) {
+        if (!repository.state.value.connected) {
+            val client = Identity.getAuthorizationClient(context)
+            try { repository.connect(silentDriveToken(client,email),email,refresh = { silentDriveToken(client,email) }) }
+            catch(e: CancellationException) { throw e }
+            catch(_: Exception) { repository.reconnectNeeded() }
+        }
+    }
+}
+
 /** Native Google authorization: app-data only, explicitly bound to the signed-in email. */
 @Composable
 fun DriveBackupScreen(

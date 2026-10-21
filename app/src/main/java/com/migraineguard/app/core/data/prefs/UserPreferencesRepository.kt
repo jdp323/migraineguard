@@ -377,7 +377,7 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
             body.weightKg?.let { p[profileWeightKey] = it } ?: p.remove(profileWeightKey)
             body.activityLevel?.let { p[profileActivityKey] = it.name } ?: p.remove(profileActivityKey)
             p[profileMetricKey] = body.useMetric; p[profileCompleteKey] = body.profileComplete
-            p[setupCompleteKey] = value.setupComplete
+            p[setupCompleteKey] = value.setupComplete || p[setupCompleteKey] == true
             p[onboardingKey] = value.onboardingDone || value.setupComplete
             p[geminiKey] = apiKeyVault.encrypt(value.geminiApiKey)
             p[groqKey] = apiKeyVault.encrypt(value.groqApiKey)

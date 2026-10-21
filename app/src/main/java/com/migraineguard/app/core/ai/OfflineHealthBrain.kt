@@ -87,6 +87,8 @@ class OfflineHealthBrain : BaseAiProvider("OfflineHealthBrain", priority = 99) {
             .put("trainingGoalDaysPerWeek", pack.prefs.weeklyWorkoutGoal)
             .put("recentExercises", JSONArray().also { arr -> pack.workouts.take(12).forEach { e ->
                 arr.put(JSONObject().put("name", e.exerciseName.ifBlank { e.type.label }).put("durationMinutes", e.durationMinutes)
+                    .put("activityType",e.type.name).put("speedKmh",e.details.speedKmh).put("inclinePercent",e.details.inclinePercent)
+                    .put("distanceKm",e.details.distanceKm).put("holdSeconds",e.details.holdSeconds).put("rounds",e.details.rounds)
                     .put("completedSets", JSONArray().also { sets -> e.sets.filter { it.completed }.take(30).forEach { set -> sets.put(JSONObject().put("weightKg",set.weightKg).put("reps",set.reps)) } }))
             } })
             .put("foodScans", pack.foods.take(8).map {

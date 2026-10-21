@@ -118,6 +118,10 @@ class DriveSyncRepository(
         }
     }
 
+    fun reconnectNeeded() {
+        mutableState.value = mutableState.value.copy(busy = false, message = "Drive needs reconnecting. Your saved profile is available; open Account settings when online.")
+    }
+
     fun dispose() { observer?.cancel(); observer = null; token = null; refreshAccessToken = null }
 
     suspend fun pause() {

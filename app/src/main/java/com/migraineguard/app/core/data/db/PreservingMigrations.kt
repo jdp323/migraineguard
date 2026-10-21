@@ -28,5 +28,11 @@ object PreservingMigrations {
             db.execSQL("ALTER TABLE workouts ADD COLUMN equipmentPhotoUri TEXT")
         }
     }
-    val ALL: Array<Migration> = oldMigrations + FROM_4
+    val FROM_5 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE workouts ADD COLUMN detailsJson TEXT NOT NULL DEFAULT '{}'")
+            db.execSQL("CREATE TABLE IF NOT EXISTS water_action_receipts (token TEXT NOT NULL PRIMARY KEY, appliedAtMillis INTEGER NOT NULL)")
+        }
+    }
+    val ALL: Array<Migration> = oldMigrations + FROM_4 + FROM_5
 }

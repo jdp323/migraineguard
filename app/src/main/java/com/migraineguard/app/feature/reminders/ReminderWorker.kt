@@ -26,8 +26,8 @@ class ReminderWorker(appContext:Context,params:WorkerParameters):CoroutineWorker
         val plan=ReminderPolicy.plan(prefs)
         if(kind !in plan.intervals || !plan.enabled)return Result.success()
         if(kind!="update"&&!ReminderPolicy.activeHour(java.time.LocalTime.now().hour,plan.startHour,plan.endHour))return Result.success()
-        var title="Your MigraineGuard reminder"
-        var text=when(kind){"water"->"Take a water break and log a cup.";"food"->"Had a meal? Add a food photo or description to your journal.";"medication"->"Review your medication journal and mark what you took.";"migraine"->"Record any symptoms or triggers you noticed.";else->""}
+        var title=if(kind=="water") "Time for water" else "Your MigraineGuard reminder"
+        var text=when(kind){"water"->"Log what you drank: 1 glass = 250 ml. Choose 1, 2 or 3 below.";"food"->"Had a meal? Add a food photo or description to your journal.";"medication"->"Review your medication journal and mark what you took.";"migraine"->"Record any symptoms or triggers you noticed.";else->""}
         var downloadUrl:String?=null
         if(kind=="update"){
             try{
@@ -48,7 +48,9 @@ class ReminderWorker(appContext:Context,params:WorkerParameters):CoroutineWorker
         val id=2000+listOf("water","food","medication","migraine","update").indexOf(kind)
         val pending=PendingIntent.getActivity(applicationContext,id,intent,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         try{
-            NotificationManagerCompat.from(applicationContext).notify(id,NotificationCompat.Builder(applicationContext,CHANNEL_ID).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle(title).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text)).setContentIntent(pending).setAutoCancel(true).setVisibility(NotificationCompat.VISIBILITY_PRIVATE).build())
+            val builder = NotificationCompat.Builder(applicationContext,CHANNEL_ID).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle(title).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text)).setContentIntent(pending).setAutoCancel(true).setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            if(kind=="water") WaterQuickAdd.addActions(applicationContext,builder,account)
+            NotificationManagerCompat.from(applicationContext).notify(id,builder.build())
             if(kind=="update")applicationContext.getSharedPreferences("public_release_cache",Context.MODE_PRIVATE).edit().putString("notified",AppUpdates.cached(applicationContext)?.version).apply()
         }catch(_:SecurityException){return Result.success()}
         return Result.success()

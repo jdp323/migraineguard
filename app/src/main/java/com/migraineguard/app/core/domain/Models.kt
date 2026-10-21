@@ -215,6 +215,10 @@ enum class WorkoutType(val label: String) {
     STRENGTH("Strength"),
     YOGA("Yoga"),
     CYCLING("Cycling"),
+    TREADMILL("Treadmill"),
+    STRETCHING("Stretching"),
+    ROWING("Rowing"),
+    ELLIPTICAL("Elliptical"),
     OTHER("Other"),
 }
 
@@ -229,6 +233,7 @@ data class WorkoutEntry(
     val exerciseName: String = "",
     val sets: List<ExerciseSet> = emptyList(),
     val equipmentPhotoUri: String? = null,
+    val details: WorkoutDetails = WorkoutDetails(),
 )
 
 data class ExerciseSuggestion(

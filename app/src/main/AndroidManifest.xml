@@ -87,6 +87,8 @@
             </intent-filter>
         </activity-alias>
 
+        <receiver android:name=".feature.reminders.WaterActionReceiver" android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

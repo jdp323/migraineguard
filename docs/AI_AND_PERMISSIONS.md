@@ -1,6 +1,6 @@
 # AI prompts, permissions and data flow
 
-Current implementation: v1.9.1 / code 17. This describes what the code sends and when. It is not a promise that a provider will always return accurate results. [User guide](USER_GUIDE.md) · [v1.9.1 implementation](UPDATE_1_9_0.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
+Current implementation: v1.10.0 / code 18. This describes what the code sends and when. It is not a promise that a provider will always return accurate results. [User guide](USER_GUIDE.md) · [v1.9.1 implementation](UPDATE_1_9_0.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
 
 ## Permissions and choices
 
@@ -154,3 +154,5 @@ The update checker calls only GitHub's public latest-release metadata endpoint f
 - [Fireworks Chat API](https://docs.fireworks.ai/api-reference/post-chatcompletions)
 - [Android periodic work](https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started/define-work)
 - [Strong exercise/set workflow](https://help.strongapp.io/article/229-my-first-workout), used as interaction inspiration; no third-party assets or implementation copied.
+
+In v1.10.0, explicitly shared recentExercises also includes activityType and present speedKmh/inclinePercent/distanceKm/holdSeconds/rounds. Remembered app identity and notification action receipts stay device-local and are not AI context or portable backup fields. See [session and quick-action design](UPDATE_1_10_0.md).

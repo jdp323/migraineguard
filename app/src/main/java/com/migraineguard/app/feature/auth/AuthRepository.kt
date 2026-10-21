@@ -136,6 +136,13 @@ class DefaultAuthRepository(
         }
     }
 
+    /** Restores only a locally remembered identity; remote APIs still require their own authorization. */
+    internal fun restoreRememberedSession(state: AuthState) {
+        require(state.isSignedIn && state.user != null)
+        onAccountChanged(state)
+        _state.value = state
+    }
+
     /** Called only after Credential Manager returns a Google ID credential. */
     internal suspend fun activateGoogleProfile(profile: UserProfile) {
         val next = AuthState(isSignedIn = true, isDemo = false, user = profile)

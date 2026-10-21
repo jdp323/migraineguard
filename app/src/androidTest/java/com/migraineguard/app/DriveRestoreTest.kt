@@ -59,6 +59,7 @@ class DriveRestoreTest {
             first.setSetupComplete(true)
             sourceDb.migraineDao().insert(MigraineEpisodeEntity(timestampMillis = 1000, overallIntensity = 4,
                 notes = "fixture restored journal", symptoms = emptyList(), markers = emptyList()))
+            sourceDb.workoutDao().insert(WorkoutEntity.fromDomain(com.migraineguard.app.core.domain.WorkoutEntry(timestampMillis=1000,type=com.migraineguard.app.core.domain.WorkoutType.TREADMILL,durationMinutes=20,exerciseName="Treadmill fixture",details=com.migraineguard.app.core.domain.WorkoutDetails(speedKmh=6.5f,inclinePercent=3f,distanceKm=2f))))
             source.connect(email, email)
             source.backupNow()
             assertNotNull(drive.saved)
@@ -77,6 +78,7 @@ class DriveRestoreTest {
             assertTrue(restored.foodReminders)
             assertEquals(30,restored.waterReminderMinutes)
             assertEquals(drive.saved!!.size.toLong(),target.state.value.backupBytes)
+            assertEquals(6.5f,targetDb.backupDao().workouts().single().toDomain().details.speedKmh!!,0.01f)
             assertTrue(restored.setupComplete)
             assertFalse(restored.deviceHealthEnabled)
             assertEquals("fixture restored journal", targetDb.backupDao().migraines().single().notes)
@@ -99,5 +101,9 @@ class DriveRestoreTest {
         assertFalse(applied)
         assertEquals("Current", prefs.preferences.first().bodyProfile.displayName)
         assertEquals("fixture-new-key", prefs.getGeminiApiKey())
+        prefs.setSetupComplete(true)
+        val completed = prefs.preferences.first()
+        assertTrue(prefs.restoreCloudSettings(completed.copy(setupComplete=false,modifiedAtMillis=completed.modifiedAtMillis+1000)))
+        assertTrue(prefs.preferences.first().setupComplete)
     }
 }

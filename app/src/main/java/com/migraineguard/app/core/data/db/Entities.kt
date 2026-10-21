@@ -114,6 +114,7 @@ data class WorkoutEntity(
     @androidx.room.ColumnInfo(defaultValue = "''") val exerciseName: String = "",
     @androidx.room.ColumnInfo(defaultValue = "'[]'") val setsJson: String = "[]",
     val equipmentPhotoUri: String? = null,
+    @androidx.room.ColumnInfo(defaultValue = "'{}'") val detailsJson: String = "{}",
 ) {
     fun toDomain() = WorkoutEntry(
         id = id,
@@ -126,6 +127,7 @@ data class WorkoutEntity(
         exerciseName = exerciseName,
         sets = kotlinx.serialization.json.Json.decodeFromString<List<com.migraineguard.app.core.domain.ExerciseSet>>(setsJson),
         equipmentPhotoUri = equipmentPhotoUri,
+        details = kotlinx.serialization.json.Json.decodeFromString<com.migraineguard.app.core.domain.WorkoutDetails>(detailsJson),
     )
 
     companion object {
@@ -140,6 +142,7 @@ data class WorkoutEntity(
             exerciseName = e.exerciseName,
             setsJson = kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(com.migraineguard.app.core.domain.ExerciseSet.serializer()), e.sets),
             equipmentPhotoUri = e.equipmentPhotoUri,
+            detailsJson = kotlinx.serialization.json.Json.encodeToString(com.migraineguard.app.core.domain.WorkoutDetails.serializer(), e.details),
         )
     }
 }

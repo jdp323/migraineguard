@@ -42,8 +42,9 @@ data class JournalBackup(
         require(migraines.all { it.overallIntensity in 1..10 && it.timestampMillis >= 0 &&
             it.markers.all { marker -> marker.x in 0f..1f && marker.y in 0f..1f && marker.intensity in 1..10 } })
         water.forEach { require(it.cups in 0..1000); LocalDate.parse(it.dateIso) }
-        require(workouts.all { it.durationMinutes in 1..1440 && it.timestampMillis >= 0 && it.exerciseName.length <= 120 && it.setsJson.length <= 32_000 })
+        require(workouts.all { it.durationMinutes in 1..1440 && it.timestampMillis >= 0 && it.exerciseName.length <= 120 && it.setsJson.length <= 32_000 && it.detailsJson.length <= 4000 })
         workouts.forEach { row ->
+            kotlinx.serialization.json.Json.decodeFromString<com.migraineguard.app.core.domain.WorkoutDetails>(row.detailsJson).validate()
             val sets = kotlinx.serialization.json.Json.decodeFromString<List<com.migraineguard.app.core.domain.ExerciseSet>>(row.setsJson)
             require(sets.size <= 100); sets.forEach { it.validate() }
         }

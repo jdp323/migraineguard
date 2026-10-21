@@ -87,19 +87,13 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
     var driveChecked by remember { mutableStateOf(false) }
     var healthChecked by remember { mutableStateOf(false) }
     var openDrive by remember { mutableStateOf(false) }
-    if (authState.isSignedIn && !authState.isDemo && (!driveChecked || openDrive)) {
+    if (authState.isSignedIn && !authState.isDemo && ((!prefs.setupComplete && !driveChecked) || openDrive)) {
         DriveBackupScreen(container.driveSyncRepository, authState.user?.email.orEmpty(),
             onContinue = { driveChecked = true; openDrive = false })
         return
     }
-    if (authState.isSignedIn && !authState.isDemo && prefs.setupComplete && !healthChecked) {
-        var checked by remember { mutableStateOf<Boolean?>(null) }
-        LaunchedEffect(Unit) { checked = container.healthDataRepository.hasAllPermissions() }
-        if (checked == true) { LaunchedEffect(Unit) { healthChecked = true } }
-        else if (checked == false) HealthConnectStep(container.healthDataRepository,
-            remember { SnackbarHostState() }, onNext = { healthChecked = true },
-            onSkip = { healthChecked = true }, modifier = Modifier.fillMaxSize())
-        return
+    if (authState.isSignedIn && !authState.isDemo && prefs.setupComplete && prefs.driveSyncEnabled && !openDrive) {
+        com.migraineguard.app.feature.settings.SilentDriveReconnect(container.driveSyncRepository, authState.user?.email.orEmpty())
     }
 
     // Signed-out storage is empty; old local data is opened only by Continue locally.
