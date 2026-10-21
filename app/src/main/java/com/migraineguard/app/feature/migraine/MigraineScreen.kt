@@ -87,7 +87,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.math.roundToInt
 
-private enum class MigrainePane { Log, History, Detail }
+private enum class MigrainePane { Overview, Log, History, Detail }
 
 private val ViewOrder = listOf(HeadView.FRONT, HeadView.RIGHT, HeadView.BACK, HeadView.LEFT, HeadView.TOP)
 
@@ -95,9 +95,13 @@ private val ViewOrder = listOf(HeadView.FRONT, HeadView.RIGHT, HeadView.BACK, He
 @Composable
 fun MigraineScreen(
     repository: MigraineRepository,
+    preferences: com.migraineguard.app.core.data.prefs.UserPreferencesRepository? = null,
+    weatherRepository: com.migraineguard.app.feature.weather.WeatherRepository? = null,
+    onOpenMeds: () -> Unit = {},
+    onAnalyst: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    var pane by remember { mutableStateOf(MigrainePane.Log) }
+    var pane by remember { mutableStateOf(MigrainePane.Overview) }
     var detailId by remember { mutableStateOf<Long?>(null) }
     val episodes by repository.observeEpisodes().collectAsStateWithLifecycle(initialValue = emptyList())
     val snackbar = remember { SnackbarHostState() }
@@ -125,6 +129,7 @@ fun MigraineScreen(
                 title = {
                     Text(
                         when (pane) {
+                            MigrainePane.Overview -> "Migraine"
                             MigrainePane.Log -> "Log migraine"
                             MigrainePane.History -> "Episode history"
                             MigrainePane.Detail -> "Episode detail"
@@ -132,9 +137,9 @@ fun MigraineScreen(
                     )
                 },
                 navigationIcon = {
-                    if (pane != MigrainePane.Log) {
+                    if (pane != MigrainePane.Overview) {
                         IconButton(onClick = {
-                            pane = if (pane == MigrainePane.Detail) MigrainePane.History else MigrainePane.Log
+                            pane = if (pane == MigrainePane.Detail) MigrainePane.History else MigrainePane.Overview
                         }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
@@ -158,6 +163,22 @@ fun MigraineScreen(
         },
     ) { padding ->
         when (pane) {
+            MigrainePane.Overview -> {
+                Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Make space to check in.", style = MaterialTheme.typography.headlineSmall)
+                    Text("Your symptoms, history and context in one place.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    SectionCard("Your journal") {
+                        Text("Episodes recorded: "+episodes.size)
+                        Button(onClick = { pane = MigrainePane.Log }, modifier = Modifier.fillMaxWidth()) { Text("Log migraine") }
+                        OutlinedButton(onClick = { pane = MigrainePane.History }, modifier = Modifier.fillMaxWidth()) { Text("Episode history") }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onOpenMeds, modifier = Modifier.weight(1f)) { Text("Medication") }
+                        OutlinedButton(onClick = onAnalyst, modifier = Modifier.weight(1f)) { Text("Review patterns") }
+                    }
+                    if (preferences != null && weatherRepository != null) MigraineContext(preferences, weatherRepository)
+                }
+            }
             MigrainePane.History -> {
                 if (episodes.isEmpty()) {
                     EmptyState(

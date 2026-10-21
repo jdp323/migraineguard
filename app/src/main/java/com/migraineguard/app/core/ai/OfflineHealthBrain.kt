@@ -84,6 +84,11 @@ class OfflineHealthBrain : BaseAiProvider("OfflineHealthBrain", priority = 99) {
             .put("weather", pack.weather?.condition)
             .put("workoutCount7d", pack.workouts.size)
             .put("workoutMinutes7d", pack.workouts.sumOf { it.durationMinutes })
+            .put("trainingGoalDaysPerWeek", pack.prefs.weeklyWorkoutGoal)
+            .put("recentExercises", JSONArray().also { arr -> pack.workouts.take(12).forEach { e ->
+                arr.put(JSONObject().put("name", e.exerciseName.ifBlank { e.type.label }).put("durationMinutes", e.durationMinutes)
+                    .put("completedSets", JSONArray().also { sets -> e.sets.filter { it.completed }.take(30).forEach { set -> sets.put(JSONObject().put("weightKg",set.weightKg).put("reps",set.reps)) } }))
+            } })
             .put("foodScans", pack.foods.take(8).map {
                 JSONObject().put("label", it.result.foodLabel).put("hint", it.result.migraineTriggerHint)
             }.let { arr -> JSONArray().also { a -> arr.forEach { a.put(it) } } })
@@ -131,7 +136,7 @@ class OfflineHealthBrain : BaseAiProvider("OfflineHealthBrain", priority = 99) {
             if (stepPct != null && stepPct < 50) add("A 10–15 min walk would close the gap on steps.")
             if (waterPct < 50) add("Sip water now — dehydration is a common migraine trigger.")
             if (sleepH in 0.1f..5.9f) add("Prioritize an earlier wind-down tonight.")
-            if (workouts == 0) add("Try today's Exercise of the Day when you have a free slot.")
+            if (workouts == 0) add("Review your training goal and log a session that fits your own plan.")
             if (pack.migraines.any { it.timestampMillis > System.currentTimeMillis() - 48L * 3600_000 }) {
                 add("Recent migraine logged — keep intensity low today and hydrate.")
             }
@@ -160,7 +165,7 @@ class OfflineHealthBrain : BaseAiProvider("OfflineHealthBrain", priority = 99) {
             appendLine("**Your ask**")
             appendLine(prompt.lines().lastOrNull { it.isNotBlank() && !it.startsWith("System:") }?.take(280) ?: "Check-in")
             appendLine()
-            appendLine("_Offline coach · add a free Gemini key in Settings for richer chat._")
+            appendLine("_Offline coach · choose an AI provider in Settings for optional cloud chat._")
         }
     }
 
@@ -233,7 +238,7 @@ class OfflineHealthBrain : BaseAiProvider("OfflineHealthBrain", priority = 99) {
             appendLine("### OfflineHealthBrain")
             appendLine(Personas.SAFETY_DISCLAIMER)
             appendLine()
-            appendLine("No live context pack was attached. Open **Coach** once so stats can load, or add a Gemini key in Settings.")
+            appendLine("No live context pack was attached. Open **Coach** once so stats can load, or configure your selected provider in Settings.")
             appendLine()
             appendLine("Prompt echo: ${prompt.take(400)}")
         }

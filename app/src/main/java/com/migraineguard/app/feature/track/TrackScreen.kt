@@ -118,6 +118,9 @@ fun TrackScreen(
     var logMinutes by remember { mutableStateOf("20") }
     var logCalories by remember { mutableStateOf("") }
     var logNotes by remember { mutableStateOf("") }
+    val pageScroll = rememberScrollState()
+    var training by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(training) { pageScroll.scrollTo(0) }
     var showConnectionDetails by remember { mutableStateOf(false) }
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
     var manualSteps by remember { mutableStateOf("") }
@@ -363,10 +366,15 @@ fun TrackScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(pageScroll),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            FeatureHeader("Move, rest, recover.", "Your movement and recovery, in one view.", Icons.Filled.FitnessCenter, eyebrow = "Your activity")
+            Text("Move, rest, recover.", style = MaterialTheme.typography.headlineSmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = !training, onClick = { training = false }, label = { Text("Health") })
+                FilterChip(selected = training, onClick = { training = true }, label = { Text("Training") })
+            }
+            if (training) com.migraineguard.app.feature.fitness.WorkoutJournal(workoutRepository, preferencesRepository, onSectionChanged = { scope.launch { pageScroll.animateScrollTo(0) } }) else {
             if (!prefs.deviceHealthEnabled) Button(onClick = { scope.launch {
                 healthDataRepository.allowDeviceHealth(); healthRefreshCoordinator?.refresh(force = true); connectHealth()
             } }, modifier = Modifier.fillMaxWidth()) { Text("Connect this phone's health data") }
@@ -449,110 +457,6 @@ fun TrackScreen(
                         },
                     ) { Text("Apply") }
                 }
-            }
-
-            SectionCard(title = stringResource(R.string.exercise_of_the_day), icon = Icons.Filled.FitnessCenter) {
-                Text(eod.title, style = MaterialTheme.typography.titleMedium)
-                Text("${eod.type.label} · ${eod.durationMinutes} min")
-                Text(eod.description, style = MaterialTheme.typography.bodyMedium)
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                workoutRepository.save(
-                                    WorkoutEntry(
-                                        timestampMillis = System.currentTimeMillis(),
-                                        type = eod.type,
-                                        durationMinutes = eod.durationMinutes,
-                                        notes = "Exercise of the Day: ${eod.title}",
-                                        fromExerciseOfDay = true,
-                                    ),
-                                )
-                                eodDoneToday = true
-                            }
-                        },
-                        enabled = !eodDoneToday,
-                        modifier = Modifier.weight(1f),
-                    ) { Text(if (eodDoneToday) "Done ✓" else "Start / Done") }
-                }
-            }
-
-            SectionCard(title = stringResource(R.string.workout_log), icon = Icons.Filled.MonitorHeart) {
-                Text("Type", style = MaterialTheme.typography.labelLarge)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    WorkoutType.entries.forEach { t ->
-                        FilterChip(
-                            selected = logType == t,
-                            onClick = { logType = t },
-                            label = { Text(t.label) },
-                        )
-                    }
-                }
-                OutlinedTextField(
-                    value = logMinutes,
-                    onValueChange = { logMinutes = it.filter { c -> c.isDigit() }.take(3) },
-                    label = { Text("Duration (min)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = logCalories,
-                    onValueChange = { logCalories = it.filter { c -> c.isDigit() }.take(4) },
-                    label = { Text("Calories (optional)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = logNotes,
-                    onValueChange = { logNotes = it },
-                    label = { Text("Notes") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    minLines = 1,
-                )
-                Button(
-                    onClick = {
-                        val mins = logMinutes.toIntOrNull() ?: return@Button
-                        scope.launch {
-                            workoutRepository.save(
-                                WorkoutEntry(
-                                    timestampMillis = System.currentTimeMillis(),
-                                    type = logType,
-                                    durationMinutes = mins.coerceIn(1, 600),
-                                    calories = logCalories.toIntOrNull(),
-                                    notes = logNotes.trim(),
-                                ),
-                            )
-                            logNotes = ""
-                            logCalories = ""
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = (logMinutes.toIntOrNull() ?: 0) > 0,
-                ) { Text("Save workout") }
-
-                if (workouts.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
-                    Text("Recent", style = MaterialTheme.typography.labelLarge)
-                    workouts.take(8).forEach { w ->
-                        Text(
-                            "${formatTs(w.timestampMillis)} · ${w.type.label} · ${w.durationMinutes} min" +
-                                (w.calories?.let { " · ${it} kcal" } ?: ""),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                }
-            }
-
-            SectionCard(title = "This week", icon = Icons.Filled.FitnessCenter) {
-                Text("${weekWorkouts.size} workouts · $weekMinutes minutes")
-                Text("Steps today: ${observedSteps?.toString() ?: "—"} / $stepGoal")
-                Text("Exercise minutes: ${fitness?.activeMinutes ?: 0}")
             }
 
             SectionCard(title = "Sleep", icon = Icons.Filled.Bedtime) {
@@ -697,6 +601,7 @@ fun TrackScreen(
                 onClick = { reload() },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Refresh data") }
+            }
         }
     }
 }

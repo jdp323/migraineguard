@@ -20,11 +20,14 @@ import com.migraineguard.app.navigation.MigraineGuardNavHost
 
 class MainActivity : ComponentActivity() {
     private lateinit var app: MigraineGuardApp
+    private val requestedRoute = androidx.compose.runtime.mutableStateOf<String?>(null)
+    override fun onNewIntent(intent: android.content.Intent) { super.onNewIntent(intent); setIntent(intent); requestedRoute.value = intent.getStringExtra("open_route") }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         app = application as MigraineGuardApp
+        requestedRoute.value = intent.getStringExtra("open_route")
         setContent {
             val active by app.containers.collectAsStateWithLifecycle()
             val container = active ?: return@setContent
@@ -48,7 +51,7 @@ class MainActivity : ComponentActivity() {
                     dynamicColor = prefs.dynamicColor,
                 ) {
                     Surface(modifier = Modifier.fillMaxSize()) {
-                        MigraineGuardNavHost(container = container)
+                        MigraineGuardNavHost(container = container, requestedRoute = requestedRoute.value, onRouteConsumed = { requestedRoute.value = null; intent.removeExtra("open_route") })
                     }
                 }
             }

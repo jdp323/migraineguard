@@ -1,6 +1,8 @@
+> New controls and fixes: [v1.9.0 guide](UPDATE_1_9_0.md), [AI prompts and permissions](AI_AND_PERMISSIONS.md). Settings → App → Check for updates opens the current GitHub release.
+
 # Troubleshooting MigraineGuard
 
-Applies to v1.8.0 (15). Check **Settings → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
+Applies to v1.9.0 (16). Check **Settings → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
 
 [User guide](USER_GUIDE.md) · [Latest download](https://github.com/jdp323/migraineguard/releases/latest) · [Technical guide](HOW_IT_WORKS.md)
 
@@ -8,8 +10,8 @@ Applies to v1.8.0 (15). Check **Settings → About** first. The Standard and Pre
 
 | Symptom | Likely cause | What to do |
 | --- | --- | --- |
-| Release link says 404 | Old/wrong link, an older private access state or a stale browser page | Open the public latest-release link above in a fresh tab. Repository visibility is public as checked October 20, 2026. Download from Assets, not a historical Actions run. |
-| Phone shows an older release | Cached page, old bookmark or an older installed APK | Open the specific v1.8.0-debug release and select its APK. Check installed Settings → About after updating. Source-code ZIPs are not installable APKs. |
+| Release link says 404 | Old/wrong link, an older private access state or a stale browser page | Open the public latest-release link above in a fresh tab. Repository visibility is public as checked October 21, 2026. Download from Assets, not a historical Actions run. |
+| Phone shows an older release | Cached page, old bookmark or an older installed APK | Open the specific v1.9.0-debug release and select its APK. Check installed Settings → About after updating. Source-code ZIPs are not installable APKs. |
 | App not installed / package conflicts | Different signing certificate, wrong package, unsupported Android or insufficient storage | Keep the existing app/data. Try Preview alongside it. Standard updates require the same package and retained signer. Ask for help before uninstalling an app with records. |
 | Android warns about installing from this source | APK is sideloaded rather than installed through Play | Review the GitHub URL and APK identity. Allow the specific browser/file manager only if you trust the file. Do not disable device-wide security controls. |
 | APK appears to download as a ZIP | You downloaded source code or an Actions artifact | Use the .apk release asset. Do not rename a source ZIP to .apk. |
@@ -21,7 +23,7 @@ Applies to v1.8.0 (15). Check **Settings → About** first. The Standard and Pre
 | --- | --- | --- |
 | Sign-in cancelled | Was the account picker dismissed, or a system prompt interrupted? | Try again and complete the picker. Check internet, device Google accounts, Play services and automatic date/time. A repeatable cancellation needs the exact redacted error and installed version; it does not by itself identify a certificate failure. |
 | No Google accounts available | Device account/credential-provider state | Add the intended Google account in Android settings and retry the explicit picker. Continue locally is available while troubleshooting. |
-| APK signing certificate SHA-1 is not registered | Installed package and actual runtime certificate | In Settings → Advanced sign-in setup → Show SHA-1, compare the installed APK to the published certificate. A locally rebuilt APK normally has a different signer. The maintainer must register that package/signer in the same Cloud project as its Web OAuth client. Never send a private signing key. |
+| APK signing certificate SHA-1 is not registered | Installed package and actual runtime certificate | In Settings → Account → Advanced sign-in setup → Show SHA-1, compare the installed APK to the published certificate. A locally rebuilt APK normally has a different signer. The maintainer must register that package/signer in the same Cloud project as its Web OAuth client. Never send a private signing key. |
 | Access blocked / app has not completed verification | Old Testing configuration, different client override or account policy | The published configuration is External/In production. Remove an unintended optional client override and use the published APK. Workspace/Advanced Protection policies can still block access; use the account administrator's permitted approach. Do not add friends as testers as a substitute for fixing the published configuration. |
 | Google displays a warning or unfamiliar app name | Custom branding is not verified/shown | Production audience access and branding verification are different. Check the intended app, requested email/app-data scope and public privacy page; authorize only if comfortable. The app does not require broad access to ordinary Drive files. |
 | Login works but backup is disconnected | Login does not grant Drive app-data permission | Settings → Connect / restore Drive or Reconnect Google Drive, select the same account and finish authorization. Wait for the real result. |
@@ -66,11 +68,11 @@ The previous 12–14-versus-180 report motivated full-day queries and Samsung bu
 | Problem | What to check and do |
 | --- | --- |
 | Invalid key / 400 or 401 | Use a key from the intended provider, save it and test. A Firebase client API key or Google OAuth client ID is not a Gemini key. Rotate an exposed key at the provider. |
-| AI 403, 404, 429 or timeout | Check provider project/API permissions, model availability, region, quota/billing and internet. Model access can change. Save & Test is a small text request, not proof that image requests or all future calls work. |
+| AI 403, 404, 429 or timeout | Check provider project/API permissions, model availability, region, quota/billing and internet. Model access can change. Test selected provider is a small text request, not proof that image requests or all future calls work. |
 | Offline answer despite a saved key | A cloud request may have failed and fallen through the configured chain. Inspect the displayed provider/status. Offline answers do not prove the cloud key worked. |
 | Skipping setup still leaves a key | Expected: Skip verification preserves saved settings. Remove all keys in Settings to stop using those providers. |
 | Food estimates blank or — | No usable analysis was returned. Add a clear description/portion and retry; do not interpret missing values as zero. |
-| Selected photo not analyzed | Selecting a photo keeps it local. Explicitly enable Send photo to Gemini and submit; a valid Gemini key/network are required. The app does not silently send the image to another provider. |
+| Selected photo not analyzed | Selecting a photo keeps it local. Explicitly enable photo analysis and submit; the selected Gemini/OpenAI/Claude key/model and network are required. The app does not silently send the image to another provider. |
 | Restored food photo unavailable | Photo bytes are not included in account snapshots or encrypted journal exports. Old local URI references are not portable image storage. |
 | Weather unavailable/stale | Allow optional approximate location, enable phone location services and retry with internet. Stale labels reflect old actual samples; a successful health connection does not grant location. |
 | Reminders late/missing | Check the app toggles, Android notification permission/channel and Samsung background/battery policy. WorkManager is periodic; the current app does not provide exact medication-time alarms. |

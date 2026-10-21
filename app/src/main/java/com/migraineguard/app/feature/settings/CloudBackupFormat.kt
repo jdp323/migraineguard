@@ -23,6 +23,11 @@ data class CloudAccountBackup(
         }
         require(savedAtMillis >= 0 && settings.modifiedAtMillis >= 0)
         require(listOf(settings.geminiApiKey, settings.groqApiKey, settings.openRouterApiKey).all { it.length <= 4096 })
+        require(settings.aiConnections.size <= 20 && settings.aiConnections.all { (id, c) -> com.migraineguard.app.core.ai.AiCatalog.service(id) != null && c.apiKey.length <= 4096 && c.model.length <= 160 })
+        require(settings.preferredAiProvider in listOf("auto", "offline") || com.migraineguard.app.core.ai.AiCatalog.service(settings.preferredAiProvider) != null)
+        require(settings.weeklyWorkoutGoal in 1..7)
+        require(listOf(settings.waterReminderMinutes, settings.foodReminderMinutes, settings.medicationReminderMinutes, settings.migraineReminderMinutes).all { it in 15..1440 })
+        require(settings.reminderStartHour in 0..23 && settings.reminderEndHour in 0..23 && settings.reminderStartHour != settings.reminderEndHour)
         journal.copy(profile = settings.bodyProfile, waterGoalCups = settings.waterGoalCups,
             stepGoal = settings.dailyStepGoal, sleepGoalHours = settings.sleepGoalHours).validate()
         journal.validate()

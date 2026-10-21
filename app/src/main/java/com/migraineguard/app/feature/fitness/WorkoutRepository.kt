@@ -16,8 +16,11 @@ class WorkoutRepository(private val dao: WorkoutDao) {
     suspend fun inRange(startMs: Long, endMs: Long): List<WorkoutEntry> =
         dao.inRange(startMs, endMs).map { it.toDomain() }
 
-    suspend fun save(entry: WorkoutEntry): Long =
-        dao.insert(WorkoutEntity.fromDomain(entry))
+    suspend fun save(entry: WorkoutEntry): Long {
+        require(entry.durationMinutes in 1..1440 && entry.exerciseName.length <= 120 && entry.sets.size <= 100)
+        entry.sets.forEach { it.validate() }
+        return dao.insert(WorkoutEntity.fromDomain(entry))
+    }
 
     suspend fun delete(id: Long) = dao.delete(id)
 

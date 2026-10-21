@@ -79,7 +79,7 @@ import com.migraineguard.app.feature.reminders.ReminderWorker
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(
     preferencesRepository: UserPreferencesRepository,
@@ -94,41 +94,23 @@ fun SettingsScreen(
     onOpenBody: () -> Unit = {},
     onOpenMeds: () -> Unit = {},
     onConnectGemini: () -> Unit = {},
+    initialGroup: String = "Account",
     focusGoogle: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val prefs by preferencesRepository.preferences.collectAsStateWithLifecycle(UserPreferences())
+    var settingsGroup by androidx.compose.runtime.saveable.rememberSaveable(initialGroup) { mutableStateOf(initialGroup) }
     var googleId by remember { mutableStateOf("") }
     var showSha by remember { mutableStateOf(false) }
     var showGoogleSetup by remember { mutableStateOf(false) }
     var signingOut by remember { mutableStateOf(false) }
     var signOutError by remember { mutableStateOf<String?>(null) }
     var weightGoalText by remember { mutableStateOf("") }
-    var geminiKey by remember { mutableStateOf("") }
-    var groqKey by remember { mutableStateOf("") }
-    var openRouterKey by remember { mutableStateOf("") }
-    var aiTestStatus by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val notifPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted ->
-        if (granted) {
-            ReminderWorker.schedule(context, true)
-            Toast.makeText(context, "Reminders enabled", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(context, "Notification permission denied", Toast.LENGTH_SHORT).show()
-        }
-    }
-
     LaunchedEffect(prefs.googleWebClientId) {
         googleId = prefs.googleWebClientId
-    }
-    LaunchedEffect(prefs.geminiApiKey, prefs.groqApiKey, prefs.openRouterApiKey) {
-        geminiKey = prefs.geminiApiKey
-        groqKey = prefs.groqApiKey
-        openRouterKey = prefs.openRouterApiKey
     }
     LaunchedEffect(prefs.weightGoalKg) {
         weightGoalText = prefs.weightGoalKg?.let { String.format("%.1f", it) } ?: ""
@@ -137,18 +119,6 @@ fun SettingsScreen(
         // scroll cue via snackbar-ish toast
         if (focusGoogle) {
             Toast.makeText(context, "Optional: override Web Client ID below (baked ID already works)", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    fun rescheduleReminders() {
-        val any = prefs.notificationsEnabled &&
-            (prefs.waterReminders || prefs.migraineReminders || prefs.medicationReminders)
-        if (any && Build.VERSION.SDK_INT >= 33 &&
-            !ReminderWorker.canPostNotifications(context)
-        ) {
-            notifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            ReminderWorker.schedule(context, any)
         }
     }
 
@@ -173,9 +143,16 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            FeatureHeader("Make it yours.", "Your profile, connections and everyday preferences.", Icons.Filled.Person, eyebrow = "Your settings")
+            Text("Make it yours.", style = MaterialTheme.typography.headlineSmall)
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Account", "AI", "Reminders", "App").forEach { group -> FilterChip(selected = settingsGroup == group, onClick = { settingsGroup = group }, label = { Text(group) }) }
+            }
+            if (settingsGroup == "App") AppUpdateCard()
+            if (settingsGroup == "Account") {
             driveRepository?.let { DriveBackupCard(it, onConnectDrive) }
 
+            }
+            if (settingsGroup == "Account") {
             SectionCard(title = "Google Sign-In", icon = Icons.Filled.Key) {
                 Text("Google sign-in keeps your profile separate from other accounts on this phone.")
                 TextButton(onClick = { showGoogleSetup = !showGoogleSetup }) {
@@ -227,119 +204,12 @@ fun SettingsScreen(
 
                 }
 
-            SectionCard(title = "AI providers", icon = Icons.Filled.SmartToy) {
-                Text(
-                    "Uses YOUR keys only — never developer tokens or the Firebase api_key. Order: Gemini → Groq → OpenRouter → OfflineHealthBrain. " +
-                        "Cloud AI runs only with keys you paste. Without a key: OfflineHealthBrain + Connect Gemini CTA. Google Sign-In ≠ Gemini.",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                OutlinedTextField(
-                    value = geminiKey,
-                    onValueChange = { geminiKey = it },
-                    label = { Text("Gemini API key") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                )
-                Text(
-                    "Get free Gemini key: aistudio.google.com/apikey",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-                OutlinedButton(
-                    onClick = {
-                        runCatching {
-                            context.startActivity(
-                                Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/apikey")),
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Open Google AI Studio") }
-                OutlinedTextField(
-                    value = groqKey,
-                    onValueChange = { groqKey = it },
-                    label = { Text("Groq API key") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = openRouterKey,
-                    onValueChange = { openRouterKey = it },
-                    label = { Text("OpenRouter API key") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                )
-                Button(
-                    onClick = {
-                        scope.launch {
-                            preferencesRepository.setGeminiApiKey(geminiKey)
-                            preferencesRepository.setGroqApiKey(groqKey)
-                            preferencesRepository.setOpenRouterApiKey(openRouterKey)
-                            Toast.makeText(context, "AI keys saved", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Save AI keys") }
-                OutlinedButton(
-                    onClick = {
-                        scope.launch {
-                            aiTestStatus = "Testing…"
-                            preferencesRepository.setGeminiApiKey(geminiKey)
-                            val client = aiClient
-                            if (client == null) {
-                                aiTestStatus = "AI client unavailable"
-                                return@launch
-                            }
-                            when (val r = client.testGemini { preferencesRepository.getGeminiApiKey() }) {
-                                is Result.Success -> aiTestStatus = "Gemini OK: ${r.data.take(80)}"
-                                is Result.Error -> {
-                                    // Offline still counts as usable
-                                    val offline = client.complete("Say hi offline briefly")
-                                    aiTestStatus = when (offline) {
-                                        is Result.Success -> "Gemini failed (${r.message}); OfflineHealthBrain OK"
-                                        is Result.Error -> "Test failed: ${r.message}"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Test connection") }
-                if (aiTestStatus.isNotBlank()) {
-                    Text(aiTestStatus, style = MaterialTheme.typography.bodySmall)
-                }
-                val gConfigured = prefs.geminiApiKey.isNotBlank()
-                val qConfigured = prefs.groqApiKey.isNotBlank()
-                val oConfigured = prefs.openRouterApiKey.isNotBlank()
-                Text(
-                    "Your keys: Gemini=$gConfigured · Groq=$qConfigured · OpenRouter=$oConfigured · Offline=always",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                OutlinedButton(
-                    onClick = onConnectGemini,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Open Connect Gemini screen") }
-                OutlinedButton(
-                    onClick = {
-                        scope.launch {
-                            preferencesRepository.clearAllAiKeys()
-                            geminiKey = ""
-                            groqKey = ""
-                            openRouterKey = ""
-                            Toast.makeText(context, "AI keys removed", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Remove all my AI keys") }
             }
+            if (settingsGroup == "AI") {
+            AiProviderSettings(preferencesRepository)
 
+            }
+            if (settingsGroup == "Account") {
             SectionCard(title = "Profile", icon = Icons.Filled.Person) {
                 Text(
                     prefs.bodyProfile.displayName.ifBlank { "Not set" } +
@@ -356,6 +226,8 @@ fun SettingsScreen(
                 }
             }
 
+            }
+            if (settingsGroup == "App") {
             SectionCard(title = "Appearance", icon = Icons.Filled.DarkMode) {
                 Text("Theme", style = MaterialTheme.typography.labelLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -374,6 +246,8 @@ fun SettingsScreen(
                 )
             }
 
+            }
+            if (settingsGroup == "App") {
             SectionCard(title = "Goals hub", icon = Icons.Filled.FitnessCenter) {
                 Text("Step goal: ${prefs.dailyStepGoal}")
                 Slider(
@@ -421,6 +295,8 @@ fun SettingsScreen(
                 ) { Text("Save weight goal") }
             }
 
+            }
+            if (settingsGroup == "App") {
             SectionCard(title = "Water & units", icon = Icons.Filled.WaterDrop) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     WaterUnit.entries.forEach { unit ->
@@ -438,54 +314,12 @@ fun SettingsScreen(
                 )
             }
 
-            SectionCard(title = "Reminders", icon = Icons.Filled.Notifications) {
-                PrefSwitch(
-                    label = "Enable notifications",
-                    checked = prefs.notificationsEnabled,
-                    onCheckedChange = {
-                        scope.launch {
-                            preferencesRepository.setNotificationsEnabled(it)
-                            rescheduleReminders()
-                        }
-                    },
-                )
-                PrefSwitch(
-                    label = "Water reminders",
-                    checked = prefs.waterReminders,
-                    onCheckedChange = {
-                        scope.launch {
-                            preferencesRepository.setWaterReminders(it)
-                            rescheduleReminders()
-                        }
-                    },
-                )
-                PrefSwitch(
-                    label = "Medication reminders",
-                    checked = prefs.medicationReminders,
-                    onCheckedChange = {
-                        scope.launch {
-                            preferencesRepository.setMedicationReminders(it)
-                            rescheduleReminders()
-                        }
-                    },
-                )
-                PrefSwitch(
-                    label = "Migraine check-in reminders",
-                    checked = prefs.migraineReminders,
-                    onCheckedChange = {
-                        scope.launch {
-                            preferencesRepository.setMigraineReminders(it)
-                            rescheduleReminders()
-                        }
-                    },
-                )
-                Text(
-                    "Uses WorkManager periodic reminders (every ~6h) when toggles are on and POST_NOTIFICATIONS is granted on Android 13+.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
+            if (settingsGroup == "Reminders") {
+            ReminderSettings(preferencesRepository)
 
+            }
+            if (settingsGroup == "Account") {
             SectionCard(title = "Samsung Health / Health Connect", icon = Icons.Filled.Watch) {
                 Text(
                     "Grant permissions on the Fitness tab. Sideloaded debug apps appear in Connected apps after the first successful permission request.",
@@ -505,12 +339,21 @@ fun SettingsScreen(
                 }
             }
 
+            }
+            if (settingsGroup == "Account") {
             BackupCard(backupRepository)
 
+            }
+            if (settingsGroup == "App") {
+            SectionCard(title = "Help & documentation", icon = Icons.Filled.Info) {
+                listOf("User guide" to "USER_GUIDE.md", "AI prompts & permissions" to "AI_AND_PERMISSIONS.md", "Errors & fixes" to "TROUBLESHOOTING.md").forEach { (label, file) ->
+                    OutlinedButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jdp323/migraineguard/blob/main/docs/"+file))) } }, modifier = Modifier.fillMaxWidth()) { Text(label) }
+                }
+            }
             SectionCard(title = "About", icon = Icons.Filled.Info) {
                 Text("MigraineGuard v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
                 Text("Package ${BuildConfig.APPLICATION_ID}")
-                Text("AI: your Gemini/Groq/OpenRouter keys only; OfflineHealthBrain always on")
+                Text("AI: your selected provider and key; on-device fallback available")
                 OutlinedButton(
                     onClick = {
                         runCatching {
@@ -523,15 +366,19 @@ fun SettingsScreen(
                 ) { Text("GitHub") }
             }
 
+            }
+            if (settingsGroup == "Account") {
             SectionCard(title = "Privacy", icon = Icons.Filled.PrivacyTip) {
                 Text(
                     "Logs stay on this device unless you enable Drive backup, export a backup or choose to share a health summary with cloud AI. " +
-                        "Weather shares approximate coordinates with Open-Meteo. Cloud AI uses your encrypted stored keys; food photos are sent to Gemini only when you select that option. " +
+                        "Weather shares approximate coordinates with Open-Meteo. Cloud AI uses your encrypted stored keys; photos are sent to your selected image-capable provider only when you choose. " +
                         "OfflineHealthBrain always available. Not a medical device — for personal awareness only.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
 
+            }
+            if (settingsGroup == "Account") {
             Button(onClick = {
                 signingOut = true
                 scope.launch {
@@ -550,6 +397,7 @@ fun SettingsScreen(
                     text = { Text(message + " Your details are still saved on this phone. Reconnect Drive and try again, or sign out using the local copy.") },
                     confirmButton = { TextButton(onClick = { signOutError = null }) { Text("Keep me signed in") } },
                     dismissButton = { TextButton(onClick = { signOutError = null; onSignOut() }) { Text("Sign out with local copy") } })
+            }
             }
             OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
         }

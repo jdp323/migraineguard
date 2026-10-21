@@ -32,6 +32,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,6 +51,13 @@ class AppContainer(context: Context, val account: String = AccountStorage.LOCAL,
     val backupRepository = BackupRepository(appContext, db, preferencesRepository)
     val driveSyncRepository = com.migraineguard.app.feature.settings.DriveSyncRepository(account, preferencesRepository, db, backupRepository, appScope)
     val authRepository: AuthRepository = sharedAuth ?: DefaultAuthRepository({ preferencesRepository })
+    init {
+        if (account != AccountStorage.SIGNED_OUT) appScope.launch {
+            preferencesRepository.preferences.map { com.migraineguard.app.feature.reminders.ReminderPolicy.plan(it) }.distinctUntilChanged().collect { plan ->
+                com.migraineguard.app.feature.reminders.ReminderWorker.schedule(appContext, plan, account)
+            }
+        }
+    }
     val migraineRepository = MigraineRepository(db.migraineDao())
     val waterIntakeRepository = WaterIntakeRepository(appContext, db.waterHistoryDao(), account == AccountStorage.LOCAL)
     val weatherRepository: WeatherRepository = OpenMeteoWeatherRepository(appContext)
@@ -71,15 +81,13 @@ class AppContainer(context: Context, val account: String = AccountStorage.LOCAL,
 
     val aiClient: FallbackAiClient = FallbackAiClient(
         providers = listOf(
-            GeminiFreeProvider { preferencesRepository.getGeminiApiKey() },
-            GroqFreeProvider { preferencesRepository.getGroqApiKey() },
-            OpenRouterFreeProvider { preferencesRepository.getOpenRouterApiKey() },
+            com.migraineguard.app.core.ai.ConfiguredAiProvider { preferencesRepository.preferences.first() },
             offlineHealthBrain,
         ),
         offlineBrain = offlineHealthBrain,
     )
 
-    val nutritionAnalyzer: NutritionAnalyzer = AiNutritionAnalyzer(aiClient, db.nutritionDao(), appContext, GeminiFreeProvider { preferencesRepository.getGeminiApiKey() })
+    val nutritionAnalyzer: NutritionAnalyzer = AiNutritionAnalyzer(aiClient, db.nutritionDao(), appContext, com.migraineguard.app.core.ai.ConfiguredAiProvider { preferencesRepository.preferences.first() })
     val insightsAnalyzer: InsightsAnalyzer = DefaultInsightsAnalyzer(
         migraineRepository = migraineRepository,
         waterIntakeRepository = waterIntakeRepository,

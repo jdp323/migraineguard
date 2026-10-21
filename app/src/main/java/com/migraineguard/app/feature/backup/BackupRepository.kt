@@ -42,7 +42,11 @@ data class JournalBackup(
         require(migraines.all { it.overallIntensity in 1..10 && it.timestampMillis >= 0 &&
             it.markers.all { marker -> marker.x in 0f..1f && marker.y in 0f..1f && marker.intensity in 1..10 } })
         water.forEach { require(it.cups in 0..1000); LocalDate.parse(it.dateIso) }
-        require(workouts.all { it.durationMinutes in 1..1440 && it.timestampMillis >= 0 })
+        require(workouts.all { it.durationMinutes in 1..1440 && it.timestampMillis >= 0 && it.exerciseName.length <= 120 && it.setsJson.length <= 32_000 })
+        workouts.forEach { row ->
+            val sets = kotlinx.serialization.json.Json.decodeFromString<List<com.migraineguard.app.core.domain.ExerciseSet>>(row.setsJson)
+            require(sets.size <= 100); sets.forEach { it.validate() }
+        }
         require(weights.all { it.weightKg > 0 && it.weightKg <= 1000 && it.timestampMillis >= 0 })
         profile?.let {
             require(it.heightCm == null || it.heightCm in 20f..300f)
@@ -68,7 +72,7 @@ class BackupRepository(
                 profile = prefs.bodyProfile, waterGoalCups = prefs.waterGoalCups,
                 stepGoal = prefs.dailyStepGoal, sleepGoalHours = prefs.sleepGoalHours,
                 migraines = dao.migraines(), nutrition = dao.nutrition().map { it.copy(imageUri = null) },
-                water = dao.water(), workouts = dao.workouts(), weights = dao.weights(),
+                water = dao.water(), workouts = dao.workouts().map { it.copy(equipmentPhotoUri = null) }, weights = dao.weights(),
                 medications = dao.medications(), sessions = dao.sessions())
         }
         payload.validate()
@@ -106,7 +110,7 @@ class BackupRepository(
             var count = 0
             count += merge(payload.migraines, dao.migraines(), { it.copy(id = 0) }) { db.migraineDao().insert(it) }
             count += merge(payload.nutrition, dao.nutrition(), { it.copy(id = 0, imageUri = null) }) { db.nutritionDao().insert(it) }
-            count += merge(payload.workouts, dao.workouts(), { it.copy(id = 0) }) { db.workoutDao().insert(it) }
+            count += merge(payload.workouts, dao.workouts(), { it.copy(id = 0, equipmentPhotoUri = null) }) { db.workoutDao().insert(it) }
             count += merge(payload.weights, dao.weights(), { it.copy(id = 0) }) { db.weightDao().insert(it) }
             count += merge(payload.medications, dao.medications(), { it.copy(id = 0) }) { db.medicationDao().insert(it) }
             count += merge(payload.sessions, dao.sessions(), { it.copy(id = 0) }) { db.aiSessionDao().insert(it) }

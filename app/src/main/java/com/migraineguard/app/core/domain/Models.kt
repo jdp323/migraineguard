@@ -226,6 +226,9 @@ data class WorkoutEntry(
     val calories: Int? = null,
     val notes: String = "",
     val fromExerciseOfDay: Boolean = false,
+    val exerciseName: String = "",
+    val sets: List<ExerciseSet> = emptyList(),
+    val equipmentPhotoUri: String? = null,
 )
 
 data class ExerciseSuggestion(

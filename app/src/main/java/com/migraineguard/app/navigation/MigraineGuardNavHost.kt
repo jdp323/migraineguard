@@ -34,6 +34,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.migraineguard.app.core.ai.hasConfiguredCloud
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,11 +74,12 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.foundation.layout.fillMaxSize
 
 @Composable
-fun MigraineGuardNavHost(container: AppContainer) {
+fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null, onRouteConsumed: () -> Unit = {}) {
     val authState by container.authRepository.authState.collectAsStateWithLifecycle()
     val loadedPrefs by container.preferencesRepository.preferences.collectAsStateWithLifecycle<UserPreferences?>(null)
     val prefs = loadedPrefs ?: return
     val scope = rememberCoroutineScope()
+    var settingsInitialGroup by remember { mutableStateOf("Account") }
     var forceProfileEdit by remember { mutableStateOf(false) }
     var coachPersona by remember { mutableStateOf(AiPersona.COACH) }
     var forceConnectGemini by remember { mutableStateOf(false) }
@@ -173,6 +175,10 @@ fun MigraineGuardNavHost(container: AppContainer) {
 
     val hideBottom = setOf(Routes.Settings, Routes.BodyMetrics, Routes.Medications, Routes.ProfileSetup, Routes.Water)
 
+    LaunchedEffect(requestedRoute) {
+        if (requestedRoute in setOf(Routes.Water, Routes.Food, Routes.Medications, Routes.Migraine, Routes.Settings)) { navController.navigate(requestedRoute!!); onRouteConsumed() }
+    }
+
     // Initial refresh when entering main app
     LaunchedEffect(Unit) {
         container.healthRefreshCoordinator.refresh(force = true)
@@ -225,7 +231,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
             composable(Routes.Home) {
                 HomeScreen(
                     userName = authState.user?.displayName ?: "Friend",
-                    onOpenSettings = { navController.navigate(Routes.Settings) },
+                    onOpenSettings = { settingsInitialGroup = "Account"; navController.navigate(Routes.Settings) },
                     onLogMigraine = { goBottom(Routes.Migraine) },
                     onOpenWater = { navController.navigate(Routes.Water) },
                     onOpenFood = { goBottom(Routes.Food) },
@@ -243,7 +249,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
                 )
             }
             composable(Routes.Migraine) {
-                MigraineScreen(repository = container.migraineRepository)
+                MigraineScreen(repository = container.migraineRepository, preferences = container.preferencesRepository, weatherRepository = container.weatherRepository, onOpenMeds = { navController.navigate(Routes.Medications) }, onAnalyst = { openCoach(AiPersona.ANALYST) })
             }
             composable(Routes.Track) {
                 TrackScreen(
@@ -269,20 +275,21 @@ fun MigraineGuardNavHost(container: AppContainer) {
                     aiClient = container.aiClient,
                     onOpenCoach = { openCoach(AiPersona.COACH) },
                     onOpenAnalyst = { openCoach(AiPersona.ANALYST) },
-                    hasUserGeminiKey = prefs.geminiApiKey.isNotBlank(),
-                    onConnectGemini = { forceConnectGemini = true },
+                    hasCloudKey = prefs.hasConfiguredCloud(),
+                    onConnectGemini = { settingsInitialGroup = "AI"; navController.navigate(Routes.Settings) },
                 )
             }
             composable(Routes.Coach) {
                 CoachScreen(
                     coachRepository = container.aiCoachRepository,
                     initialPersona = coachPersona,
-                    hasUserGeminiKey = prefs.geminiApiKey.isNotBlank(),
-                    onConnectGemini = { forceConnectGemini = true },
+                    hasCloudKey = prefs.hasConfiguredCloud(),
+                    onConnectGemini = { settingsInitialGroup = "AI"; navController.navigate(Routes.Settings) },
                 )
             }
             composable(Routes.Settings) {
                 SettingsScreen(
+                    initialGroup = settingsInitialGroup,
                     preferencesRepository = container.preferencesRepository,
                     backupRepository = container.backupRepository,
                     healthDataRepository = container.healthDataRepository,
@@ -294,7 +301,7 @@ fun MigraineGuardNavHost(container: AppContainer) {
                     onEditProfile = { forceProfileEdit = true },
                     onOpenBody = { navController.navigate(Routes.BodyMetrics) },
                     onOpenMeds = { navController.navigate(Routes.Medications) },
-                    onConnectGemini = { forceConnectGemini = true },
+                    onConnectGemini = { settingsInitialGroup = "AI"; navController.navigate(Routes.Settings) },
                 )
             }
             composable(Routes.BodyMetrics) {

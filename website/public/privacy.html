@@ -17,7 +17,7 @@
 <article class="document"><span class="eyebrow">MIGRAINEGUARD · YOUR INFORMATION</span>
 <h1>Privacy policy</h1>
 
-<p class="date">Last updated: October 19, 2026 · Applies to Android v1.7.0 and this website</p>
+<p class="date">Last updated: October 21, 2026 · Applies to Android v1.9.0 and this website</p>
 
 <p class="intro">MigraineGuard helps you track your wellbeing. This policy explains what stays on your phone, what optional features send to other services, and how you control that data.</p>
 
@@ -44,11 +44,11 @@
 
 <tr><td>Migraine episodes, symptoms, triggers, medications, meals, water, workouts, weight entries and AI conversations</td><td>Provide the journal, tracking, local insights and requested coaching features.</td></tr>
 
-<tr><td>Health Connect steps, heart rate, sleep, exercise, distance and calorie records, including permitted history</td><td>Show permissioned phone health readings and context. Workout saving can write an exercise record when the relevant permission is granted.</td></tr>
+<tr><td>Health Connect steps, heart rate, sleep, exercise, distance and calorie records, including permitted history</td><td>Show permissioned phone health readings and context. Manual workouts stay in the account journal; exercise-write permission is no longer requested.</td></tr>
 
-<tr><td>Gemini, Groq and OpenRouter API keys</td><td>Authenticate requests to your selected cloud AI providers; optionally restore your keys from your own Drive backup.</td></tr>
+<tr><td>User-selected AI provider keys and model settings</td><td>Authenticate requests to your selected cloud AI providers; optionally restore your keys from your own Drive backup.</td></tr>
 
-<tr><td>Chosen meal photos and approximate location</td><td>Optional food-photo analysis and local weather. Location sent for weather is rounded to two decimal places.</td></tr>
+<tr><td>Chosen meal/equipment photos and approximate location</td><td>Optional food-photo estimates, equipment-name suggestions and local weather. Location sent for weather is rounded to two decimal places.</td></tr>
 </tbody>
 </table>
 </div>
@@ -67,23 +67,24 @@
 
 <p>When you authorize backup, MigraineGuard requests <code>drive.appdata</code> and account-email access. It stores one current account backup in Google's hidden application-data folder. This permission is for this application's app-data storage; it does not request general access to your ordinary Drive documents.</p>
 
-<p>The snapshot includes your profile and birthday, measurements, goals, preferences, setup status, all three configured AI API keys, and the seven journal categories: migraine, nutrition, water, workouts, weights, medications and AI sessions. Photo files are not included; local photo references may not work on another phone. This can include sensitive information you entered into journal or conversation text.</p>
+<p>The snapshot includes your profile and birthday, measurements, goals, preferences, setup status, all configured AI provider keys/model settings, and the seven journal categories: migraine, nutrition, water, workouts, weights, medications and AI sessions. Photo files are not included; local photo references may not work on another phone. This can include sensitive information you entered into journal or conversation text.</p>
 
 <p>Backup uses HTTPS and Google's account/storage protections. To allow restoration on another phone, API keys are stored as portable values inside the backup JSON. <strong>The cloud backup is not separately password-encrypted or end-to-end encrypted by MigraineGuard.</strong> Anyone able to access the backup through your account or a compromised app authorization could obtain its contents and keys. Restored keys are encrypted again in that phone's local settings.</p>
 
 <p>Authorized backup observes saved changes and attempts to save before sign-out. Network failure, Android process termination, quotas or account restrictions can prevent completion; use the completed Back up now status to check. It is one snapshot, not a guaranteed archival or multi-device synchronization service. Standard and Preview builds using the same Google OAuth project should not be assumed to have independent cloud backups.</p>
 
 <h2>Optional AI providers</h2>
+<p>See the <a href="https://github.com/jdp323/migraineguard/blob/main/docs/AI_AND_PERMISSIONS.md">AI prompts and permissions guide</a> for the exact prompt templates, context fields, provider protocols and consent boundaries.</p>
 
-<p>With a configured key, your submitted chat message or food description is sent directly from the phone to the configured provider. Requests can fall back in this order: Google Gemini, Groq, OpenRouter, then the on-device assistant, depending on configured keys and availability. OpenRouter may route a request to a model provider. Each external provider handles requests under its own terms and retention rules.</p>
+<p>With a configured key, your submitted chat message or food description is sent directly from the phone to the configured provider. Selected-provider mode tries the chosen service, then the on-device fallback. Legacy Auto uses Google Gemini, Groq, OpenRouter and then the on-device assistant, using the separate key configured for each. Supported choices include Gemini, OpenAI, Claude, Groq, OpenRouter, DeepSeek, xAI, Mistral, Perplexity, Together and Fireworks. OpenRouter may route a request to a model provider. Each external provider handles requests under its own terms and retention rules.</p>
 
-<p>The chat's health-summary sharing checkbox is off by default. Turning it on includes the app's health context for that request. Text you type can itself disclose health information, even with that checkbox off. Choosing Send photo to Gemini sends the selected food image to Google after image preparation that removes the original file metadata. Merely attaching a photo does not authorize its upload. Automatically generated Insights use the on-device assistant.</p>
+<p>The chat's health-summary sharing checkbox is off by default. Turning it on includes the app's health context for that request. Text you type can itself disclose health information, even with that checkbox off. An explicit food/equipment photo request sends the prepared image to the selected image-capable provider (Gemini, OpenAI or Claude). Preparation removes original metadata. Other selections do not silently send the image to another service. A machine-name suggestion does not determine safe technique or load. Merely attaching a photo does not authorize its upload. Automatically generated Insights use the on-device assistant.</p>
 
 <p>MigraineGuard does not run a developer-hosted AI relay or use your records to train its own model. External providers may retain or use requests according to their current policies and your account/product settings; the app cannot promise deletion or no training by every provider. Review <a href="https://ai.google.dev/gemini-api/terms">Gemini's terms</a>, <a href="https://groq.com/privacy-policy/">Groq's privacy policy</a>, and <a href="https://openrouter.ai/privacy">OpenRouter's privacy policy</a> before sharing sensitive content.</p>
 
 <h2>Other network activity</h2>
 
-<p>If you allow location for weather, rounded coordinates are sent to Open-Meteo to request a forecast. Network services also receive connection metadata such as your IP address. Notifications and reminders use Android capabilities. This static Firebase-hosted website has no analytics scripts, advertising pixels, account forms or client-side health-data collection; Google may process hosting request metadata under its own service policies.</p>
+<p>If you allow location for weather, rounded coordinates are sent to Open-Meteo to request a forecast. Network services also receive connection metadata such as your IP address. Notifications and reminders use Android capabilities with account-specific toggles, intervals and active hours. A persisted account marker permits generic check-ins after process restart; sign-out clears it and cancels work. Optional GitHub release checks read public metadata without your health records, Google tokens or AI keys. GitHub receives ordinary connection metadata. This static Firebase-hosted website has no analytics scripts, advertising pixels, account forms or client-side health-data collection; Google may process hosting request metadata under its own service policies.</p>
 
 <h2>Your controls, retention and deletion</h2>
 

@@ -21,6 +21,8 @@ import kotlin.coroutines.resumeWithException
 
 private val httpClient: OkHttpClient by lazy {
     OkHttpClient.Builder()
+        .followRedirects(false)
+        .followSslRedirects(false)
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(45, TimeUnit.SECONDS)
         .callTimeout(50, TimeUnit.SECONDS)
@@ -158,7 +160,14 @@ internal suspend fun executeRequest(request: Request): HttpResponse = suspendCan
 
         override fun onResponse(call: Call, response: Response) {
             try {
-                val result = response.use { HttpResponse(it.code, it.body?.string().orEmpty()) }
+                val result = response.use {
+                    val stream = it.body?.byteStream()
+                    val bytes = stream?.use { input ->
+                        val out = java.io.ByteArrayOutputStream(); val buffer = ByteArray(8192)
+                        while (true) { val count = input.read(buffer); if (count < 0) break; require(out.size() + count <= 2_000_000); out.write(buffer, 0, count) }; out.toByteArray()
+                    } ?: ByteArray(0)
+                    HttpResponse(it.code, String(bytes, Charsets.UTF_8))
+                }
                 if (continuation.isActive) continuation.resume(result)
             } catch (e: Exception) {
                 if (continuation.isActive) continuation.resumeWithException(e)

@@ -34,6 +34,9 @@ class MigraineGuardApp : Application() {
             else -> AccountStorage.google(requireNotNull(state.user).id)
         }
         if (current.value?.account == account) return
+        getSharedPreferences("reminder_owner", MODE_PRIVATE).edit().apply {
+            if (state.isSignedIn) putString("active_account", account) else remove("active_account")
+        }.commit()
         ReminderWorker.schedule(this, false)
         getSystemService(android.app.NotificationManager::class.java)?.cancelAll()
         val previous = current.value

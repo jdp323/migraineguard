@@ -50,6 +50,8 @@ class NavigationFlowTest {
             container.preferencesRepository.setDynamicColor(false)
             container.preferencesRepository.setThemeMode(ThemeMode.LIGHT)
             container.preferencesRepository.clearAllAiKeys()
+            container.preferencesRepository.setNotificationsEnabled(false)
+            container.preferencesRepository.setUpdateChecks(false)
             container.preferencesRepository.saveBodyProfile(BodyProfile(
                 displayName = "Emulator fixture", dateOfBirthIso = "1990-01-01",
                 heightCm = 180f, weightKg = 70f, useMetric = true,
@@ -86,7 +88,7 @@ class NavigationFlowTest {
             compose.onNodeWithText("Enter MigraineGuard").performScrollTo().assertIsDisplayed().performClick()
             val pages = listOf("Migraine" to "Make space to check in.", "Fitness" to "Move, rest, recover.",
                 "Food" to "Eat with awareness.", "Coach" to "A little guidance.",
-                "Insights" to "See the bigger picture.", "Home" to "Find your rhythm.")
+                "Insights" to "See the bigger picture.", "Home" to "Your day, at a glance.")
             for ((theme, suffix) in listOf(ThemeMode.LIGHT to "light", ThemeMode.DARK to "dark")) {
                 runBlocking { container.preferencesRepository.setThemeMode(theme) }
                 for ((label, heading) in pages) {
@@ -98,14 +100,44 @@ class NavigationFlowTest {
                     capture(label.lowercase() + "-" + suffix)
                 }
             }
+            compose.onNode(hasText("Fitness") and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performClick()
+            compose.onNodeWithText("Training", useUnmergedTree = true).performScrollTo().performClick()
+            awaitText("Your training goal")
+            capture("training-overview")
+            compose.onNodeWithTag("exercise-name").performScrollTo().performTextInput("Leg press fixture")
+            compose.onNodeWithTag("set-weight-0").performScrollTo().performTextInput("40")
+            compose.onNodeWithTag("set-reps-0").performScrollTo().performTextReplacement("8")
+            compose.onNodeWithTag("set-done-0").performScrollTo().performClick()
+            capture("training-set-entry")
+            compose.onNodeWithText("Save exercise").performScrollTo().performClick()
+            awaitText("Exercise saved ✓")
+            val logged = runBlocking { container.workoutRepository.inRange(0,Long.MAX_VALUE) }.first { it.exerciseName == "Leg press fixture" }
+            assertEquals(40f,logged.sets.single().weightKg,0.01f)
+            assertEquals(8,logged.sets.single().reps)
+            capture("training-history")
+            compose.onNode(hasText("Home") and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performClick()
             compose.onAllNodesWithText("Add water").onFirst().performScrollTo().performClick()
             awaitText("One sip at a time.")
             capture("water-dark")
             compose.onNodeWithContentDescription("Back").performClick()
-            awaitText("Find your rhythm.")
+            awaitText("Your day, at a glance.")
             compose.onNodeWithContentDescription("Settings").performClick()
             awaitText("Make it yours.")
             capture("settings-dark")
+            compose.onNodeWithText("AI", useUnmergedTree = true).performScrollTo().performClick()
+            awaitText("AI providers")
+            capture("settings-ai")
+            compose.onNodeWithTag("ai-provider-picker").performScrollTo().performClick()
+            compose.onNodeWithText("Anthropic Claude").performClick()
+            compose.onNodeWithTag("ai-provider-model").assertTextContains("claude-haiku-4-5-20251001")
+            compose.onNodeWithText("Reminders", useUnmergedTree = true).performScrollTo().performClick()
+            awaitText("Notification controls")
+            capture("settings-reminders")
+            compose.onNodeWithText("App", useUnmergedTree = true).performScrollTo().performClick()
+            compose.onNodeWithText("Check for updates").performScrollTo().assertIsDisplayed()
+            capture("settings-updates")
+            runBlocking { container.workoutRepository.delete(logged.id) }
+
 
             } catch (failure: Throwable) {
                 runCatching { capture("failure") }

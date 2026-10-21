@@ -128,7 +128,7 @@ fun NutritionScreen(
             item { FeatureHeader("Eat with awareness.", "A simple place for meals, photos and nutrition estimates.", Icons.Filled.LocalDining, eyebrow = "Your nutrition") }
             item {
                 Text(
-                    "Describe your meal for an optional AI estimate. Photos stay local unless you choose to send one to Gemini. " +
+                    "Describe your meal for an optional AI estimate. Photos stay local unless you choose to send one to the selected image-capable AI provider. " +
                         "Photo estimates can miss ingredients and portion sizes. Without a usable AI response, nutrition values remain unavailable.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -174,7 +174,7 @@ fun NutritionScreen(
             if (imageUri != null) item {
                 Row {
                     Checkbox(checked = sendPhoto, onCheckedChange = { sendPhoto = it }, enabled = !loading)
-                    Text("Send this photo and description to Google Gemini using my key. Your configured provider may charge for requests.")
+                    Text("Send this photo and description to my selected AI provider using my key. Your configured provider may charge for requests.")
                 }
             }
             item {
@@ -204,7 +204,7 @@ fun NutritionScreen(
                     if (loading) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                     } else {
-                        Text(if (sendPhoto && imageUri != null) "Send photo to Gemini" else "Analyze description")
+                        Text(if (sendPhoto && imageUri != null) "Analyze photo" else "Analyze description")
                     }
                 }
             }

@@ -59,7 +59,7 @@ import java.time.format.DateTimeFormatter
 fun CoachScreen(
     coachRepository: AiCoachRepository,
     initialPersona: AiPersona = AiPersona.COACH,
-    hasUserGeminiKey: Boolean = false,
+    hasCloudKey: Boolean = false,
     onConnectGemini: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -136,15 +136,15 @@ fun CoachScreen(
                 }
             }
 
-            if (!hasUserGeminiKey) {
+            if (!hasCloudKey) {
                 SectionCard(title = "Cloud AI", icon = Icons.Filled.AutoAwesome) {
                     Text(
-                        "No Gemini key yet — Coach/Analyst use OfflineHealthBrain (your on-device logs). " +
-                            "Cloud AI needs YOUR free Google AI Studio key, not the developer’s.",
+                        "Cloud AI is off or no selected provider key is configured. The on-device fallback can use your local logs. " +
+                            "Choose your provider and key in Settings → AI.",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     OutlinedButton(onClick = onConnectGemini, modifier = Modifier.fillMaxWidth()) {
-                        Text("Connect Gemini")
+                        Text("AI provider settings")
                     }
                 }
             }
@@ -177,7 +177,7 @@ fun CoachScreen(
                     AssistChip(
                         onClick = {
                             runPrompt(
-                                "Give me a brief motivational check-in based on my recent habits and exercise of the day.",
+                                "Give me a brief motivational check-in based on my recent habits, exercise logs and training goal.",
                                 AiPersona.COACH,
                             )
                         },

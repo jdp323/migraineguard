@@ -2,4 +2,5 @@
 <paths>
     <cache-path name="food_cache" path="." />
     <files-path name="food_photos" path="food_photos/" />
+    <files-path name="equipment_photos" path="equipment_photos/" />
 </paths>

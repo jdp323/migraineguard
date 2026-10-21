@@ -23,7 +23,7 @@ class AiNutritionAnalyzer(
     private val aiClient: FallbackAiClient,
     private val dao: NutritionDao,
     private val context: Context,
-    private val imageProvider: GeminiFreeProvider,
+    private val imageProvider: com.migraineguard.app.core.ai.ConfiguredAiProvider,
 ) : NutritionAnalyzer {
     override suspend fun analyzeFoodLabel(description: String, imageUri: String?, sendPhotoToGemini: Boolean): NutritionScanResult {
         val base = if (sendPhotoToGemini && imageUri != null) {

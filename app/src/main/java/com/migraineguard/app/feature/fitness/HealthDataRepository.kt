@@ -151,7 +151,6 @@ class HealthConnectHealthDataRepository(
                 "android.permission.health.READ_EXERCISE",
                 "android.permission.health.READ_DISTANCE",
                 "android.permission.health.READ_TOTAL_CALORIES_BURNED",
-                "android.permission.health.WRITE_EXERCISE",
             )
         } else {
             base

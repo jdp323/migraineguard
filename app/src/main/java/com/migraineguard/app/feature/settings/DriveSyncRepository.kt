@@ -12,6 +12,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 data class DriveBackupState(
+    val backupBytes: Long? = null,
     val connected: Boolean = false,
     val busy: Boolean = false,
     val lastSavedMillis: Long? = null,
@@ -50,7 +51,7 @@ class DriveSyncRepository(
             token = accessToken
             refreshAccessToken = refresh
             prefs.setDriveSyncEnabled(true)
-            mutableState.value = DriveBackupState(true, false, null,
+            mutableState.value = DriveBackupState(backupBytes = file?.bytes?.size?.toLong(), connected = true, busy = false, lastSavedMillis = null, message =
                 if (file == null) "Drive connected. Your details will back up as you save them."
                 else "Your account backup is restored. Checking this phone's health permissions next.")
         } catch (e: CancellationException) { throw e
@@ -101,11 +102,13 @@ class DriveSyncRepository(
             val payload = CloudAccountBackup(owner = account, savedAtMillis = System.currentTimeMillis(),
                 settings = CloudBackupFormat.portable(settings), journal = backup.snapshot())
             val hash = CloudBackupFormat.fingerprint(payload)
-            if (hash != fingerprint) {
-                remote.upload(currentToken, CloudBackupFormat.encode(payload), previous)
+            val encoded = CloudBackupFormat.encode(payload)
+            val changed = hash != fingerprint
+            if (changed) {
+                remote.upload(currentToken, encoded, previous)
                 fingerprint = hash
             }
-            mutableState.value = DriveBackupState(true, false, System.currentTimeMillis(),
+            mutableState.value = DriveBackupState(backupBytes = (if (changed) encoded.size else (previous?.bytes?.size ?: encoded.size)).toLong(), connected = true, busy = false, lastSavedMillis = System.currentTimeMillis(), message =
                 "Your profile, settings, API keys and journal are backed up to your private Drive app data.")
         } catch (e: CancellationException) { throw e
         } catch (e: Exception) {

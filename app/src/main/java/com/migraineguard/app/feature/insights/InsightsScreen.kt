@@ -69,7 +69,7 @@ fun InsightsScreen(
     aiClient: FallbackAiClient,
     onOpenCoach: () -> Unit = {},
     onOpenAnalyst: () -> Unit = {},
-    hasUserGeminiKey: Boolean = false,
+    hasCloudKey: Boolean = false,
     onConnectGemini: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -119,14 +119,14 @@ fun InsightsScreen(
 
             SectionCard(title = "AI hub", icon = Icons.Filled.AutoAwesome) {
                 Text("Open Coach for habits or Health Analyst for an educational migraine review.")
-                if (!hasUserGeminiKey) {
+                if (!hasCloudKey) {
                     Text(
-                        "Cloud AI needs YOUR Gemini key. Without it, OfflineHealthBrain only.",
+                        "Cloud AI is optional. Configure your chosen provider in Settings → AI.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                     )
                     OutlinedButton(onClick = onConnectGemini, modifier = Modifier.fillMaxWidth()) {
-                        Text("Connect Gemini")
+                        Text("AI provider settings")
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

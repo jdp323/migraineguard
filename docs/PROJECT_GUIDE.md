@@ -1,3 +1,5 @@
+> v1.9.0: [focused Home, structured training, reminder/update controls, AI providers and Drive size](UPDATE_1_9_0.md). [Exact prompts and permissions](AI_AND_PERMISSIONS.md).
+
 > Public v1.8.0 entry points: [user guide](USER_GUIDE.md), [troubleshooting](TROUBLESHOOTING.md), [current architecture summary](HOW_IT_WORKS.md) and [publication audit](PUBLICATION_AUDIT.md). The sections below retain their stated historical source baseline; current release evidence is in UPDATE_1_8_0.md.
 
 > Current v1.8.0: [interface, navigation, verified setup and changed-file/function reference](UPDATE_1_8_0.md).

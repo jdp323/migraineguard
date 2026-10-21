@@ -1,5 +1,6 @@
 package com.migraineguard.app.core.data.prefs
 
+import kotlinx.serialization.encodeToString
 import com.migraineguard.app.BuildConfig
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -38,6 +39,17 @@ private object AccountPreferenceStores {
 
 @kotlinx.serialization.Serializable
 data class UserPreferences(
+    val aiConnections: Map<String, com.migraineguard.app.core.ai.AiConnection> = emptyMap(),
+    val preferredAiProvider: String = "auto",
+    val weeklyWorkoutGoal: Int = 3,
+    val foodReminders: Boolean = false,
+    val waterReminderMinutes: Int = 120,
+    val foodReminderMinutes: Int = 240,
+    val medicationReminderMinutes: Int = 360,
+    val migraineReminderMinutes: Int = 360,
+    val reminderStartHour: Int = 8,
+    val reminderEndHour: Int = 22,
+    val updateChecksEnabled: Boolean = true,
     val modifiedAtMillis: Long = 0L,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = false,
@@ -70,6 +82,17 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
     private val dataStore = AccountPreferenceStores.get(context, account)
     private val apiKeyVault = ApiKeyVault()
 
+    private val connectionsKey = stringPreferencesKey("ai_connections_v1")
+    private val preferredAiKey = stringPreferencesKey("preferred_ai_provider")
+    private val weeklyWorkoutGoalKey = intPreferencesKey("weekly_workout_goal")
+    private val waterReminderMinutesKey = intPreferencesKey("water_reminder_minutes")
+    private val foodReminderMinutesKey = intPreferencesKey("food_reminder_minutes")
+    private val medicationReminderMinutesKey = intPreferencesKey("medication_reminder_minutes")
+    private val migraineReminderMinutesKey = intPreferencesKey("migraine_reminder_minutes")
+    private val reminderStartHourKey = intPreferencesKey("reminder_start_hour")
+    private val reminderEndHourKey = intPreferencesKey("reminder_end_hour")
+    private val foodRemindersKey = booleanPreferencesKey("food_reminders")
+    private val updateChecksKey = booleanPreferencesKey("update_checks")
     private val modifiedKey = androidx.datastore.preferences.core.longPreferencesKey("modified_at_millis")
     private val themeKey = stringPreferencesKey("theme_mode")
     private val dynamicKey = booleanPreferencesKey("dynamic_color")
@@ -114,7 +137,7 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
             }
             return@transform
         }
-        val apiKeys = listOf(geminiKey, groqKey, openRouterKey)
+        val apiKeys = listOf(geminiKey, groqKey, openRouterKey, connectionsKey)
         if (apiKeys.any { !p[it].isNullOrBlank() && !p[it]!!.startsWith(ApiKeyVault.PREFIX) }) {
             dataStore.edit { values ->
                 apiKeys.forEach { key ->
@@ -127,6 +150,17 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
             return@transform
         }
         emit(UserPreferences(
+            aiConnections = decodeConnections(apiKeyVault.decrypt(p[connectionsKey].orEmpty())),
+            preferredAiProvider = p[preferredAiKey] ?: "auto",
+            foodReminders = p[foodRemindersKey] ?: false,
+            updateChecksEnabled = p[updateChecksKey] ?: true,
+            weeklyWorkoutGoal = p[weeklyWorkoutGoalKey] ?: 3,
+            waterReminderMinutes = p[waterReminderMinutesKey] ?: 120,
+            foodReminderMinutes = p[foodReminderMinutesKey] ?: 240,
+            medicationReminderMinutes = p[medicationReminderMinutesKey] ?: 360,
+            migraineReminderMinutes = p[migraineReminderMinutesKey] ?: 360,
+            reminderStartHour = p[reminderStartHourKey] ?: 8,
+            reminderEndHour = p[reminderEndHourKey] ?: 22,
             modifiedAtMillis = p[modifiedKey] ?: 0L,
             themeMode = runCatching { ThemeMode.valueOf(p[themeKey] ?: ThemeMode.SYSTEM.name) }
                 .getOrDefault(ThemeMode.SYSTEM),
@@ -304,6 +338,8 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
             it[geminiKey] = ""
             it[groqKey] = ""
             it[openRouterKey] = ""
+            it[connectionsKey] = ""
+            it[preferredAiKey] = "auto"
         }
     }
 
@@ -346,6 +382,16 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
             p[geminiKey] = apiKeyVault.encrypt(value.geminiApiKey)
             p[groqKey] = apiKeyVault.encrypt(value.groqApiKey)
             p[openRouterKey] = apiKeyVault.encrypt(value.openRouterApiKey)
+            p[connectionsKey] = apiKeyVault.encrypt(kotlinx.serialization.json.Json.encodeToString(value.aiConnections))
+            p[preferredAiKey] = value.preferredAiProvider
+            p[foodRemindersKey] = value.foodReminders; p[updateChecksKey] = value.updateChecksEnabled
+            p[weeklyWorkoutGoalKey] = value.weeklyWorkoutGoal
+            p[waterReminderMinutesKey] = value.waterReminderMinutes
+            p[foodReminderMinutesKey] = value.foodReminderMinutes
+            p[medicationReminderMinutesKey] = value.medicationReminderMinutes
+            p[migraineReminderMinutesKey] = value.migraineReminderMinutes
+            p[reminderStartHourKey] = value.reminderStartHour
+            p[reminderEndHourKey] = value.reminderEndHour
             p[modifiedKey] = value.modifiedAtMillis
             applied = true
         }
@@ -355,4 +401,29 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
     suspend fun getGeminiApiKey(): String = preferences.first().geminiApiKey
     suspend fun getGroqApiKey(): String = preferences.first().groqApiKey
     suspend fun getOpenRouterApiKey(): String = preferences.first().openRouterApiKey
+    private fun decodeConnections(raw: String): Map<String, com.migraineguard.app.core.ai.AiConnection> =
+        if (raw.isBlank()) emptyMap() else kotlinx.serialization.json.Json { ignoreUnknownKeys = true }.decodeFromString(raw)
+
+    suspend fun saveAiConnection(id: String, key: String, model: String) {
+        require(com.migraineguard.app.core.ai.AiCatalog.service(id) != null && key.length <= 4096 && model.length <= 160)
+        editUser { p ->
+            val values = decodeConnections(apiKeyVault.decrypt(p[connectionsKey].orEmpty())).toMutableMap()
+            values[id] = com.migraineguard.app.core.ai.AiConnection(key.trim(), model.trim())
+            p[connectionsKey] = apiKeyVault.encrypt(kotlinx.serialization.json.Json.encodeToString(values))
+            when (id) { "gemini" -> p[geminiKey] = apiKeyVault.encrypt(key.trim()); "groq" -> p[groqKey] = apiKeyVault.encrypt(key.trim()); "openrouter" -> p[openRouterKey] = apiKeyVault.encrypt(key.trim()) }
+            p[preferredAiKey] = id
+        }
+    }
+    suspend fun setPreferredAiProvider(id: String) { require(id in listOf("auto", "offline") || com.migraineguard.app.core.ai.AiCatalog.service(id) != null); editUser { it[preferredAiKey] = id } }
+    suspend fun setWeeklyWorkoutGoal(days: Int) { editUser { it[weeklyWorkoutGoalKey] = days.coerceIn(1, 7) } }
+    suspend fun setUpdateChecks(enabled: Boolean) { editUser { it[updateChecksKey] = enabled } }
+    suspend fun setReminderOptions(food: Boolean, waterMinutes: Int, foodMinutes: Int, medMinutes: Int, migraineMinutes: Int, startHour: Int, endHour: Int) {
+        require(listOf(waterMinutes, foodMinutes, medMinutes, migraineMinutes).all { it in 15..1440 })
+        require(startHour in 0..23 && endHour in 0..23 && startHour != endHour)
+        editUser { p ->
+            p[foodRemindersKey] = food; p[waterReminderMinutesKey] = waterMinutes; p[foodReminderMinutesKey] = foodMinutes
+            p[medicationReminderMinutesKey] = medMinutes; p[migraineReminderMinutesKey] = migraineMinutes
+            p[reminderStartHourKey] = startHour; p[reminderEndHourKey] = endHour
+        }
+    }
 }

@@ -1,3 +1,5 @@
+> v1.9.0 source update: [focused Home, structured training, reminders, provider dropdown, Drive size and update checks](docs/UPDATE_1_9_0.md). [Exact AI prompts and permissions](docs/AI_AND_PERMISSIONS.md). Hosted Android verification/publication is pending for this source; the current released APK remains linked below until publication.
+
 # MigraineGuard
 
 A native Android companion for migraine journaling, movement, sleep, hydration, meals, body measurements, medication check-ins and optional educational AI coaching.

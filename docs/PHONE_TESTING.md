@@ -1,3 +1,5 @@
+> v1.9.0: [focused Home, structured training, reminder/update controls, AI providers and Drive size](UPDATE_1_9_0.md). [Exact prompts and permissions](AI_AND_PERMISSIONS.md).
+
 > Current v1.8.0: [interface, navigation, verified setup and changed-file/function reference](UPDATE_1_8_0.md).
 
 ## v1.8.0 interface acceptance
@@ -72,3 +74,14 @@ See [FEATURE_STATUS.md](FEATURE_STATUS.md) for implemented workflows and verific
 Today’s cumulative queries now end at the next local midnight. Health Connect rescales interval counts when a query clips a record; a Samsung daily bucket can otherwise show only an early-morning fraction. The reported 12–14 versus 180 is consistent with that effect, but the actual Samsung record has not been inspected. After installing, refresh and compare both the combined and Samsung-only totals. No raw source totals are added together. DST boundaries are covered by unit tests.
 
 Reference: https://android.googlesource.com/platform/packages/modules/HealthFitness/+/8d79b9403cee11fdd9d2bea173adff0edb6bec13/tests/cts/src/android/healthconnect/cts/StepsRecordTest.java (rescaled-count aggregation tests).
+
+## v1.9.0 acceptance checks
+
+- Update Standard without uninstalling; confirm 1.9.0 (16), old journal rows and old workouts survive. Preview is separate.
+- Home should show essentials/shortcuts, with migraine/context/history/medication tools in Migraine.
+- Fitness → Training: enter a custom name, 40 kg × 8 reps, check one set, save and verify its history. Add/edit set rows and test kg/lb draft conversion, previous-name match, reuse and the distinct-day weekly goal.
+- Attach an equipment photo locally, deny upload and verify no request occurs. Only with your chosen Gemini/OpenAI/Claude key and explicit consent, test name suggestion; check that UNKNOWN/failure leaves manual entry usable.
+- Settings → AI: select provider/key/model, save, test a real response and change/remove it. A wrong key must fail the selected-provider test even if offline coaching works. Ambiguous sk- keys must not be tried at multiple services.
+- With two accounts, confirm provider/model, training/reminder choices and journals stay separate; complete Drive save/restore and compare the displayed snapshot bytes.
+- Enable Android notifications and each desired type, choose a 15-minute test interval and active hours, background the app, then test taps to Water/Food/Migraine/Medication. Force-stop and OEM battery policy can suppress work; do not describe approximate WorkManager jobs as exact alarms. Sign out and confirm prior-account reminders stop.
+- App → Check for updates: verify current/newer/offline/rate-limit messages, notes and the GitHub download page. A new release notification requires a future version after installing this checking feature; no silent installation should occur.

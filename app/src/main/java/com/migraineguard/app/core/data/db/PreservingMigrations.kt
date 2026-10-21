@@ -5,7 +5,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 /** Historical schemas 1–3 were reviewed from the repository; no tables are dropped. */
 object PreservingMigrations {
-    val ALL: Array<Migration> = arrayOf(1, 2, 3).map { old ->
+    private val oldMigrations: Array<Migration> = arrayOf(1, 2, 3).map { old ->
         object : Migration(old, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS workouts (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, timestampMillis INTEGER NOT NULL, typeName TEXT NOT NULL, durationMinutes INTEGER NOT NULL, calories INTEGER, notes TEXT NOT NULL, fromExerciseOfDay INTEGER NOT NULL)")
@@ -21,4 +21,12 @@ object PreservingMigrations {
             }
         }
     }.toTypedArray()
+    val FROM_4 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE workouts ADD COLUMN exerciseName TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE workouts ADD COLUMN setsJson TEXT NOT NULL DEFAULT '[]'")
+            db.execSQL("ALTER TABLE workouts ADD COLUMN equipmentPhotoUri TEXT")
+        }
+    }
+    val ALL: Array<Migration> = oldMigrations + FROM_4
 }
