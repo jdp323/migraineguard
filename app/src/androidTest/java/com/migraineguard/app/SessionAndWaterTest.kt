@@ -94,16 +94,15 @@ class SessionAndWaterTest {
             activate(fixture())
             val account = app.container.account
             app.container.preferencesRepository.setNotificationsEnabled(true)
-            val notification = WaterQuickAdd.addActions(app,NotificationCompat.Builder(app,ReminderWorker.CHANNEL_ID).setSmallIcon(android.R.drawable.ic_dialog_info),account).build()
+            val notification = WaterQuickAdd.addActions(app,NotificationCompat.Builder(app,ReminderWorker.CHANNEL_ID).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("Time for water").setContentText("1 glass = 250 ml · choose what you drank").setStyle(NotificationCompat.BigTextStyle().bigText("1 glass = 250 ml · choose what you drank")),account).build()
             assertEquals(listOf("1 glass","2 glasses","3 glasses"),notification.actions.map { it.title.toString() })
             val automation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation
             fun shell(command: String) { android.os.ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand(command)).use { it.readBytes() } }
             shell("pm grant "+app.packageName+" android.permission.POST_NOTIFICATIONS")
-            androidx.core.app.NotificationManagerCompat.from(app).notify(WaterQuickAdd.NOTIFICATION_ID,
-                android.app.Notification.Builder(app,ReminderWorker.CHANNEL_ID).setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .setContentTitle("Time for water").setContentText("1 glass = 250 ml · choose what you drank")
-                    .setActions(*notification.actions).build())
+            androidx.core.app.NotificationManagerCompat.from(app).notify(WaterQuickAdd.NOTIFICATION_ID,notification)
+            withTimeout(10_000) { while(app.getSystemService(android.app.NotificationManager::class.java).activeNotifications.none { it.id == WaterQuickAdd.NOTIFICATION_ID }) delay(100) }
             shell("cmd statusbar expand-notifications")
+            withTimeout(10_000) { while(automation.rootInActiveWindow?.findAccessibilityNodeInfosByText("3 glasses").orEmpty().isEmpty()) delay(100) }
             automation.waitForIdle(300,5000)
             val directory = java.io.File(app.getExternalFilesDir(null),"verification").apply { mkdirs() }
             automation.takeScreenshot()?.let { bitmap -> java.io.File(directory,"water-notification.png").outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it) }; bitmap.recycle() }
