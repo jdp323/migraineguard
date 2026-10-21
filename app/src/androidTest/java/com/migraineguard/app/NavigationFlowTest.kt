@@ -118,7 +118,7 @@ class NavigationFlowTest {
             capture("training-history")
             compose.onNodeWithText("Log exercise",useUnmergedTree=true).performScrollTo().performClick()
             compose.onNodeWithTag("activity-TREADMILL").performScrollTo().performClick()
-            compose.onNodeWithText("Choose your session").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("activity-OTHER").performScrollTo().assertIsDisplayed()
             capture("training-cardio-picker")
             compose.onNodeWithTag("exercise-name").performScrollTo().performTextReplacement("Treadmill fixture")
             compose.onNodeWithTag("set-weight-0").assertDoesNotExist()
