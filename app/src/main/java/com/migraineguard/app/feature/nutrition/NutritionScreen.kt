@@ -34,12 +34,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -66,8 +68,8 @@ fun NutritionScreen(
     nutritionAnalyzer: NutritionAnalyzer,
     modifier: Modifier = Modifier,
 ) {
-    var foodText by remember { mutableStateOf("") }
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var foodText by rememberSaveable { mutableStateOf("") }
+    var imageUri by rememberSaveable { mutableStateOf<Uri?>(null) }
     var sendPhoto by remember { mutableStateOf(false) }
     LaunchedEffect(imageUri) { sendPhoto = false }
     var result by remember { mutableStateOf<NutritionScanResult?>(null) }
@@ -77,7 +79,7 @@ fun NutritionScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    var cameraUri by remember { mutableStateOf<Uri?>(null) }
+    var cameraUri by rememberSaveable { mutableStateOf<Uri?>(null) }
 
     fun createCameraUri(): Uri {
         val folder = File(context.filesDir, "food_photos").apply { mkdirs() }
@@ -167,7 +169,7 @@ fun NutritionScreen(
                     onValueChange = { foodText = it },
                     label = { Text("Food description") },
                     enabled = !loading,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("food-description"),
                     shape = RoundedCornerShape(16.dp),
                 )
             }

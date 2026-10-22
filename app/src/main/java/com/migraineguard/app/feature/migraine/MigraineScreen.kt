@@ -49,6 +49,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -58,6 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -100,21 +103,32 @@ fun MigraineScreen(
     onOpenMeds: () -> Unit = {},
     onAnalyst: () -> Unit = {},
     modifier: Modifier = Modifier,
+    isActive: Boolean = true,
 ) {
-    var pane by remember { mutableStateOf(MigrainePane.Overview) }
-    var detailId by remember { mutableStateOf<Long?>(null) }
+    var pane by rememberSaveable { mutableStateOf(MigrainePane.Overview) }
+    var detailId by rememberSaveable { mutableStateOf<Long?>(null) }
     val episodes by repository.observeEpisodes().collectAsStateWithLifecycle(initialValue = emptyList())
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
 
-    val markers = remember { mutableStateListOf<PainMarker>() }
-    var intensity by remember { mutableFloatStateOf(5f) }
-    var notes by remember { mutableStateOf("") }
-    val selectedSymptoms = remember { mutableStateListOf<MigraineSymptom>() }
-    val selectedTriggers = remember { mutableStateListOf<MigraineTrigger>() }
-    var currentView by remember { mutableStateOf(HeadView.FRONT) }
-    var showLabels by remember { mutableStateOf(true) }
+    val markers = rememberSaveable(saver = androidx.compose.runtime.saveable.listSaver(
+        save = { list: androidx.compose.runtime.snapshots.SnapshotStateList<PainMarker> -> list.map { kotlinx.serialization.json.Json.encodeToString(PainMarker.serializer(),it) } },
+        restore = { list -> list.map { kotlinx.serialization.json.Json.decodeFromString<PainMarker>(it) }.toMutableStateList() })) { mutableStateListOf<PainMarker>() }
+    var intensity by rememberSaveable { mutableFloatStateOf(5f) }
+    var notes by rememberSaveable { mutableStateOf("") }
+    val selectedSymptoms = rememberSaveable(saver = androidx.compose.runtime.saveable.listSaver(
+        save = { list: androidx.compose.runtime.snapshots.SnapshotStateList<MigraineSymptom> -> list.map { it.name } },
+        restore = { list -> list.map { MigraineSymptom.valueOf(it) }.toMutableStateList() })) { mutableStateListOf<MigraineSymptom>() }
+    val selectedTriggers = rememberSaveable(saver = androidx.compose.runtime.saveable.listSaver(
+        save = { list: androidx.compose.runtime.snapshots.SnapshotStateList<MigraineTrigger> -> list.map { it.name } },
+        restore = { list -> list.map { MigraineTrigger.valueOf(it) }.toMutableStateList() })) { mutableStateListOf<MigraineTrigger>() }
+    var currentView by rememberSaveable { mutableStateOf(HeadView.FRONT) }
+    var showLabels by rememberSaveable { mutableStateOf(true) }
+
+    androidx.activity.compose.BackHandler(enabled = isActive && pane != MigrainePane.Overview) {
+        pane = if(pane == MigrainePane.Detail) MigrainePane.History else MigrainePane.Overview
+    }
 
     fun rotate(delta: Int) {
         val idx = ViewOrder.indexOf(currentView)
@@ -165,8 +179,7 @@ fun MigraineScreen(
         when (pane) {
             MigrainePane.Overview -> {
                 Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Make space to check in.", style = MaterialTheme.typography.headlineSmall)
-                    Text("Your symptoms, history and context in one place.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    FeatureHeader("Make space to check in.", "Your symptoms, history and context in one place.", Icons.Filled.Healing, eyebrow="Your journal")
                     SectionCard("Your journal") {
                         Text("Episodes recorded: "+episodes.size)
                         Button(onClick = { pane = MigrainePane.Log }, modifier = Modifier.fillMaxWidth()) { Text("Log migraine") }
@@ -376,7 +389,7 @@ fun MigraineScreen(
                         value = notes,
                         onValueChange = { notes = it },
                         label = { Text("Notes") },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().testTag("migraine-notes"),
                         minLines = 2,
                         shape = RoundedCornerShape(16.dp),
                     )
@@ -481,7 +494,7 @@ private fun HeadPainMap(
             )
             Canvas(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxSize().testTag(if(interactive) "pain-map" else "saved-pain-map")
                     .then(
                         if (interactive && onAddMarker != null) {
                             Modifier.pointerInput(intensityForTap, view) {

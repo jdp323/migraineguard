@@ -40,6 +40,7 @@
     <application
         android:name=".MigraineGuardApp"
         android:allowBackup="false"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="${appLabel}"
         android:roundIcon="@mipmap/ic_launcher_round"

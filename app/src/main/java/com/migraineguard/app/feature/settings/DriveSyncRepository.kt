@@ -54,7 +54,10 @@ class DriveSyncRepository(
             mutableState.value = DriveBackupState(backupBytes = file?.bytes?.size?.toLong(), connected = true, busy = false, lastSavedMillis = null, message =
                 if (file == null) "Drive connected. Your details will back up as you save them."
                 else "Your account backup is restored. Checking this phone's health permissions next.")
-        } catch (e: CancellationException) { throw e
+        } catch (e: CancellationException) {
+            token = null
+            mutableState.value = DriveBackupState(message="Drive check paused. Your local data is preserved; reconnect when ready.")
+            throw e
         } catch (e: Exception) {
             token = null
             mutableState.value = DriveBackupState(message = e.message ?: "Drive restore could not finish. Local data is preserved.")
@@ -110,7 +113,9 @@ class DriveSyncRepository(
             }
             mutableState.value = DriveBackupState(backupBytes = (if (changed) encoded.size else (previous?.bytes?.size ?: encoded.size)).toLong(), connected = true, busy = false, lastSavedMillis = System.currentTimeMillis(), message =
                 "Your profile, settings, API keys and journal are backed up to your private Drive app data.")
-        } catch (e: CancellationException) { throw e
+        } catch (e: CancellationException) {
+            mutableState.value = mutableState.value.copy(busy=false,message="Backup paused. Your local data is preserved.")
+            throw e
         } catch (e: Exception) {
             mutableState.value = mutableState.value.copy(busy = false,
                 message = e.message ?: "Backup failed. Your local data is preserved.")

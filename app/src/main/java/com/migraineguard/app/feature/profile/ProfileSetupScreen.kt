@@ -26,7 +26,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,17 +57,18 @@ fun ProfileSetupScreen(
     onComplete: () -> Unit,
     modifier: Modifier = Modifier,
     embedded: Boolean = false,
+    onBack: (() -> Unit)? = null,
 ) {
-    var name by remember { mutableStateOf(initial.displayName.ifBlank { prefilledName }) }
-    var dob by remember { mutableStateOf(initial.dateOfBirthIso) }
-    var sex by remember { mutableStateOf(initial.sex ?: SexGender.PREFER_NOT) }
-    var useMetric by remember { mutableStateOf(initial.useMetric) }
-    var heightCm by remember {
+    var name by rememberSaveable { mutableStateOf(initial.displayName.ifBlank { prefilledName }) }
+    var dob by rememberSaveable { mutableStateOf(initial.dateOfBirthIso) }
+    var sex by rememberSaveable { mutableStateOf(initial.sex ?: SexGender.PREFER_NOT) }
+    var useMetric by rememberSaveable { mutableStateOf(initial.useMetric) }
+    var heightCm by rememberSaveable {
         mutableStateOf(initial.heightCm?.toInt()?.toString() ?: "170")
     }
-    var heightFt by remember { mutableStateOf(imperialHeight(initial.heightCm ?: 170f).first.toString()) }
-    var heightIn by remember { mutableStateOf(imperialHeight(initial.heightCm ?: 170f).second.toString()) }
-    var weight by remember {
+    var heightFt by rememberSaveable { mutableStateOf(imperialHeight(initial.heightCm ?: 170f).first.toString()) }
+    var heightIn by rememberSaveable { mutableStateOf(imperialHeight(initial.heightCm ?: 170f).second.toString()) }
+    var weight by rememberSaveable {
         mutableStateOf(
             when {
                 initial.weightKg != null && !useMetric ->
@@ -72,7 +78,7 @@ fun ProfileSetupScreen(
             },
         )
     }
-    var activity by remember { mutableStateOf(initial.activityLevel ?: ActivityLevel.MODERATE) }
+    var activity by rememberSaveable { mutableStateOf(initial.activityLevel ?: ActivityLevel.MODERATE) }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -97,7 +103,7 @@ fun ProfileSetupScreen(
 
     Scaffold(
         modifier = modifier,
-        topBar = { if (!embedded) AppTopBar(title = { Text("Complete your profile") }) },
+        topBar = { if (!embedded) AppTopBar(title = { Text(if(onBack == null) "Complete your profile" else "Your profile") },navigationIcon={ if(onBack!=null) IconButton(onClick=onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack,"Back") } }) },
         contentWindowInsets = if (embedded) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
     ) { padding ->
         Column(

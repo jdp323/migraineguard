@@ -2,6 +2,8 @@ package com.migraineguard.app.core.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -33,7 +35,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun AppTopBar(title: @Composable () -> Unit, modifier: Modifier = Modifier,
     navigationIcon: @Composable () -> Unit = {}, actions: @Composable RowScope.() -> Unit = {}) {
-    TopAppBar(title = { ProvideTextStyle(MaterialTheme.typography.titleLarge, title) },
+    TopAppBar(title = { ProvideTextStyle(MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp), title) },
         modifier = modifier, navigationIcon = navigationIcon, actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background))
 }
@@ -42,22 +44,19 @@ fun AppTopBar(title: @Composable () -> Unit, modifier: Modifier = Modifier,
 fun FeatureHeader(title: String, subtitle: String, icon: ImageVector,
     modifier: Modifier = Modifier, eyebrow: String? = null) {
     val colors = MaterialTheme.colorScheme
-    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp))
-        .background(Brush.linearGradient(listOf(colors.primaryContainer, colors.secondaryContainer.copy(alpha = .55f))))) {
+    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
+        .background(Brush.linearGradient(listOf(colors.primaryContainer, colors.secondaryContainer.copy(alpha = .65f))))) {
         Canvas(Modifier.matchParentSize()) {
-            drawCircle(colors.primary.copy(alpha = .06f), radius = size.width * .45f,
-                center = Offset(size.width, 0f))
-            drawCircle(colors.secondary.copy(alpha = .07f), radius = size.width * .28f,
-                center = Offset(size.width * .95f, size.height))
+            drawCircle(colors.primary.copy(alpha=.05f),size.width*.36f,Offset(size.width,size.height*.1f))
         }
-        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(icon, null, Modifier.size(22.dp), tint = colors.onPrimaryContainer)
-                eyebrow?.let { Text(it.uppercase(), color = colors.onPrimaryContainer,
-                    style = MaterialTheme.typography.labelSmall, letterSpacing = 1.5.sp) }
+        Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                Icon(icon,null,Modifier.size(18.dp),tint=colors.onPrimaryContainer)
+                Text(eyebrow?.uppercase() ?: "MIGRAINEGUARD",style=MaterialTheme.typography.labelSmall,
+                    letterSpacing=1.2.sp,color=colors.onPrimaryContainer)
             }
-            Text(title, style = MaterialTheme.typography.headlineSmall, color = colors.onPrimaryContainer)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = colors.onPrimaryContainer.copy(alpha = .85f))
+            Text(title,style=MaterialTheme.typography.headlineSmall,color=colors.onPrimaryContainer)
+            Text(subtitle,style=MaterialTheme.typography.bodySmall,color=colors.onPrimaryContainer.copy(alpha=.85f))
         }
     }
 }
@@ -65,19 +64,24 @@ fun FeatureHeader(title: String, subtitle: String, icon: ImageVector,
 @Composable
 fun ActionTile(title: String, subtitle: String, icon: ImageVector, onClick: () -> Unit,
     modifier: Modifier = Modifier) {
-    Card(onClick = onClick, modifier = modifier, shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .6f))) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(38.dp).clip(RoundedCornerShape(13.dp)).background(MaterialTheme.colorScheme.secondaryContainer), Alignment.Center) {
-                    Icon(icon, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(21.dp))
+    val interaction=remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by androidx.compose.animation.core.animateFloatAsState(if(pressed).975f else 1f,
+        androidx.compose.animation.core.spring(stiffness=650f,dampingRatio=.85f),label="tile press")
+    Card(onClick=onClick,interactionSource=interaction,
+        modifier=modifier.graphicsLayer { scaleX=scale; scaleY=scale },shape=RoundedCornerShape(24.dp),
+        colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),
+        border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant.copy(alpha=.5f))) {
+        Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+                Box(Modifier.size(34.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.secondaryContainer),Alignment.Center) {
+                    Icon(icon,null,tint=MaterialTheme.colorScheme.onSecondaryContainer,modifier=Modifier.size(19.dp))
                 }
                 Spacer(Modifier.weight(1f))
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.AutoMirrored.Filled.ArrowForward,null,Modifier.size(15.dp),tint=MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(title,style=MaterialTheme.typography.titleMedium)
+            Text(subtitle,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

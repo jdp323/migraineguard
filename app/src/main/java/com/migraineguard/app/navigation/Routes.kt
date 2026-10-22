@@ -12,6 +12,7 @@ object Routes {
     const val Insights = "insights"
     const val Coach = "coach"
     const val Settings = "settings"
+    const val DriveBackup = "drive_backup"
     const val BodyMetrics = "body_metrics"
     const val Medications = "medications"
 }

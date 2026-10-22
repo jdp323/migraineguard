@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -73,6 +74,7 @@ fun DriveBackupScreen(
     email: String,
     onContinue: () -> Unit,
     autoCheck: Boolean = true,
+    onBack: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val activity = context.findActivity()
@@ -121,10 +123,11 @@ fun DriveBackupScreen(
     }
     LaunchedEffect(email) { if (autoCheck) authorize() }
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
+    Column(Modifier.fillMaxSize().then(if(onBack!=null) Modifier.statusBarsPadding().navigationBarsPadding() else Modifier).verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(Modifier.height(36.dp))
+        if(onBack!=null) Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) { IconButton(onClick=onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack,"Back") }; Text("Google Drive",style=MaterialTheme.typography.titleLarge) }
+        else Spacer(Modifier.height(36.dp))
         FeatureHeader("Your space, restored.", "Bring your saved profile and journal with you.", Icons.Default.CloudDone, eyebrow = "Private backup")
         Text(email, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         SectionCard("One account. All your progress.") {

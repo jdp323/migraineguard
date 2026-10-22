@@ -33,12 +33,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -63,14 +65,14 @@ fun CoachScreen(
     onConnectGemini: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    var persona by remember { mutableStateOf(initialPersona) }
-    var question by remember { mutableStateOf("") }
+    var persona by rememberSaveable(initialPersona) { mutableStateOf(initialPersona) }
+    var question by rememberSaveable { mutableStateOf("") }
     var streaming by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
-    var shareHealthContext by remember { mutableStateOf(false) }
+    var shareHealthContext by rememberSaveable { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val sessions by coachRepository.observeSessions().collectAsStateWithLifecycle(emptyList())
-    var selectedId by remember { mutableStateOf<Long?>(null) }
+    var selectedId by rememberSaveable { mutableStateOf<Long?>(null) }
     val scope = rememberCoroutineScope()
     val scroll = rememberScrollState()
 
@@ -213,7 +215,7 @@ fun CoachScreen(
                     value = question,
                     onValueChange = { question = it },
                     label = { Text("Your question") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("coach-question"),
                     shape = RoundedCornerShape(12.dp),
                     minLines = 2,
                 )

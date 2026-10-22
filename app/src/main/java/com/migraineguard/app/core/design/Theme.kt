@@ -12,31 +12,31 @@ import com.migraineguard.app.core.domain.ThemeMode
 
 val MigraineGuardPainColor = Color(0xFFE15C76)
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF5954C7), onPrimary = Color.White,
-    primaryContainer = Color(0xFFEEECFF), onPrimaryContainer = Color(0xFF302979),
+    primary = Color(0xFF4D55CC), onPrimary = Color.White,
+    primaryContainer = Color(0xFFE9EDFF), onPrimaryContainer = Color(0xFF293779),
     secondary = Color(0xFF147C72), onSecondary = Color.White,
     secondaryContainer = Color(0xFFDDF6EF), onSecondaryContainer = Color(0xFF14574F),
     tertiary = Color(0xFF9F5E45), onTertiary = Color.White,
     tertiaryContainer = Color(0xFFFFEBDF), onTertiaryContainer = Color(0xFF65351F),
-    background = Color(0xFFF5F5FC), onBackground = Color(0xFF202039),
-    surface = Color.White, onSurface = Color(0xFF202039),
-    surfaceVariant = Color(0xFFEEEDF5), onSurfaceVariant = Color(0xFF68677D),
-    outline = Color(0xFF8C899F), outlineVariant = Color(0xFFE4E1ED),
+    background = Color(0xFFF3F6FB), onBackground = Color(0xFF18243B),
+    surface = Color.White, onSurface = Color(0xFF18243B),
+    surfaceVariant = Color(0xFFEAF0F7), onSurfaceVariant = Color(0xFF5E6A80),
+    outline = Color(0xFF8C899F), outlineVariant = Color(0xFFDAE2EE),
     surfaceContainerLowest = Color.White, surfaceContainerLow = Color(0xFFF1F0F9),
     surfaceContainer = Color(0xFFEEEDF7), surfaceContainerHigh = Color(0xFFE9E7F3),
     error = Color(0xFFBA3450),
 )
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFFC1BCFF), onPrimary = Color(0xFF302979),
-    primaryContainer = Color(0xFF37335E), onPrimaryContainer = Color(0xFFE8E5FF),
+    primary = Color(0xFFB7C2FF), onPrimary = Color(0xFF293779),
+    primaryContainer = Color(0xFF2D3A63), onPrimaryContainer = Color(0xFFE8E5FF),
     secondary = Color(0xFF8DDCC9), onSecondary = Color(0xFF143C35),
     secondaryContainer = Color(0xFF244B44), onSecondaryContainer = Color(0xFFCBF6EA),
     tertiary = Color(0xFFF3BEA1), onTertiary = Color(0xFF4A2F22),
     tertiaryContainer = Color(0xFF543D32), onTertiaryContainer = Color(0xFFFFE3D2),
-    background = Color(0xFF101424), onBackground = Color(0xFFF0EDF7),
-    surface = Color(0xFF1A2035), onSurface = Color(0xFFF0EDF7),
-    surfaceVariant = Color(0xFF252D44), onSurfaceVariant = Color(0xFFBBB7CB),
-    outline = Color(0xFF938DA8), outlineVariant = Color(0xFF353D55),
+    background = Color(0xFF0C1322), onBackground = Color(0xFFF0EDF7),
+    surface = Color(0xFF172237), onSurface = Color(0xFFF0EDF7),
+    surfaceVariant = Color(0xFF223047), onSurfaceVariant = Color(0xFFADBBD0),
+    outline = Color(0xFF938DA8), outlineVariant = Color(0xFF35445C),
     surfaceContainerLowest = Color(0xFF0C1020), surfaceContainerLow = Color(0xFF161C30),
     surfaceContainer = Color(0xFF1F273E), surfaceContainerHigh = Color(0xFF293149),
     error = Color(0xFFFFB1C0),
@@ -51,5 +51,5 @@ fun MigraineGuardTheme(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Bo
     } else if (dark) DarkColors else LightColors
     MaterialTheme(colorScheme = colors, typography = MigraineGuardTypography,
         shapes = Shapes(small = RoundedCornerShape(12.dp), medium = RoundedCornerShape(20.dp),
-            large = RoundedCornerShape(28.dp), extraLarge = RoundedCornerShape(36.dp)), content = content)
+            large = RoundedCornerShape(26.dp), extraLarge = RoundedCornerShape(32.dp)), content = content)
 }

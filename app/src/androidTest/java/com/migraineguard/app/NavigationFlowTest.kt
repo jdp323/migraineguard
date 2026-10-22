@@ -93,14 +93,14 @@ class NavigationFlowTest {
                 runBlocking { container.preferencesRepository.setThemeMode(theme) }
                 for ((label, heading) in pages) {
                     awaitText(label)
-                    compose.onNode(hasText(label) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected))
+                    compose.onNodeWithTag("tab-"+label.lowercase())
                         .performClick().assertIsSelected()
                     awaitText(heading)
                     compose.onNodeWithText(heading).assertIsDisplayed()
                     capture(label.lowercase() + "-" + suffix)
                 }
             }
-            compose.onNode(hasText("Fitness") and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performClick()
+            compose.onNodeWithTag("tab-fitness").performClick()
             compose.onNodeWithText("Training", useUnmergedTree = true).performScrollTo().performClick()
             awaitText("Your training goal")
             capture("training-overview")
@@ -143,7 +143,7 @@ class NavigationFlowTest {
             val stretch = runBlocking { container.workoutRepository.inRange(0,Long.MAX_VALUE) }.first { it.exerciseName=="Stretching fixture" }
             assertEquals(30,stretch.details.holdSeconds); assertEquals(3,stretch.details.rounds); assertEquals(0,stretch.sets.size)
             runBlocking { container.workoutRepository.delete(cardio.id); container.workoutRepository.delete(stretch.id) }
-            compose.onNode(hasText("Home") and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performClick()
+            compose.onNodeWithTag("tab-home").performClick()
             compose.onAllNodesWithText("Add water").onFirst().performScrollTo().performClick()
             awaitText("One sip at a time.")
             capture("water-dark")

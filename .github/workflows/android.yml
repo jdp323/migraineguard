@@ -113,7 +113,13 @@ jobs:
             adb shell am instrument -w com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-runtime-results.txt
             adb pull /sdcard/Android/data/com.migraineguard.app/files/verification ui-verification || true
             cat android-runtime-results.txt
-            grep -q 'OK (24 tests)' android-runtime-results.txt
+            grep -q 'OK (27 tests)' android-runtime-results.txt
+            adb shell settings put global window_animation_scale 1.0
+            adb shell settings put global transition_animation_scale 1.0
+            adb shell settings put global animator_duration_scale 1.0
+            adb shell am instrument -w -e class com.migraineguard.app.SwipeNavigationTest com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-gesture-results.txt
+            cat android-gesture-results.txt
+            grep -q 'OK (2 tests)' android-gesture-results.txt
             adb shell am start -n com.migraineguard.app/.MainActivity
             sleep 5
             adb exec-out screencap -p > android-startup.png
@@ -124,6 +130,7 @@ jobs:
           name: Android-runtime-evidence
           path: |
             android-runtime-results.txt
+            android-gesture-results.txt
             android-startup.png
             ui-verification/*.png
           if-no-files-found: ignore
@@ -153,17 +160,17 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
-          Water notifications now offer 1 glass, 2 glasses and 3 glasses. Each glass logs 250 ml without opening the app. A notification accepts one choice; repeated taps, expired actions and another account's notifications cannot add extra water. Android controls notification display and background timing.
+          Redesigned the interface with a calmer indigo/teal palette, compact gradient summaries, consistent rounded cards, clearer type and responsive press feedback. Home keeps daily essentials and four focused shortcuts; all main screens share the refreshed visual system.
 
-          Training has separate Strength, Cardio, Stretching and Other tiles. Strength uses weight/reps/completed sets. Treadmill uses duration, speed, incline and distance. Walk/run/cycling/rowing/elliptical use pace/distance; stretching/yoga use duration, hold seconds and rounds. Optional metrics stay unknown when blank. History, reuse and backups preserve the new details. Existing records migrate from database v5 to v6 without deletion.
+          Swipe left/right between Home, Migraine, Fitness, Coach, Food and Insights. The floating dock's selection capsule follows the swipe, and all six labeled tabs remain tappable and accessible. Swiping the head map or scrolling horizontal controls keeps their own behavior. Short detail-page transitions use native Navigation Compose back handling, including predictive back where the Android/device configuration supports it. Android's edge gestures are not replaced by an app-wide drag detector.
 
-          Returning users keep a device-encrypted remembered session across app restarts and updates. Explicit sign-out clears it. A completed account opens Home without repeating setup or blocking on Drive/Health Connect prompts. Previously enabled Drive reconnects silently when Google allows it; consent/network errors are shown in Account settings. New users/devices still complete sign-in/restore/setup, and no permission or Google API token is fabricated or carried between accounts.
+          Food, coach, migraine and training drafts and scroll positions are retained across offscreen tab disposal; selected page/drafts also survive supported activity recreation. A keyboard-aware layout keeps forms and the dock above the IME. Profile and Drive settings now have proper detail routes with Back; cancelling a Drive check leaves local data intact and allows retry. Account changes still recreate the entire storage/UI graph.
 
-          Includes the v1.9 features: focused Home, separate Migraine overview, eleven AI choices, adjustable reminders, Drive snapshot size and GitHub version checks. The exact fields, changed files, data boundaries and phone test steps are documented in docs/UPDATE_1_10_0.md.
+          No permission, database schema, AI endpoint or cloud scope is added. All v1.10 water quick actions, activity-specific logs, remembered sign-in, per-account backups and GitHub update checks remain.
 
-          Release gates include unit tests, lint, retained Standard/Preview signing and 24 Android tests. Emulator fixtures cover session restore/account isolation, one-tap notification actions, named strength/cardio/stretch logs, schema preservation and simulated Drive restore. Live watch transfer, actual Google authorization and OEM notification timing still need phone acceptance.
+          Release gates include unit tests, lint, retained Standard/Preview signing, 27 Android tests, and a second run of the two gesture/back/draft tests with system animations enabled. Emulator checks do not certify phone frame rate, Samsung gesture behavior or external health/provider integrations. See docs/UPDATE_1_11_0.md for usage, changed files, screenshots and verification limits.
 
-          Use Standard to update com.migraineguard.app with the retained FB:67 certificate, or Preview alongside it with separate records/permissions. Do not uninstall an older installation with records to solve a signing conflict.
+          Use Standard to update com.migraineguard.app with the retained FB:67 certificate, or Preview alongside it with separate records/permissions. Do not uninstall an older app containing records to resolve a signing conflict.
           NOTES
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists; it will not be overwritten."

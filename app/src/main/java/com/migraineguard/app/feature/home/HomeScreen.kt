@@ -27,27 +27,20 @@ fun HomeScreen(userName: String, onOpenSettings: () -> Unit, onLogMigraine: () -
     onHealthAnalyst: () -> Unit = {}, weatherRepository: WeatherRepository,
     healthDataRepository: HealthDataRepository, healthRefreshCoordinator: HealthRefreshCoordinator? = null,
     waterIntakeRepository: WaterIntakeRepository, preferencesRepository: UserPreferencesRepository,
-    migraineRepository: MigraineRepository, modifier: Modifier = Modifier) {
+    migraineRepository: MigraineRepository, modifier: Modifier = Modifier, isActive: Boolean = true) {
     val prefs by preferencesRepository.preferences.collectAsStateWithLifecycle(UserPreferences())
     val cups by waterIntakeRepository.cupsToday.collectAsStateWithLifecycle(0)
     val refresh = healthRefreshCoordinator?.state?.collectAsStateWithLifecycle()?.value
-    HealthAutoRefresh(healthRefreshCoordinator)
+    if(isActive) HealthAutoRefresh(healthRefreshCoordinator)
     Scaffold(modifier = modifier, topBar = { AppTopBar(title = { Text("Today") }, actions = {
         IconButton(onClick = onOpenSettings) { Icon(Icons.Default.Settings, "Settings") }
     }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("Hello, "+prefs.bodyProfile.displayName.ifBlank { userName }.substringBefore(' '), style = MaterialTheme.typography.headlineSmall)
-            Text("Your day, at a glance.", style = MaterialTheme.typography.titleMedium)
-            Text(LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d")), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            SectionCard("Daily essentials") {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Column(Modifier.weight(1f)) { Text("Steps", style = MaterialTheme.typography.labelMedium); Text(refresh?.fitness?.observedSteps?.toString() ?: "—", style = MaterialTheme.typography.titleLarge) }
-                    Column(Modifier.weight(1f)) { Text("Water", style = MaterialTheme.typography.labelMedium); Text("$cups / "+prefs.waterGoalCups, style = MaterialTheme.typography.titleLarge) }
-                    Column(Modifier.weight(1f)) { Text("Sleep", style = MaterialTheme.typography.labelMedium); Text(refresh?.sleep?.recordedHours?.let { "%.1f h".format(it) } ?: "—", style = MaterialTheme.typography.titleLarge) }
-                }
-                Spacer(Modifier.height(12.dp))
-                OutlinedButton(onClick = onOpenWater, modifier = Modifier.fillMaxWidth()) { Text("Add water") }
-            }
+            Text("Hello, "+prefs.bodyProfile.displayName.ifBlank { userName }.substringBefore(' '), style = MaterialTheme.typography.bodyMedium, color=MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Your day, at a glance.", style = MaterialTheme.typography.headlineSmall)
+            Text(LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d")), color = MaterialTheme.colorScheme.onSurfaceVariant, style=MaterialTheme.typography.labelMedium)
+            DailyOverview(refresh?.fitness?.observedSteps,prefs.dailyStepGoal,cups,prefs.waterGoalCups,
+                refresh?.sleep?.recordedHours,prefs.sleepGoalHours,null,onOpenFitness,onOpenWater)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 ActionTile("Train", "Log your workout", Icons.Default.FitnessCenter, onOpenFitness, Modifier.weight(1f))
                 ActionTile("Meals", "Photo & food log", Icons.Default.LocalDining, onOpenFood, Modifier.weight(1f))
@@ -56,7 +49,6 @@ fun HomeScreen(userName: String, onOpenSettings: () -> Unit, onLogMigraine: () -
                 ActionTile("Body", "Weight & progress", Icons.Default.MonitorWeight, onOpenBody, Modifier.weight(1f))
                 ActionTile("Coach", "Ask your AI", Icons.Default.AutoAwesome, onAskCoach, Modifier.weight(1f))
             }
-            Text("Symptoms, triggers, medication and weather are together in the Migraine tab.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

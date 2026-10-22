@@ -39,6 +39,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -89,6 +90,7 @@ fun TrackScreen(
     workoutRepository: WorkoutRepository,
     preferencesRepository: UserPreferencesRepository,
     modifier: Modifier = Modifier,
+    isActive: Boolean = true,
 ) {
     var fitness by remember { mutableStateOf<HealthSnapshot?>(null) }
     var sleep by remember { mutableStateOf<SleepSnapshot?>(null) }
@@ -120,10 +122,11 @@ fun TrackScreen(
     var logNotes by remember { mutableStateOf("") }
     val pageScroll = rememberScrollState()
     var training by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(training) { pageScroll.scrollTo(0) }
-    var showConnectionDetails by remember { mutableStateOf(false) }
+    var lastSection by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(training) }
+    LaunchedEffect(training) { if(lastSection != training) { pageScroll.scrollTo(0); lastSection=training } }
+    var showConnectionDetails by rememberSaveable { mutableStateOf(false) }
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
-    var manualSteps by remember { mutableStateOf("") }
+    var manualSteps by rememberSaveable { mutableStateOf("") }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -133,7 +136,7 @@ fun TrackScreen(
 
     var autoRefreshLabel by remember { mutableStateOf<String?>(null) }
     var autoRefreshError by remember { mutableStateOf<String?>(null) }
-    HealthAutoRefresh(healthRefreshCoordinator)
+    if(isActive) HealthAutoRefresh(healthRefreshCoordinator)
     val coordinator = healthRefreshCoordinator
     if (coordinator != null) {
         val rs by coordinator.state.collectAsStateWithLifecycle()
@@ -369,7 +372,7 @@ fun TrackScreen(
                 .verticalScroll(pageScroll),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Move, rest, recover.", style = MaterialTheme.typography.headlineSmall)
+            FeatureHeader("Move, rest, recover.", "Your movement and training, together.", Icons.Filled.FitnessCenter, eyebrow="Your activity")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = !training, onClick = { training = false }, label = { Text("Health") })
                 FilterChip(selected = training, onClick = { training = true }, label = { Text("Training") })

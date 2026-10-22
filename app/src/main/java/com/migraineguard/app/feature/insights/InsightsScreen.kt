@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -73,8 +74,8 @@ fun InsightsScreen(
     onConnectGemini: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    var range by remember { mutableStateOf(RangeMode.Week) }
-    var mode by remember { mutableStateOf(InsightMode.Overall) }
+    var range by rememberSaveable { mutableStateOf(RangeMode.Week) }
+    var mode by rememberSaveable { mutableStateOf(InsightMode.Overall) }
     var report by remember { mutableStateOf<InsightReport?>(null) }
     var aiText by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }

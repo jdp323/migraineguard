@@ -41,6 +41,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -80,19 +81,15 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
     val prefs = loadedPrefs ?: return
     val scope = rememberCoroutineScope()
     var settingsInitialGroup by remember { mutableStateOf("Account") }
-    var forceProfileEdit by remember { mutableStateOf(false) }
     var coachPersona by remember { mutableStateOf(AiPersona.COACH) }
-    var forceConnectGemini by remember { mutableStateOf(false) }
 
     var driveChecked by remember { mutableStateOf(false) }
-    var healthChecked by remember { mutableStateOf(false) }
-    var openDrive by remember { mutableStateOf(false) }
-    if (authState.isSignedIn && !authState.isDemo && ((!prefs.setupComplete && !driveChecked) || openDrive)) {
+    if (authState.isSignedIn && !authState.isDemo && (!prefs.setupComplete && !driveChecked)) {
         DriveBackupScreen(container.driveSyncRepository, authState.user?.email.orEmpty(),
-            onContinue = { driveChecked = true; openDrive = false })
+            onContinue = { driveChecked = true })
         return
     }
-    if (authState.isSignedIn && !authState.isDemo && prefs.setupComplete && prefs.driveSyncEnabled && !openDrive) {
+    if (authState.isSignedIn && !authState.isDemo && prefs.setupComplete && prefs.driveSyncEnabled) {
         com.migraineguard.app.feature.settings.SilentDriveReconnect(container.driveSyncRepository, authState.user?.email.orEmpty())
     }
 
@@ -109,29 +106,7 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
             preferencesRepository = container.preferencesRepository,
             healthDataRepository = container.healthDataRepository,
             aiClient = container.aiClient,
-            onFinished = { healthChecked = true },
-        )
-        return
-    }
-
-    // Settings-driven Gemini reconnect (post-setup)
-    if (forceConnectGemini) {
-        ConnectGeminiScreen(
-            preferencesRepository = container.preferencesRepository,
-            aiClient = container.aiClient,
-            onConnected = { forceConnectGemini = false },
-            onSkipOffline = { forceConnectGemini = false },
-        )
-        return
-    }
-
-    // Settings-driven profile edit (post-setup)
-    if (forceProfileEdit) {
-        ProfileSetupScreen(
-            preferencesRepository = container.preferencesRepository,
-            prefilledName = authState.user?.displayName ?: prefs.bodyProfile.displayName,
-            initial = prefs.bodyProfile,
-            onComplete = { forceProfileEdit = false },
+            onFinished = {},
         )
         return
     }
@@ -143,34 +118,32 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
     }
 
     val navController = rememberNavController()
-    val bottomItems = listOf(
-        BottomNavItem(BottomDest.Home, Icons.Filled.Home),
-        BottomNavItem(BottomDest.Migraine, Icons.Outlined.Healing),
-        BottomNavItem(BottomDest.Track, Icons.Filled.FitnessCenter),
-        BottomNavItem(BottomDest.Coach, Icons.Filled.AutoAwesome),
-        BottomNavItem(BottomDest.Food, Icons.Filled.LocalDining),
-        BottomNavItem(BottomDest.Insights, Icons.Filled.Insights),
-    )
-
+    val entry by navController.currentBackStackEntryAsState()
+    val currentRoute = entry?.destination?.route
+    val bottomItems = MainTabs
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { bottomItems.size })
+    var tabJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     fun goBottom(route: String) {
-        // Debounced HC refresh on tab switch
-        container.healthRefreshCoordinator.refresh(force = false)
-        navController.navigate(route) {
-            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-            launchSingleTop = true
-            restoreState = true
-        }
+        val page = bottomItems.indexOfFirst { it.dest.route == route }
+        if (page < 0) return
+        if (currentRoute != null && currentRoute != Routes.Home) navController.popBackStack(Routes.Home,false)
+        tabJob?.cancel()
+        tabJob = scope.launch { pagerState.animateScrollToPage(page, animationSpec = androidx.compose.animation.core.tween(320)) }
     }
+    androidx.activity.compose.BackHandler(enabled = currentRoute == Routes.Home && pagerState.currentPage != 0) { goBottom(Routes.Home) }
+    LaunchedEffect(pagerState.settledPage) { container.healthRefreshCoordinator.refresh(force = false) }
 
     fun openCoach(persona: AiPersona) {
         coachPersona = persona
         goBottom(Routes.Coach)
     }
 
-    val hideBottom = setOf(Routes.Settings, Routes.BodyMetrics, Routes.Medications, Routes.ProfileSetup, Routes.Water)
-
     LaunchedEffect(requestedRoute) {
-        if (requestedRoute in setOf(Routes.Water, Routes.Food, Routes.Medications, Routes.Migraine, Routes.Settings)) { navController.navigate(requestedRoute!!); onRouteConsumed() }
+        if (requestedRoute in setOf(Routes.Food, Routes.Migraine)) {
+            goBottom(requestedRoute!!); onRouteConsumed()
+        } else if (requestedRoute in setOf(Routes.Water, Routes.Medications, Routes.Settings)) {
+            navController.navigate(requestedRoute!!) { launchSingleTop = true }; onRouteConsumed()
+        }
     }
 
     // Initial refresh when entering main app
@@ -181,50 +154,28 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            val navBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentRoute = navBackStackEntry?.destination?.route
-            if (currentRoute !in hideBottom) {
-                Column(Modifier.navigationBarsPadding().padding(horizontal = 8.dp, vertical = 6.dp)) {
-                    Surface(shape = RoundedCornerShape(26.dp), color = MaterialTheme.colorScheme.surface,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .65f)),
-                        shadowElevation = 3.dp) {
-                        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 8.dp)) {
-                            bottomItems.forEach { item ->
-                                val selected = currentRoute == item.dest.route
-                                val fill by animateColorAsState(if (selected) MaterialTheme.colorScheme.primaryContainer
-                                    else MaterialTheme.colorScheme.surface, tween(180), label = "tab background")
-                                val tint by animateColorAsState(if (selected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurfaceVariant, tween(180), label = "tab tint")
-                                Column(Modifier.weight(1f).clip(RoundedCornerShape(18.dp))
-                                    .selectable(selected = selected, role = Role.Tab, onClick = { goBottom(item.dest.route) })
-                                    .padding(vertical = 4.dp), horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Box(Modifier.size(width = 44.dp, height = 30.dp).clip(RoundedCornerShape(13.dp))
-                                        .background(fill), contentAlignment = Alignment.Center) {
-                                        Icon(item.icon, null, Modifier.size(21.dp), tint = tint)
-                                    }
-                                    Text(item.dest.label, color = tint, style = MaterialTheme.typography.labelSmall,
-                                        fontSize = 10.sp, letterSpacing = 0.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            if (currentRoute == Routes.Home) ModernTabDock(pagerState) { goBottom(it) }
         },
     ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Routes.Home,
             modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
-            enterTransition = { fadeIn(tween(240)) + slideInHorizontally(tween(240)) { it / 14 } },
-            exitTransition = { fadeOut(tween(140)) },
-            popEnterTransition = { fadeIn(tween(240)) + slideInHorizontally(tween(240)) { -it / 14 } },
-            popExitTransition = { fadeOut(tween(140)) },
+            enterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(340)) { it } },
+            exitTransition = { fadeOut(tween(220)) + slideOutHorizontally(tween(340)) { -it / 4 } },
+            popEnterTransition = { fadeIn(tween(260)) + slideInHorizontally(tween(340)) { -it / 4 } },
+            popExitTransition = { fadeOut(tween(220)) + slideOutHorizontally(tween(340)) { it } },
         ) {
             composable(Routes.Home) {
+                androidx.compose.foundation.pager.HorizontalPager(state = pagerState,
+                    beyondViewportPageCount = 1, key = { bottomItems[it].dest.route },
+                    modifier = Modifier.fillMaxSize().testTag("main-pager")) { page ->
+                    val active = currentRoute == Routes.Home && pagerState.currentPage == page
+                    when (bottomItems[page].dest.route) {
+                        Routes.Home -> {
                 HomeScreen(
                     userName = authState.user?.displayName ?: "Friend",
+                    isActive = active,
                     onOpenSettings = { settingsInitialGroup = "Account"; navController.navigate(Routes.Settings) },
                     onLogMigraine = { goBottom(Routes.Migraine) },
                     onOpenWater = { navController.navigate(Routes.Water) },
@@ -241,45 +192,25 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
                     preferencesRepository = container.preferencesRepository,
                     migraineRepository = container.migraineRepository,
                 )
-            }
-            composable(Routes.Migraine) {
-                MigraineScreen(repository = container.migraineRepository, preferences = container.preferencesRepository, weatherRepository = container.weatherRepository, onOpenMeds = { navController.navigate(Routes.Medications) }, onAnalyst = { openCoach(AiPersona.ANALYST) })
-            }
-            composable(Routes.Track) {
-                TrackScreen(
-                    healthDataRepository = container.healthDataRepository,
-                    healthRefreshCoordinator = container.healthRefreshCoordinator,
-                    workoutRepository = container.workoutRepository,
-                    preferencesRepository = container.preferencesRepository,
-                )
-            }
-            composable(Routes.Food) {
-                NutritionScreen(nutritionAnalyzer = container.nutritionAnalyzer)
+                        }
+                        Routes.Migraine -> MigraineScreen(repository = container.migraineRepository, preferences = container.preferencesRepository,
+                            weatherRepository = container.weatherRepository, onOpenMeds = { navController.navigate(Routes.Medications) },
+                            onAnalyst = { openCoach(AiPersona.ANALYST) }, isActive = active)
+                        Routes.Track -> TrackScreen(healthDataRepository = container.healthDataRepository,
+                            healthRefreshCoordinator = container.healthRefreshCoordinator, workoutRepository = container.workoutRepository,
+                            preferencesRepository = container.preferencesRepository, isActive = active)
+                        Routes.Food -> NutritionScreen(nutritionAnalyzer = container.nutritionAnalyzer)
+                        Routes.Insights -> InsightsScreen(insightsAnalyzer = container.insightsAnalyzer, aiClient = container.aiClient,
+                            onOpenCoach = { openCoach(AiPersona.COACH) }, onOpenAnalyst = { openCoach(AiPersona.ANALYST) },
+                            hasCloudKey = prefs.hasConfiguredCloud(), onConnectGemini = { settingsInitialGroup = "AI"; navController.navigate(Routes.Settings) })
+                        Routes.Coach -> CoachScreen(coachRepository = container.aiCoachRepository, initialPersona = coachPersona,
+                            hasCloudKey = prefs.hasConfiguredCloud(), onConnectGemini = { settingsInitialGroup = "AI"; navController.navigate(Routes.Settings) })
+                    }
+                }
             }
             composable(Routes.Water) {
-                WaterScreen(
-                    repository = container.waterIntakeRepository,
-                    preferencesRepository = container.preferencesRepository,
-                    onBack = { navController.popBackStack() },
-                )
-            }
-            composable(Routes.Insights) {
-                InsightsScreen(
-                    insightsAnalyzer = container.insightsAnalyzer,
-                    aiClient = container.aiClient,
-                    onOpenCoach = { openCoach(AiPersona.COACH) },
-                    onOpenAnalyst = { openCoach(AiPersona.ANALYST) },
-                    hasCloudKey = prefs.hasConfiguredCloud(),
-                    onConnectGemini = { settingsInitialGroup = "AI"; navController.navigate(Routes.Settings) },
-                )
-            }
-            composable(Routes.Coach) {
-                CoachScreen(
-                    coachRepository = container.aiCoachRepository,
-                    initialPersona = coachPersona,
-                    hasCloudKey = prefs.hasConfiguredCloud(),
-                    onConnectGemini = { settingsInitialGroup = "AI"; navController.navigate(Routes.Settings) },
-                )
+                WaterScreen(repository = container.waterIntakeRepository, preferencesRepository = container.preferencesRepository,
+                    onBack = { navController.popBackStack() })
             }
             composable(Routes.Settings) {
                 SettingsScreen(
@@ -289,14 +220,23 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
                     healthDataRepository = container.healthDataRepository,
                     aiClient = container.aiClient,
                     driveRepository = if (authState.isDemo) null else container.driveSyncRepository,
-                    onConnectDrive = { openDrive = true },
+                    onConnectDrive = { navController.navigate(Routes.DriveBackup) },
                     onSignOut = { container.authRepository.signOut() },
                     onBack = { navController.popBackStack() },
-                    onEditProfile = { forceProfileEdit = true },
+                    onEditProfile = { navController.navigate(Routes.ProfileSetup) },
                     onOpenBody = { navController.navigate(Routes.BodyMetrics) },
                     onOpenMeds = { navController.navigate(Routes.Medications) },
                     onConnectGemini = { settingsInitialGroup = "AI"; navController.navigate(Routes.Settings) },
                 )
+            }
+            composable(Routes.ProfileSetup) {
+                ProfileSetupScreen(preferencesRepository=container.preferencesRepository,
+                    prefilledName=authState.user?.displayName ?: prefs.bodyProfile.displayName,initial=prefs.bodyProfile,
+                    onComplete={navController.popBackStack()},onBack={navController.popBackStack()})
+            }
+            composable(Routes.DriveBackup) {
+                DriveBackupScreen(container.driveSyncRepository,authState.user?.email.orEmpty(),
+                    onContinue={navController.popBackStack()},onBack={navController.popBackStack()})
             }
             composable(Routes.BodyMetrics) {
                 BodyMetricsScreen(
@@ -314,8 +254,3 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
         }
     }
 }
-
-private data class BottomNavItem(
-    val dest: BottomDest,
-    val icon: ImageVector,
-)

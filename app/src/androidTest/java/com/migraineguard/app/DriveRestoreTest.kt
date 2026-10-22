@@ -90,6 +90,31 @@ class DriveRestoreTest {
         } finally { source.dispose(); target.dispose(); sourceScope.cancel(); targetScope.cancel() }
     }
 
+    @Test fun cancelledDriveCheckCanBeRetriedWithoutLosingLocalProfile() = runBlocking {
+        val email="cancel-"+UUID.randomUUID()+"@example.invalid"
+        val owner=AccountStorage.google(email)
+        val prefs=UserPreferencesRepository(context,owner)
+        prefs.saveBodyProfile(BodyProfile(displayName="Retained fixture",profileComplete=true))
+        val db=AppDatabase.get(context,owner)
+        val scope=CoroutineScope(SupervisorJob()+Dispatchers.IO)
+        val started=CompletableDeferred<Unit>()
+        var block=true
+        val remote=object:DriveBackupTransport {
+            override suspend fun verifyAccount(token:String,email:String) {}
+            override suspend fun download(token:String):DriveFile? { if(block) { started.complete(Unit); awaitCancellation() }; return null }
+            override suspend fun upload(token:String,payload:ByteArray,previous:DriveFile?)="fixture"
+        }
+        val repository=DriveSyncRepository(owner,prefs,db,BackupRepository(context,db,prefs),scope,remote)
+        try {
+            val job=launch { repository.connect("fixture-token",email) }
+            started.await(); job.cancelAndJoin()
+            assertFalse(repository.state.value.busy)
+            assertEquals("Retained fixture",prefs.preferences.first().bodyProfile.displayName)
+            block=false; repository.connect("fixture-token",email)
+            assertTrue(repository.state.value.connected)
+        } finally { repository.dispose(); scope.cancel() }
+    }
+
     @Test fun remoteRestoreCannotOverwriteNewerLocalProfileOrKeys() = runBlocking {
         val id = AccountStorage.google("revision-fixture-" + UUID.randomUUID())
         val prefs = UserPreferencesRepository(context, id)

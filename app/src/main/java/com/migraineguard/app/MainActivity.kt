@@ -8,6 +8,7 @@ import com.migraineguard.app.core.domain.ThemeMode
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
@@ -50,7 +51,7 @@ class MainActivity : ComponentActivity() {
                     themeMode = prefs.themeMode,
                     dynamicColor = prefs.dynamicColor,
                 ) {
-                    Surface(modifier = Modifier.fillMaxSize()) {
+                    Surface(modifier = Modifier.fillMaxSize().imePadding()) {
                         MigraineGuardNavHost(container = container, requestedRoute = requestedRoute.value, onRouteConsumed = { requestedRoute.value = null; intent.removeExtra("open_route") })
                     }
                 }
