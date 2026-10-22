@@ -7,7 +7,7 @@ Static homepage, privacy, terms, support and 404 pages. No JavaScript, trackers,
 - public/index.html: product overview, public GitHub release download links and honest device/service limitations.
 - public/privacy.html: actual local/Health Connect/AI/Drive data flows, portable keys, consent and deletion limitations.
 - public/terms.html: wellness/test-build use terms.
-- public/support.html: v1.8.0 install/setup, links to complete public guides, restore, health diagnostics and data controls.
+- public/support.html: current install/setup, links to complete public guides, restore, health diagnostics and data controls.
 - public/404.html: explicit missing page.
 - public/styles.css: responsive system-font styling, keyboard focus and reduced-motion support.
 - public/mark.svg: original code-native shield/pulse icon.

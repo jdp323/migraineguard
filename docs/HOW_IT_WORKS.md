@@ -1,6 +1,6 @@
 # How MigraineGuard works
 
-Current behavior: v1.10.0 / code 18. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
+Current behavior: v1.11.1 / code 20. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
 
 ## From your device to the screen
 
@@ -24,7 +24,7 @@ Heart reads include recent record buckets but exclude future samples; the displa
 | Local/source image storage | Selected meal/equipment-photo references or camera files | Snapshots do not include photo bytes. A restored URI is not a cross-device photo backup. |
 | GitHub / public website | Source, docs, synthetic test screenshots and signed test APKs | No user journal or user Drive backup is intentionally uploaded here. See the limited [public exposure audit](PUBLICATION_AUDIT.md). |
 
-Room Flow and DataStore updates drive Compose screens. Manual dependency construction is in AppContainer. MainActivity triggers foreground refresh; HealthRefreshCoordinator shares/debounces health reads. Active health screens also refresh periodically while resumed. Navigation saves/restores tab state, and persisted entries belong in repositories rather than only in a remembered form field.
+Room Flow and DataStore updates drive Compose screens. Manual dependency construction is in AppContainer. MainActivity triggers foreground refresh; HealthRefreshCoordinator shares/debounces health reads. Active health screens also refresh periodically while resumed. A keyed native HorizontalPager now owns the six main tabs, with saveable drafts/scroll state and limited neighboring pages. Detail destinations stay on Navigation Compose’s back stack, including Profile and Drive. The dock reads pager position during drawing, while only the active Home/Fitness page runs its periodic refresh loop. Persisted entries still belong in repositories rather than only in UI state. [Navigation/design details](UPDATE_1_11_0.md).
 
 ## Sign-in, account switching and restore
 
@@ -84,7 +84,7 @@ Run the unit/lint/Standard assembly tasks before making a release; build Preview
 
 The pipeline restores its signing key from a GitHub Actions secret for eligible push builds, checks the retained SHA-1, runs checks and builds both APKs. Pull requests do not receive that secret or publish. A release requires successful build and Android runtime jobs and the retained signer. Existing version tags are not overwritten; app binary changes need a new version/code.
 
-For v1.10.0, [run 39685744572](https://github.com/jdp323/migraineguard/actions/runs/39685744572) passed **75 JVM tests and 24 Android tests**, lint and signature checks. Released APK hashes match the inspected downloaded build artifacts. Tests use synthetic health/account data and simulated Drive transport. Real Samsung/Fitbit transfer, native authorization and live AI must still be tested on a phone; automated success is not proof of those external paths.
+For v1.11.1, [run 39719987641](https://github.com/jdp323/migraineguard/actions/runs/39719987641) passed **75 JVM tests and 27 Android runtime tests**, lint and signature checks. Two gesture tests also passed with animations enabled; the draft survived three consecutive activity recreations in each mode. Released APK hashes match the inspected downloaded build artifacts. Tests use synthetic health/account data and simulated Drive transport. Real Samsung/Fitbit transfer, native authorization and live AI still require phone acceptance. See [current changed files, captures and evidence](UPDATE_1_11_0.md).
 
 ## Current limits
 

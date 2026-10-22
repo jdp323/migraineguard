@@ -1,19 +1,19 @@
 # MigraineGuard user guide
 
-For Android v1.10.0 (version code 18). Start here if a friend shared the app with you. No programming or Google Cloud setup is needed to use the published APK.
+For Android v1.11.1 (version code 20). Start here if a friend shared the app with you. No programming or Google Cloud setup is needed to use the published APK.
 
 [Download the latest release](https://github.com/jdp323/migraineguard/releases/latest) · [Troubleshooting](TROUBLESHOOTING.md) · [How it works](HOW_IT_WORKS.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
 
-[v1.10: water quick actions, cardio/stretch fields and returning Home](UPDATE_1_10_0.md). The previous feature-by-feature guide is [v1.9.0–1.9.1: training, reminder/AI/update settings and Drive size](UPDATE_1_9_0.md). Read [exact AI prompts and permissions](AI_AND_PERMISSIONS.md) to see what is sent and why.
+[v1.11: swipe navigation and the refreshed interface](UPDATE_1_11_0.md). [v1.10: water quick actions, cardio/stretch fields and returning Home](UPDATE_1_10_0.md). The previous feature-by-feature guide is [v1.9.0–1.9.1: training, reminder/AI/update settings and Drive size](UPDATE_1_9_0.md). Read [exact AI prompts and permissions](AI_AND_PERMISSIONS.md) to see what is sent and why.
 
 ## 1. Install or update
 
 1. Open the release link on your Android phone. Expand **Assets** if needed.
-2. Download **MigraineGuard-v1.10.0-debug.apk** for the normal app. The word debug identifies the current signed test build; this is not a Play Store release.
+2. Download **MigraineGuard-v1.11.1-debug.apk** for the normal app. The word debug identifies the current signed test build; this is not a Play Store release.
 3. Open the downloaded APK. Android may ask whether your browser or file manager can install apps. Allow that source if you trust this download, install, then turn the source permission back off if you wish. Do not disable Play Protect or other device-wide protections.
 4. Updating the same Standard app with the retained certificate keeps its local data. Do not uninstall an existing app just to get past an installation conflict.
-5. For an incompatible older signing certificate, or to try a fresh setup beside your existing app, use **MigraineGuard-v1.10.0-preview.apk**. Preview is a separate app with its own records, permissions and setup. It does not automatically copy Standard's local data.
-6. Confirm **Settings → App → About** says **1.10.0 (18)** and the intended package: Standard is com.migraineguard.app; Preview ends in .preview.
+5. For an incompatible older signing certificate, or to try a fresh setup beside your existing app, use **MigraineGuard-v1.11.1-preview.apk**. Preview is a separate app with its own records, permissions and setup. It does not automatically copy Standard's local data.
+6. Confirm **Settings → App → About** says **1.11.1 (20)** and the intended package: Standard is com.migraineguard.app; Preview ends in .preview.
 
 The app supports Android 8 and later. Health Connect additionally depends on compatible Android/Google services and source health apps on the phone; an installable app does not guarantee every integration is available. This project contains a phone app, not a separate watch app or iPhone build.
 
@@ -53,7 +53,7 @@ Settings → AI has eleven provider choices including OpenAI/ChatGPT API and Cla
 
 ## 3. Use the app each day
 
-The six labeled bottom tabs keep the main areas close. Home shortcuts open additional tools; use Back to return. Pages and forms scroll independently of the bottom tabs.
+Swipe left/right across the main page to move between the six labeled tabs, or tap a tab to jump directly. The dock follows the page. Swiping inside the pain map/horizontal controls operates those controls. Home shortcuts open additional tools; use the toolbar or Android Back to return. Back from another main tab returns Home; migraine log/history/detail has its own pane Back. Android edge-back gestures require the phone’s system gesture-navigation mode. Drafts stay with their tab; save completed entries before force-stop/account switching. Pages and forms scroll vertically.
 
 | Area | How to use it | How to interpret it |
 | --- | --- | --- |

@@ -69,3 +69,46 @@ Screenshot review found the Food introduction too dense and Insights displaying 
 ### Explicit page-state retention
 
 The final runtime rerun caught an intermittent empty Food draft after activity recreation. Main-tab saveable registries are now owned by an explicit six-key state holder outside the lazy pager and detail host, rather than depending only on the pager item lifecycle. The test checks the entered draft before recreation and still requires that exact draft after each of three consecutive recreations, both with animations disabled and enabled. This remains local UI state, separate from saved journal/Drive records.
+
+## Published v1.11.1 verification and screenshots
+
+[Download Standard or Preview](https://github.com/jdp323/migraineguard/releases/tag/v1.11.1-debug). Source commit `5338663ded25aa6ff4ccbfe5c833094b2fbf57c1`, [hosted run 39719987641](https://github.com/jdp323/migraineguard/actions/runs/39719987641). Final gates passed: 75 JVM tests (zero failures/errors), lint with zero errors, both signed APK builds, and 27 Android runtime tests in 88.093 seconds. The two gesture tests passed again with all three system animation scales at 1.0 in 16.36 seconds. Each activity-restoration run performs three consecutive recreations: six verified recreations across the two animation modes.
+
+Both public release APKs were downloaded without authentication and matched the build artifacts:
+
+| Package / asset | SHA-256 |
+| --- | --- |
+| Standard, com.migraineguard.app, MigraineGuard-v1.11.1-debug.apk | `1300175a218d41f1e98a2a0678dc77700612853ba019aea943f0c4559108014a` |
+| Preview, com.migraineguard.app.preview, MigraineGuard-v1.11.1-preview.apk | `6555ffbece927079a82b65ad5f728a73f47604e8a470b161698d9f2f5b231cef` |
+
+Both are version 1.11.1/code 20 and retain certificate SHA-1 `FB:67:0D:1D:96:C2:8B:9E:27:0D:36:F8:D6:57:53:E3:6B:30:8D:E8`. The earlier failed candidate was held back; only the passing source above produced this release.
+
+These fourteen genuine API-35 emulator captures were visually inspected. Data is synthetic; missing health readings are deliberately unavailable, not invented. Screenshots demonstrate layout, not measured frame performance or real watch synchronization.
+
+### Home
+
+<table><tr><td><img src="images/v1.11.1/home-light.png" width="280" alt="home light theme"></td><td><img src="images/v1.11.1/home-dark.png" width="280" alt="home dark theme"></td></tr></table>
+
+### Migraine
+
+<table><tr><td><img src="images/v1.11.1/migraine-light.png" width="280" alt="migraine light theme"></td><td><img src="images/v1.11.1/migraine-dark.png" width="280" alt="migraine dark theme"></td></tr></table>
+
+### Fitness
+
+<table><tr><td><img src="images/v1.11.1/fitness-light.png" width="280" alt="fitness light theme"></td><td><img src="images/v1.11.1/fitness-dark.png" width="280" alt="fitness dark theme"></td></tr></table>
+
+### Coach
+
+<table><tr><td><img src="images/v1.11.1/coach-light.png" width="280" alt="coach light theme"></td><td><img src="images/v1.11.1/coach-dark.png" width="280" alt="coach dark theme"></td></tr></table>
+
+### Food
+
+<table><tr><td><img src="images/v1.11.1/food-light.png" width="280" alt="food light theme"></td><td><img src="images/v1.11.1/food-dark.png" width="280" alt="food dark theme"></td></tr></table>
+
+### Insights
+
+<table><tr><td><img src="images/v1.11.1/insights-light.png" width="280" alt="insights light theme"></td><td><img src="images/v1.11.1/insights-dark.png" width="280" alt="insights dark theme"></td></tr></table>
+
+### Settings and exercise selection
+
+<table><tr><td><img src="images/v1.11.1/settings-updates.png" width="280" alt="Settings showing installed version and update controls"></td><td><img src="images/v1.11.1/training-cardio-picker.png" width="280" alt="Exercise-specific session selection"></td></tr></table>

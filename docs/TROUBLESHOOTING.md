@@ -2,7 +2,7 @@
 
 # Troubleshooting MigraineGuard
 
-Applies to v1.10.0 (18). Check **Settings → App → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
+Applies to v1.11.1 (20). Check **Settings → App → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
 
 [User guide](USER_GUIDE.md) · [Latest download](https://github.com/jdp323/migraineguard/releases/latest) · [Technical guide](HOW_IT_WORKS.md)
 
@@ -104,3 +104,9 @@ Expand the notification; Android/OEMs may hide actions in the collapsed view or 
 ## Exercise form shows the wrong inputs
 
 Use Fitness → Training → Log exercise and choose the matching tile. Cardio → Treadmill exposes speed/incline/distance; Stretching uses duration/hold/rounds with no lifting fields. Strength exposes weight/reps/completed sets. Optional empty values remain unknown. Change metric/imperial under your profile to convert speed/distance and weight; incline is percent in either system. Speed is not pace in minutes/km.
+
+## Swipe or back gesture does not behave as expected
+
+Confirm v1.11.1/code20. Swipe within the main page to move between neighboring tabs; the first/last page does not wrap. A drag on the head map, slider, text selection or horizontally scrolling chips belongs to that control; swipe another part of the page or tap the dock. Screen-edge back is Android’s system gesture and depends on gesture-navigation settings; toolbar and three-button Back still work. Back inside the migraine journal returns through its panes; from another main tab it returns Home. Profile and Drive editing now return to Settings instead of resetting the main screen.
+
+If transitions snap, check Android’s animation/accessibility preferences: a zero duration scale intentionally removes animations. No app setting forces them back on. Screen-scoped AI work may be cancelled if its page is disposed; saved replies remain in history, and requests are not automatically retried. Report app version, Android version, screen, font/display scale and reproducible gesture; remove private data from screenshots. Emulator gesture checks are not a frame-rate certification.

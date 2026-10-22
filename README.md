@@ -2,14 +2,14 @@
 
 A native Android companion for migraine journaling, movement, sleep, hydration, meals, body measurements, medication check-ins and optional educational AI coaching.
 
-**Latest verified build: v1.10.0 (18)** · Android 8+ · Public signed test APKs
+**Latest verified build: v1.11.1 (20)** · Android 8+ · Public signed test APKs
 
 ## Download and share
 
 **[Download MigraineGuard](https://github.com/jdp323/migraineguard/releases/latest)** — share this link with friends. Open **Assets** and choose the Standard .apk. No GitHub repository invitation is needed.
 
-- [Standard v1.10.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.10.0-debug/MigraineGuard-v1.10.0-debug.apk): normal app, com.migraineguard.app. Update in place when the signing certificate matches; keep local records.
-- [Preview v1.10.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.10.0-debug/MigraineGuard-v1.10.0-preview.apk): separate installation beside Standard, with its own storage and permissions.
+- [Standard v1.11.1 APK](https://github.com/jdp323/migraineguard/releases/download/v1.11.1-debug/MigraineGuard-v1.11.1-debug.apk): normal app, com.migraineguard.app. Update in place when the signing certificate matches; keep local records.
+- [Preview v1.11.1 APK](https://github.com/jdp323/migraineguard/releases/download/v1.11.1-debug/MigraineGuard-v1.11.1-preview.apk): separate installation beside Standard, with its own storage and permissions.
 - [User guide](docs/USER_GUIDE.md): installation, checked setup, daily features, Google Drive restore and data controls.
 - [Troubleshooting](docs/TROUBLESHOOTING.md): possible errors, what they mean and how to resolve them.
 - [How it works](docs/HOW_IT_WORKS.md): device path, account isolation, AI/backup boundaries and code map.
@@ -17,17 +17,17 @@ A native Android companion for migraine journaling, movement, sleep, hydration, 
 
 Do not uninstall an old installation containing records to resolve a signature conflict. Use Preview or verify a recovery export first. These are development builds, distributed outside the Play Store; app updates are downloaded from Releases.
 
-## What's new in v1.10.0
+## What's new in v1.11.1
 
-Water notifications offer **1 / 2 / 3 glasses** (250 ml each) without opening the app. Training separates Strength, Cardio, Stretching and Other: treadmill speed/incline/distance and stretch hold/rounds use their own fields. A device-encrypted remembered session keeps returning users on Home after a restart; explicit sign-out still clears it. [Usage and changed-file/function reference](docs/UPDATE_1_10_0.md).
+Swipe between all six main tabs, with a floating dock that follows your finger. Detail pages use directional transitions and native Back; profile and Drive settings return through the same back stack. Meal, coaching, migraine and training drafts stay with their page when switching tabs, and the keyboard-aware layout keeps controls reachable.
 
-A focused Home with daily essentials; a dedicated Migraine overview; Health/Training views with named exercises, optional machine photos, weight/reps/sets, completed-set checks, history and weekly goals. Settings now groups Account, AI, Reminders and App controls.
+The interface now shares an indigo/teal palette, compact gradient summaries, consistent rounded cards, lighter visual hierarchy and subtle shortcut press feedback. System/dynamic color preferences and explicit cloud/health choices remain available.
 
-Choose among eleven AI providers, use optional key-prefix suggestions, test the selected connection and change keys/models after setup. Set separate water/meal/medication/migraine intervals and active hours. Account shows measured Drive snapshot size. App can check GitHub for updates and open the download page; optional background notifications announce a newer release.
+<table><tr><td><img src="docs/images/v1.11.1/home-light.png" width="250" alt="Refreshed focused Home in light theme"></td><td><img src="docs/images/v1.11.1/home-dark.png" width="250" alt="Refreshed focused Home in dark theme"></td><td><img src="docs/images/v1.11.1/fitness-light.png" width="250" alt="Fitness with consistent compact feature header and swipe dock"></td></tr></table>
 
-<table><tr><td><img src="docs/images/v1.10.0/training-cardio-picker.png" width="250" alt="Four distinct activity tiles"></td><td><img src="docs/images/v1.10.0/training-cardio-details.png" width="250" alt="Treadmill speed incline and distance fields"></td><td><img src="docs/images/v1.10.0/training-stretch-details.png" width="250" alt="Stretching hold seconds and rounds without weight fields"></td></tr></table>
+[Navigation, design, changed files, screenshots and verification](docs/UPDATE_1_11_0.md) · [AI prompts and permissions](docs/AI_AND_PERMISSIONS.md).
 
-[Feature guide, inspected screenshots and changed-file/function reference](docs/UPDATE_1_10_0.md) · [Exact AI prompts and permissions](docs/AI_AND_PERMISSIONS.md). Screenshots use synthetic emulator data.
+All [v1.10 features](docs/UPDATE_1_10_0.md) remain: 1/2/3-glass water actions, exercise-specific logs, remembered sign-in, weekly goals, eleven AI choices, adjustable reminders, Drive snapshot size and GitHub update checks. Captures use synthetic data.
 
 ## Start in a few steps
 
@@ -57,7 +57,7 @@ Cloud AI uses your selected provider/key, then offline fallback. Optional legacy
 
 ## Verification and remaining phone checks
 
-[Release run 39685744572](https://github.com/jdp323/migraineguard/actions/runs/39685744572) passed **75 JVM tests + 24 Android runtime tests**, compilation, lint (0 errors) and both APK signing checks. Ten inspected API-35 screenshots show Home, Migraine, Fitness, strength/cardio/stretch training and Settings flows. Both public APK downloads were fetched without authentication and their SHA-256 hashes match the built assets.
+[Release run 39719987641](https://github.com/jdp323/migraineguard/actions/runs/39719987641) passed **75 JVM tests + 27 Android runtime tests**, compilation, lint (0 errors) and both APK signing checks. The two gesture tests also passed with system animations enabled, including three consecutive activity recreations in each mode. Fourteen inspected API-35 screenshots cover all six main tabs in light/dark themes, Settings updates and the cardio picker. Both public APK downloads were fetched without authentication and their SHA-256 hashes match the built assets.
 
 These tests use synthetic data and simulated Drive transport. Actual watch synchronization, friend-account native Drive transfer, live AI and OEM notification delivery still require phone acceptance. [Phone test checklist](docs/PHONE_TESTING.md) · [Feature status](docs/FEATURE_STATUS.md)
 

@@ -1,4 +1,6 @@
-> Current v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
+> Current v1.11.1: [swipe navigation, refreshed visual components, lifecycle/back behavior and verification](UPDATE_1_11_0.md).
+
+> Historical v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
 
 > v1.9.0: [focused Home, structured training, reminder/update controls, AI providers and Drive size](UPDATE_1_9_0.md). [Exact prompts and permissions](AI_AND_PERMISSIONS.md).
 
@@ -94,3 +96,10 @@ Reference: https://android.googlesource.com/platform/packages/modules/HealthFitn
 2. Enable water reminders, wait through the selected interval/active window, expand notification and choose 1/2/3 glasses. Confirm 250/500/750 ml in Water. Test on the lock screen and after closing the app. Repeating another button must not duplicate the same reminder. Old-account buttons must stop after sign-out.
 3. Log one strength session, treadmill speed/incline/distance, and stretching duration/hold/rounds. Confirm only relevant fields, metric/imperial conversions, history and Use as next session. Back up and restore on another updated installation; metrics transfer, photos do not.
 4. Disable notifications and verify no reminders. Keep any real records; use separate fixture accounts/Preview for destructive reset tests.
+
+## v1.11.0 gesture and visual acceptance
+
+1. Update Standard in place. Swipe both directions through all six main tabs; tap distant tabs and confirm the dock follows. Check vertical scrolling, the pain-map rotation, sliders and text selection independently.
+2. Type unsaved Food, Coach, Training and Migraine fields. Visit a distant tab and return; check drafts and scroll. Rotate/recreate the activity, then check the selected page. Save important entries before force-stop or sign-out.
+3. Open Settings → Profile, Water, Body, Medications and Drive. Use toolbar Back and system edge-back with the phone in gesture mode. Confirm return to the previous detail/page; cancel a Drive check and retry without losing local data.
+4. Inspect light/dark and optional dynamic color, a larger font/display scale, the Samsung keyboard, and system reduced/disabled animations. Note real phone fluidity; no fixed display refresh rate is promised.
