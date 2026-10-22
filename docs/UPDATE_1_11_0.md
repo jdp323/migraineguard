@@ -65,3 +65,7 @@ Implementation references: Android's [Pager](https://developer.android.com/devel
 ## v1.11.1 copy refinement
 
 Screenshot review found the Food introduction too dense and Insights displaying an internal provider-chain name. The Food introduction is shorter while its explicit sharing choices remain; Insights explains its categories and optional Coach review in ordinary language. These copy changes do not alter AI transmission, permissions, gestures, storage or schema.
+
+### Explicit page-state retention
+
+The final runtime rerun caught an intermittent empty Food draft after activity recreation. Main-tab saveable registries are now owned by an explicit six-key state holder outside the lazy pager and detail host, rather than depending only on the pager item lifecycle. The test checks the entered draft before recreation and still requires that exact draft after each of three consecutive recreations, both with animations disabled and enabled. This remains local UI state, separate from saved journal/Drive records.

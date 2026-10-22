@@ -122,6 +122,7 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
     val currentRoute = entry?.destination?.route
     val bottomItems = MainTabs
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { bottomItems.size })
+    val pageStateHolder = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
     var tabJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     fun goBottom(route: String) {
         val page = bottomItems.indexOfFirst { it.dest.route == route }
@@ -171,6 +172,7 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
                     beyondViewportPageCount = 1, key = { bottomItems[it].dest.route },
                     modifier = Modifier.fillMaxSize().testTag("main-pager")) { page ->
                     val active = currentRoute == Routes.Home && pagerState.currentPage == page
+                    pageStateHolder.SaveableStateProvider(bottomItems[page].dest.route) {
                     when (bottomItems[page].dest.route) {
                         Routes.Home -> {
                 HomeScreen(
@@ -205,6 +207,7 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
                             hasCloudKey = prefs.hasConfiguredCloud(), onConnectGemini = { settingsInitialGroup = "AI"; navController.navigate(Routes.Settings) })
                         Routes.Coach -> CoachScreen(coachRepository = container.aiCoachRepository, initialPersona = coachPersona,
                             hasCloudKey = prefs.hasConfiguredCloud(), onConnectGemini = { settingsInitialGroup = "AI"; navController.navigate(Routes.Settings) })
+                    }
                     }
                 }
             }

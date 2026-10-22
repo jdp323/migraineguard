@@ -86,9 +86,14 @@ class SwipeNavigationTest {
             selected("home")
             tap("food")
             compose.onNodeWithTag("food-description").performScrollTo().performTextReplacement("Recreated meal draft")
-            scenario.recreate()
-            selected("food")
-            compose.onNodeWithTag("food-description").performScrollTo().assertTextContains("Recreated meal draft")
+            compose.waitForIdle()
+            compose.onNodeWithTag("food-description").assertTextContains("Recreated meal draft")
+            repeat(3) {
+                scenario.recreate()
+                selected("food")
+                compose.onNodeWithTag("food-description").performScrollTo().assertTextContains("Recreated meal draft")
+                compose.waitForIdle()
+            }
             scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
             selected("home")
         }
