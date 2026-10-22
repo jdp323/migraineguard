@@ -130,8 +130,7 @@ fun NutritionScreen(
             item { FeatureHeader("Eat with awareness.", "A simple place for meals, photos and nutrition estimates.", Icons.Filled.LocalDining, eyebrow = "Your nutrition") }
             item {
                 Text(
-                    "Describe your meal for an optional AI estimate. Photos stay local unless you choose to send one to the selected image-capable AI provider. " +
-                        "Photo estimates can miss ingredients and portion sizes. Without a usable AI response, nutrition values remain unavailable.",
+                    "Describe a meal or add a photo. You choose what to share with AI; estimates may be incomplete.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

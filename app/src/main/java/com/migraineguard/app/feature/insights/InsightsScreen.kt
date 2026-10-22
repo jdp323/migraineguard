@@ -113,7 +113,7 @@ fun InsightsScreen(
         ) {
             FeatureHeader("See the bigger picture.", "Reflect on your journal, habits and recorded trends.", Icons.Filled.Insights, eyebrow = "Your insights")
             Text(
-                "Modes for migraines, food, water, fitness, sleep, and weather. AI via ${aiClient.providerNames().joinToString(" → ")}.",
+                "Review your journal by category and time range. Optional AI reviews are available in Coach.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

@@ -150,7 +150,7 @@ fun ConnectGeminiScreen(
                         is Result.Error -> {
                             statusIsError = true
                             status = "Saved, but test failed: ${r.message}. " +
-                                "You can still use OfflineHealthBrain, or fix the key in Settings."
+                                "You can still use the on-device assistant, or fix the key in Settings."
                             busy = false
                         }
                     }
@@ -183,8 +183,8 @@ fun ConnectGeminiScreen(
         }
         Spacer(Modifier.height(16.dp))
         Text(
-            "Without a key, Coach / Analyst / cloud AI use OfflineHealthBrain only " +
-                "(on-device reports from your logs). You can add a key anytime in Settings.",
+            "Without a saved key, Coach and Analyst use on-device reports from your logs. " +
+                "You can add a key anytime in Settings.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

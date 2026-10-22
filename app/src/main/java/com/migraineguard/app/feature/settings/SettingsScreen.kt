@@ -372,7 +372,7 @@ fun SettingsScreen(
                 Text(
                     "Logs stay on this device unless you enable Drive backup, export a backup or choose to share a health summary with cloud AI. " +
                         "Weather shares approximate coordinates with Open-Meteo. Cloud AI uses your encrypted stored keys; photos are sent to your selected image-capable provider only when you choose. " +
-                        "OfflineHealthBrain always available. Not a medical device — for personal awareness only.",
+                        "On-device assistance is always available. Not a medical device — for personal awareness only.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }

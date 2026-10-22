@@ -241,7 +241,7 @@ fun CoachScreen(
 
             SectionCard(title = "Session history", icon = Icons.Filled.History) {
                 if (sessions.isEmpty()) {
-                    Text("No AI sessions yet. Try a quick action above — OfflineHealthBrain works without keys.")
+                    Text("No AI sessions yet. Try a quick action above — the on-device assistant works without keys.")
                 } else {
                     sessions.take(20).forEach { s ->
                         OutlinedButton(

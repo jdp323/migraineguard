@@ -1,6 +1,6 @@
 # v1.11.0 — swipe navigation and a refreshed visual system
 
-Application 1.11.0 / code 19. Extends [v1.10 features](UPDATE_1_10_0.md). Release verification and inspected captures will be added after the hosted run.
+Current application **1.11.1 / code 20**, including the v1.11.0 features below. Extends [v1.10 features](UPDATE_1_10_0.md). The final release evidence and inspected captures are recorded below.
 
 ## Navigate with touch
 
@@ -61,3 +61,7 @@ Local checks passed 75 JVM tests with zero failures/errors, lint with no errors,
 No database migration or data-format change is introduced. The retained signing certificate and separate Standard/Preview packages keep the existing update path. Update an installed compatible package in place; do not uninstall records to work around a signature mismatch.
 
 Implementation references: Android's [Pager](https://developer.android.com/develop/ui/compose/layouts/pager), [predictive-back callback guidance](https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture) and [Navigation Compose predictive back](https://developer.android.com/develop/ui/compose/animation/shared-elements/navigation). No third-party app's design assets or proprietary fonts were copied.
+
+## v1.11.1 copy refinement
+
+Screenshot review found the Food introduction too dense and Insights displaying an internal provider-chain name. The Food introduction is shorter while its explicit sharing choices remain; Insights explains its categories and optional Coach review in ordinary language. These copy changes do not alter AI transmission, permissions, gestures, storage or schema.
