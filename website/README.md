@@ -31,3 +31,7 @@ Deployed reviewed static source 77f8e1032e6439ea96d1f38d932c450fe3fe3ea2 through
 ## v1.10.0 update (2026-10-21)
 
 Deployed reviewed static source 0d6628c629f0b7d41961172517358522a1d8f752 via the existing authorized Cloud Shell and preinstalled Firebase CLI, Hosting only. All seven live files returned 200 and matched the local bytes; restrictive CSP remained present. Help/privacy now describe the remembered device-only identity, water quick actions and activity-specific metrics. APK distribution remains public GitHub, with no billing/service expansion. Exact file hashes and browser proof stay under ignored verification/v1.10.0.
+
+## v1.11.1 update (2026-10-22)
+
+Deployed reviewed static source d1a9352eec922180c8cfe0ba450d920c83f4697d through the existing authorized Cloud Shell and Firebase CLI, Hosting only. All seven live files returned 200 and matched the committed bytes; CSP and nosniff headers remained present. The help page was visually verified showing v1.11.1/code 20, swipe navigation, native Back and current public screenshot/documentation links. Exact hashes and browser proof remain in ignored verification/v1.11.1. No billing or service expansion; APK downloads remain on public GitHub Releases.
