@@ -42,7 +42,18 @@ class BodyProgressRepository(context: Context, private val dao: BodyProgressDao)
             resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
             require(bounds.outWidth > 0 && bounds.outHeight > 0 && bounds.outWidth.toLong() * bounds.outHeight <= 150_000_000L)
             val options = BitmapFactory.Options().apply { inSampleSize = 1; while (maxOf(bounds.outWidth, bounds.outHeight) / inSampleSize > 1280) inSampleSize *= 2 }
-            resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) } ?: error("Cannot read this image.")
+            val decoded = resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) } ?: error("Cannot read this image.")
+            val orientation = resolver.openInputStream(uri)?.use {
+                runCatching { android.media.ExifInterface(it).getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION,1) }.getOrDefault(1)
+            } ?: 1
+            val matrix = android.graphics.Matrix().apply {
+                when(orientation) {
+                    2 -> setScale(-1f,1f); 3 -> setRotate(180f); 4 -> setScale(1f,-1f)
+                    5 -> { setRotate(90f); postScale(-1f,1f) }; 6 -> setRotate(90f)
+                    7 -> { setRotate(-90f); postScale(-1f,1f) }; 8 -> setRotate(-90f)
+                }
+            }
+            if(matrix.isIdentity) decoded else Bitmap.createBitmap(decoded,0,0,decoded.width,decoded.height,matrix,true).also { if(it !== decoded) decoded.recycle() }
         }
         try {
             val bytes = ByteArrayOutputStream()

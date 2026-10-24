@@ -14,7 +14,7 @@ WorkManager runs approximately and can be delayed by battery saving, Doze, force
 
 Open Settings → Account → Body progress / photos / weight, or the existing Body shortcut. Add a progress photo / check-in, choose a date and Front, Side, Back or Other, then optionally record weight, waist, scale-reported body-fat percentage and observations. A photo is optional; measurement/note-only check-ins work. Save private check-in copies the selected image into this account's app-private database. The system photo picker grants access only to the selected image; no broad gallery/storage permission is requested.
 
-Images are resized to at most 1280 pixels on the long side and JPEG re-encoded with a 360,000-byte limit per photo. Original EXIF/location metadata and source URI are not retained. Android 9+ ImageDecoder handles image orientation; the Android 8 fallback reads a sampled bitmap. Original gallery images are unaffected. This is normalized progress media, not an archival full-resolution photo service.
+Images are resized to at most 1280 pixels on the long side and JPEG re-encoded with a 360,000-byte limit per photo. Original EXIF/location metadata and source URI are not retained. Android 9+ ImageDecoder handles image orientation; the Android 8 fallback reads a sampled bitmap and applies EXIF orientation before discarding metadata. Original gallery images are unaffected. This is normalized progress media, not an archival full-resolution photo service.
 
 Compare over time lets you select two check-ins, view photos side by side and see changes in recorded measurements and elapsed days. Use the same pose, lighting, distance and clothing for a useful comparison. Numerical analysis uses the measurements you supplied; the app does not infer body fat, health, attractiveness or diagnosis from appearance. Body progress photos are never sent to AI, and no new AI prompt/provider call is introduced.
 
@@ -74,7 +74,8 @@ All Kotlin paths below are relative to app/src/main/java/com/migraineguard/app/.
 | feature/settings/CloudBackupFormat.kt; DriveSyncRepository.kt | Cloud format 3 accepts 2; same private app-data filename/scope; explicit photo inclusion and body-table observation |
 | feature/settings/SettingsScreen.kt; DriveBackupScreen.kt | Data settings group, body entry point, multi-brand setup and accurate backup size/content language |
 | feature/fitness/HealthDataRepository.kt; StepSyncMessage.kt; feature/setup/HealthConnectSetup.kt; feature/track/TrackScreen.kt | Generic source copy, no Samsung requirement, combined default, identified calorie source and optional Samsung diagnostics |
-| app/src/main/AndroidManifest.xml | Declares optional READ_HEALTH_DATA_IN_BACKGROUND; no broad gallery permission |
+| app/src/main/AndroidManifest.xml | Declares optional READ_HEALTH_DATA_IN_BACKGROUND and removes the unused extended-history declaration; no broad gallery permission |
+| feature/fitness/PermissionsRationaleActivity.kt; app/src/main/res/values/strings.xml | Current system-visible rationale for optional reads, local/Drive storage and explicit AI choices; removes obsolete write/Drive-placeholder text |
 | app/src/test and app/src/androidTest | Movement/export validation, non-Samsung reads, migrations 1–6, photo normalization/recovery/deletion, credential exclusion and new-screen runtime captures |
 
 ## Compatibility and limits

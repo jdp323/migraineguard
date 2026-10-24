@@ -55,7 +55,7 @@ class PermissionsRationaleActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         SectionCard(
-                            title = "Migraine correlation + fitness",
+                            title = "Your health data, your choices",
                             icon = Icons.Filled.MonitorHeart,
                         ) {
                             Text(
@@ -64,7 +64,7 @@ class PermissionsRationaleActivity : ComponentActivity() {
                             )
                         }
                         Text(
-                            "Permissions used: Steps, Sleep, Heart rate, Exercise, Distance, Calories (read) · Exercise (write).",
+                            "Read permissions: Steps, Sleep, Heart rate, Exercise, Distance and total Calories. Movement reminders can separately request optional background reads. No exercise-write permission.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
