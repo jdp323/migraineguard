@@ -29,6 +29,32 @@ class DriveRestoreTest {
         }
     }
 
+    @Test fun bodyProgressStaysLocalUntilPhotoOptInAndDeletionSurvivesCloudMerge() = runBlocking {
+        val email="photo-"+UUID.randomUUID()+"@example.invalid"
+        val owner=AccountStorage.google(email)
+        val prefs=UserPreferencesRepository(context,owner)
+        val db=AppDatabase.get(context,owner)
+        val scope=CoroutineScope(SupervisorJob()+Dispatchers.IO)
+        val remote=MemoryDrive()
+        val repository=DriveSyncRepository(owner,prefs,db,BackupRepository(context,db,prefs),scope,remote)
+        val entry=BodyProgressEntity(UUID.randomUUID().toString(),"2026-10-01","Front",notes="private body fixture",weightKg=70f,modifiedAtMillis=1)
+        try {
+            db.bodyProgressDao().put(entry)
+            repository.connect(email,email);repository.backupNow()
+            assertTrue(CloudBackupFormat.decode(remote.saved!!,owner).journal.bodyProgress.isEmpty())
+            prefs.setBodyPhotoDriveBackup(true);prefs.setMovementReminders(true,90);repository.backupNow()
+            val included=CloudBackupFormat.decode(remote.saved!!,owner)
+            assertEquals(entry,included.journal.bodyProgress.single())
+            assertTrue(included.settings.movementReminders);assertEquals(90,included.settings.movementReminderMinutes)
+            com.migraineguard.app.feature.body.BodyProgressRepository(context,db.bodyProgressDao()).remove(entry)
+            repository.backupNow()
+            assertTrue(CloudBackupFormat.decode(remote.saved!!,owner).journal.bodyProgress.single().deleted)
+            prefs.setBodyPhotoDriveBackup(false);repository.backupNow()
+            assertTrue(CloudBackupFormat.decode(remote.saved!!,owner).journal.bodyProgress.isEmpty())
+            assertTrue(db.bodyProgressDao().all().single().deleted)
+        } finally { repository.dispose();scope.cancel() }
+    }
+
     @Test fun freshInstallationRestoresBirthdayMetricsKeysJournalAndSetup() = runBlocking {
         val uuid = UUID.randomUUID().toString()
         val email = "drive-$uuid@example.invalid"

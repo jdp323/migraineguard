@@ -53,6 +53,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun BodyMetricsScreen(
     weightRepository: WeightRepository,
+    progressRepository: BodyProgressRepository,
     preferencesRepository: UserPreferencesRepository,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -92,6 +93,8 @@ fun BodyMetricsScreen(
                     Text("%.1f · %s".format(bmi, prefs.bodyProfile.bmiLabel), style = MaterialTheme.typography.titleLarge)
                 }
             }
+
+            BodyProgressPanel(progressRepository, preferencesRepository, metric)
 
             SectionCard(title = "Log weight") {
                 OutlinedTextField(

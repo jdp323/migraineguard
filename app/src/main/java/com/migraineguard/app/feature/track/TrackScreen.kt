@@ -383,7 +383,7 @@ fun TrackScreen(
             } }, modifier = Modifier.fillMaxWidth()) { Text("Connect this phone's health data") }
             SectionCard(title = stringResource(R.string.steps_today), icon = Icons.Filled.DirectionsWalk) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("samsung" to "Samsung Health", "combined" to "Health Connect").forEach { (key, label) ->
+                    listOf("combined" to "All sources", "samsung" to "Samsung Health").forEach { (key, label) ->
                         FilterChip(selected = prefs.stepSource == key, onClick = { scope.launch {
                             preferencesRepository.setStepSource(key)
                             healthRefreshCoordinator?.refresh(force = true)
@@ -490,7 +490,7 @@ fun TrackScreen(
                     )
                     if (soft) {
                         Text(
-                            "Samsung Health must be allowed to write Sleep, and this installed MigraineGuard app must be allowed to read it. Open Samsung Health after changing sharing.",
+                            "Your source health app must be allowed to write Sleep, and this installed MigraineGuard app must be allowed to read it. Sync your device in its source app after changing sharing.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -512,11 +512,11 @@ fun TrackScreen(
                 Text(if (showConnectionDetails) "Hide connection details" else "Connection & sync details")
             }
             if (showConnectionDetails) {
-            SectionCard(title = "Samsung Health / Health Connect", icon = Icons.Filled.Watch) {
+            SectionCard(title = "Health Connect / compatible devices", icon = Icons.Filled.Watch) {
                 Text("Health Connect belongs to this phone, independently of Google login. Connect only if these are your health records. Each account must connect separately.")
                 Text(
                     "MigraineGuard appears under Health Connect → Connected apps after the first successful permission request (including sideloaded debug builds). " +
-                        "Enable Samsung Health → Health Connect sharing so Galaxy Watch data flows here.",
+                        "Enable Health Connect sharing in Samsung Health, Garmin Connect, Fitbit / Google Health or another compatible source. Records shared by any source can appear here. Select All sources for the combined total; do not add it to Samsung’s count.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(

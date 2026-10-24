@@ -113,7 +113,7 @@ jobs:
             adb shell am instrument -w com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-runtime-results.txt
             adb pull /sdcard/Android/data/com.migraineguard.app/files/verification ui-verification || true
             cat android-runtime-results.txt
-            grep -q 'OK (27 tests)' android-runtime-results.txt
+            grep -q 'OK (33 tests)' android-runtime-results.txt
             adb shell settings put global window_animation_scale 1.0
             adb shell settings put global transition_animation_scale 1.0
             adb shell settings put global animator_duration_scale 1.0
@@ -160,15 +160,17 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
-          Redesigned the interface with a calmer indigo/teal palette, compact gradient summaries, consistent rounded cards, clearer type and responsive press feedback. Home keeps daily essentials and four focused shortcuts; all main screens share the refreshed visual system.
+          Added adjustable stand/stretch/walk reminders in Settings → Reminders. Optional Health Connect background step access suppresses a break alert when recent shared steps show activity. Missing access/data uses an honest timed reminder; this is not a sitting/posture detector. Android schedules reminders approximately.
 
-          Swipe left/right between Home, Migraine, Fitness, Coach, Food and Insights. The floating dock's selection capsule follows the swipe, and all six labeled tabs remain tappable and accessible. Swiping the head map or scrolling horizontal controls keeps their own behavior. Short detail-page transitions use native Navigation Compose back handling, including predictive back where the Android/device configuration supports it. Android's edge gestures are not replaced by an app-wide drag detector.
+          Body progress now keeps dated photos, notes and optional weight, waist and scale body-fat measurements in the current account's private local database. Compare two check-ins side by side and see recorded measurement changes. Body photos are never sent to AI. A separate opt-in includes body progress in the user's own private Google Drive snapshot.
 
-          Food, coach, migraine and training drafts and scroll positions are retained across offscreen tab disposal; selected page/drafts also survive supported activity recreation. A keyboard-aware layout keeps forms and the dock above the IME. Profile and Drive settings now have proper detail routes with Back; cancelling a Drive check leaves local data intact and allows retry. Account changes still recreate the entire storage/UI graph.
+          Settings → Data exports readable JSON/CSV plus saved body photos in a ZIP, or a password-encrypted recovery backup. Readable ZIPs are not encrypted. Neither manual format includes configured provider keys, login tokens or raw Health Connect records. Meal/equipment photo files are excluded.
 
-          No permission, database schema, AI endpoint or cloud scope is added. All v1.10 water quick actions, activity-specific logs, remembered sign-in, per-account backups and GitHub update checks remain.
+          New profiles default to all Health Connect sources; Samsung remains an optional source preference. Compatible Garmin, Fitbit / Google Health and other source apps must write records into Health Connect. There is no direct watch connection. Source totals are alternatives, never added together.
 
-          Release gates include unit tests, lint, retained Standard/Preview signing, 27 Android tests, and a second run of the two gesture/back/draft tests with system animations enabled. Emulator checks do not certify phone frame rate, Samsung gesture behavior or external health/provider integrations. See docs/UPDATE_1_11_0.md for usage, changed files, screenshots and verification limits.
+          Adds one optional background health-read permission and preserving Room migration 6 → 7. No developer health-data backend, new AI endpoint or Drive scope. Current Drive format 3 and recovery format 2 accept older snapshots; update all devices before using new backups.
+
+          Release gates include JVM tests, lint, retained Standard/Preview signing, 33 Android tests, and a second run of gesture/back/draft tests with animations enabled. Actual wearable sync and OEM background delivery still need phone testing. See docs/UPDATE_1_12_0.md for controls, storage, export formats, tests and limitations.
 
           Use Standard to update com.migraineguard.app with the retained FB:67 certificate, or Preview alongside it with separate records/permissions. Do not uninstall an older app containing records to resolve a signing conflict.
           NOTES

@@ -46,15 +46,15 @@ class SetupVerificationTest {
     @Test fun permissionsWithoutRecordsDoNotShowDataCheckmarks() {
         show(Reads()); checked()
         verified("Requested permissions", true)
-        for (title in listOf("Samsung records received", "Steps received", "Heart rate received", "Sleep received")) verified(title, false)
+        for (title in listOf("Steps received", "Heart rate received", "Sleep received")) verified(title, false)
     }
     @Test fun realRecordsCheckAndRevokedAccessClearsTheirChecks() {
         val repo = Reads().apply { records = true }
         show(repo); checked()
-        for (title in listOf("Samsung records received", "Steps received", "Heart rate received", "Sleep received")) verified(title, true)
+        for (title in listOf("Steps received", "Heart rate received", "Sleep received")) verified(title, true)
         repo.fail = true
         compose.onNodeWithText("Check connection & readings").performScrollTo().performClick()
         compose.waitUntil(10_000) { compose.onAllNodesWithText("The connection could not be checked. Retry when Health Connect is available.").fetchSemanticsNodes().isNotEmpty() }
-        for (title in listOf("Requested permissions", "Samsung records received", "Steps received", "Heart rate received", "Sleep received")) verified(title, false)
+        for (title in listOf("Requested permissions", "Steps received", "Heart rate received", "Sleep received")) verified(title, false)
     }
 }

@@ -34,5 +34,10 @@ object PreservingMigrations {
             db.execSQL("CREATE TABLE IF NOT EXISTS water_action_receipts (token TEXT NOT NULL PRIMARY KEY, appliedAtMillis INTEGER NOT NULL)")
         }
     }
-    val ALL: Array<Migration> = oldMigrations + FROM_4 + FROM_5
+    val FROM_6 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS body_progress (id TEXT NOT NULL PRIMARY KEY, dateIso TEXT NOT NULL, pose TEXT NOT NULL, notes TEXT NOT NULL, weightKg REAL, waistCm REAL, bodyFatPercent REAL, jpegBase64 TEXT NOT NULL, modifiedAtMillis INTEGER NOT NULL, deleted INTEGER NOT NULL)")
+        }
+    }
+    val ALL: Array<Migration> = oldMigrations + FROM_4 + FROM_5 + FROM_6
 }

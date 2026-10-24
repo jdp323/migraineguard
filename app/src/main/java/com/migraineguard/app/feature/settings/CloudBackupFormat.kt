@@ -11,14 +11,14 @@ import java.security.MessageDigest
 
 @Serializable
 data class CloudAccountBackup(
-    val formatVersion: Int = 2,
+    val formatVersion: Int = 3,
     val owner: String,
     val savedAtMillis: Long,
     val settings: UserPreferences,
     val journal: JournalBackup,
 ) {
     fun validate(account: String) {
-        require(formatVersion == 2 && owner == account && account.startsWith("google-")) {
+        require(formatVersion in 2..3 && owner == account && account.startsWith("google-")) {
             "This backup belongs to a different account or an unsupported app version."
         }
         require(savedAtMillis >= 0 && settings.modifiedAtMillis >= 0)
@@ -26,11 +26,12 @@ data class CloudAccountBackup(
         require(settings.aiConnections.size <= 20 && settings.aiConnections.all { (id, c) -> com.migraineguard.app.core.ai.AiCatalog.service(id) != null && c.apiKey.length <= 4096 && c.model.length <= 160 })
         require(settings.preferredAiProvider in listOf("auto", "offline") || com.migraineguard.app.core.ai.AiCatalog.service(settings.preferredAiProvider) != null)
         require(settings.weeklyWorkoutGoal in 1..7)
-        require(listOf(settings.waterReminderMinutes, settings.foodReminderMinutes, settings.medicationReminderMinutes, settings.migraineReminderMinutes).all { it in 15..1440 })
+        require(listOf(settings.waterReminderMinutes, settings.foodReminderMinutes, settings.medicationReminderMinutes, settings.migraineReminderMinutes, settings.movementReminderMinutes).all { it in 15..1440 })
         require(settings.reminderStartHour in 0..23 && settings.reminderEndHour in 0..23 && settings.reminderStartHour != settings.reminderEndHour)
         journal.copy(profile = settings.bodyProfile, waterGoalCups = settings.waterGoalCups,
             stepGoal = settings.dailyStepGoal, sleepGoalHours = settings.sleepGoalHours).validate()
         journal.validate()
+        require(journal.settings == null) { "Drive settings must have a single owner." }
     }
 }
 

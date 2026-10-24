@@ -102,7 +102,8 @@ fun HealthConnectStep(healthDataRepository: HealthDataRepository, snackbar: Snac
         SectionCard("Connection checklist") {
             VerificationRow("Health Connect available", if (evidence.available) "Android's health service is ready." else "Install or update Health Connect on this phone.", state(evidence.available))
             VerificationRow("Requested permissions", if (evidence.allPermissions) "All requested read permissions were checked." else "Some reads are not allowed, or this account has not connected yet.", state(evidence.allPermissions))
-            VerificationRow("Samsung records received", if (evidence.samsungVerified) "A returned record or aggregate identifies Samsung Health." else "Not verified yet. Opening Samsung Health alone does not confirm sharing.", state(evidence.samsungVerified))
+            Text("Compatible sources include Samsung Health, Garmin Connect, Fitbit / Google Health and other Health Connect writers. Enable sharing in your source app, then grant MigraineGuard read access. A specific brand is not required.", style = MaterialTheme.typography.bodySmall)
+            if (healthDataRepository.diagnostics().samsungHealthInstalled) VerificationRow("Samsung records received (optional)", if (evidence.samsungVerified) "A returned record or aggregate identifies Samsung Health." else "No Samsung record received; other Health Connect sources can still work.", state(evidence.samsungVerified))
             Button(onClick = { connect() }, enabled = !checking, modifier = Modifier.fillMaxWidth()) { Text("Connect / grant permissions") }
             OutlinedButton(onClick = { openFirst(healthDataRepository.openHealthConnectInstallOrSettingsIntents()) }, modifier = Modifier.fillMaxWidth()) { Text("Install / open Health Connect") }
             healthDataRepository.openSamsungHealthSettingsIntent()?.let { intent ->
@@ -113,7 +114,7 @@ fun HealthConnectStep(healthDataRepository: HealthDataRepository, snackbar: Snac
             VerificationRow("Steps received", if (evidence.stepsVerified) "Today: " + evidence.fitness?.observedSteps + if (evidence.fitness?.stepSync?.isEstimated == true) " · raw-record estimate" else " steps" else "Waiting for shared steps. Permission alone is not a reading.", state(evidence.stepsVerified))
             VerificationRow("Heart rate received", if (evidence.heartVerified) "Latest recorded sample: " + evidence.fitness?.heartRateBpm + " BPM; not a live stream." else "No dated heart-rate sample received.", state(evidence.heartVerified))
             VerificationRow("Sleep received", if (evidence.sleepVerified) "Completed session: %.1f hours".format(evidence.sleep?.hours) + if (evidence.sleep?.isRecent == false) " · older session" else "" else "No completed sleep session received.", state(evidence.sleepVerified))
-            Text("Missing readings can arrive after Samsung Health syncs. You can continue and check Fitness later.", style = MaterialTheme.typography.bodySmall)
+            Text("Missing readings can arrive after your source health app syncs. You can continue and check Fitness later.", style = MaterialTheme.typography.bodySmall)
             OutlinedButton(onClick = { checkHealth() }, enabled = !checking, modifier = Modifier.fillMaxWidth()) {
                 Text(if (checking) "Checking connection…" else "Check connection & readings")
             }

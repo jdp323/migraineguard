@@ -77,7 +77,7 @@ class HealthConnectHealthDataRepository(
     private val testSdkStatus: (() -> Int)? = null,
     private val now: () -> Instant = Instant::now,
     private val readPageSize: Int = 1000,
-    private val stepSource: suspend () -> String = { "samsung" },
+    private val stepSource: suspend () -> String = { "combined" },
 ) : HealthDataRepository {
 
     @Volatile
@@ -291,7 +291,7 @@ class HealthConnectHealthDataRepository(
 
     private fun readFailure(label: String, error: Throwable): String =
         if (error is SecurityException) label + " read permission is missing or was revoked. Open Health Connect permissions."
-        else label + " read failed (" + error.javaClass.simpleName + "). Retry; if it persists, update Health Connect and Samsung Health."
+        else label + " read failed (" + error.javaClass.simpleName + "). Retry; if it persists, update Health Connect and your source health app."
 
     override suspend fun latestFitness(): HealthSnapshot {
         lastErrorText = ""
@@ -359,7 +359,7 @@ class HealthConnectHealthDataRepository(
             val heartMessage = when {
                 !hasHeart -> "Heart rate read permission is not allowed for this installed app."
                 heartRead.isFailure -> readFailure("Heart rate", heartRead.exceptionOrNull()!!)
-                heart == null -> "Permission allowed; no heart rate samples shared in the last 7 days. Allow Samsung Health to write Heart rate and sync the watch in Samsung Health."
+                heart == null -> "Permission allowed; no heart rate samples shared in the last 7 days. Allow your source health app to write Heart rate and sync your device there."
                 else -> "Latest recorded sample; not a live watch reading."
             }
             heartRead.exceptionOrNull()?.let { recordError(heartMessage) }
@@ -370,10 +370,10 @@ class HealthConnectHealthDataRepository(
                 val combinedCalories = client.aggregate(AggregateRequest(setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), dayFilter))
                 val origins = combinedCalories.dataOrigins
                 if (origins.size > 1) {
-                    val samsungOrigin = origins.firstOrNull { it.packageName == HealthConnectPackages.SAMSUNG_HEALTH }
-                    samsungOrigin?.let { origin -> client.aggregate(AggregateRequest(
+                    val preferredOrigin = (if(preferSamsung) origins.firstOrNull { it.packageName == HealthConnectPackages.SAMSUNG_HEALTH } else null) ?: origins.sortedBy { it.packageName }.first()
+                    preferredOrigin.let { origin -> client.aggregate(AggregateRequest(
                         setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), dayFilter, setOf(origin)
-                    ))[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.let { it to "Samsung Health" } }
+                    ))[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.let { it to origin.packageName } }
                 } else combinedCalories[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.let {
                     it to origins.firstOrNull()?.packageName.orEmpty()
                 }
@@ -409,7 +409,7 @@ class HealthConnectHealthDataRepository(
                 .filter { !it.endTime.isAfter(end) && it.endTime.isAfter(it.startTime) }
                 .maxByOrNull { it.endTime }
                 ?: return SleepSnapshot(0f, "No data",
-                    "Permission allowed; no sleep sessions shared in the last 14 days. Allow Samsung Health to write Sleep, open Samsung Health and sync the watch.")
+                    "Permission allowed; no sleep sessions shared in the last 14 days. Allow your source health app to write Sleep and sync your device there.")
             val recent = !latest.endTime.isBefore(end.minus(36, ChronoUnit.HOURS))
             SleepSnapshot(ChronoUnit.SECONDS.between(latest.startTime, latest.endTime) / 3600f,
                 if (recent) "Recorded session duration" else "Older session — not last night's sleep",

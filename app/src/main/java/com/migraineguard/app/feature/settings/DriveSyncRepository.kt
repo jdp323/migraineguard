@@ -79,7 +79,7 @@ class DriveSyncRepository(
 
     private fun journalChanges(): Flow<Unit> = kotlinx.coroutines.flow.callbackFlow {
         val observer = object : InvalidationTracker.Observer("migraine_episodes", "nutrition_scans",
-            "water_history", "workouts", "weight_entries", "medications", "ai_sessions") {
+            "water_history", "workouts", "weight_entries", "medications", "ai_sessions", "body_progress") {
             override fun onInvalidated(tables: Set<String>) { trySend(Unit) }
         }
         db.invalidationTracker.addObserver(observer)
@@ -103,7 +103,7 @@ class DriveSyncRepository(
             }
             val settings = prefs.preferences.first()
             val payload = CloudAccountBackup(owner = account, savedAtMillis = System.currentTimeMillis(),
-                settings = CloudBackupFormat.portable(settings), journal = backup.snapshot())
+                settings = CloudBackupFormat.portable(settings), journal = backup.snapshot(includeBodyPhotos = settings.bodyPhotoDriveBackup))
             val hash = CloudBackupFormat.fingerprint(payload)
             val encoded = CloudBackupFormat.encode(payload)
             val changed = hash != fingerprint
@@ -112,7 +112,7 @@ class DriveSyncRepository(
                 fingerprint = hash
             }
             mutableState.value = DriveBackupState(backupBytes = (if (changed) encoded.size else (previous?.bytes?.size ?: encoded.size)).toLong(), connected = true, busy = false, lastSavedMillis = System.currentTimeMillis(), message =
-                "Your profile, settings, API keys and journal are backed up to your private Drive app data.")
+                "Your profile, settings, API keys and journal are backed up to your private Drive app data." + if(settings.bodyPhotoDriveBackup) " Body progress photos are included." else " Body progress photos are excluded.")
         } catch (e: CancellationException) {
             mutableState.value = mutableState.value.copy(busy=false,message="Backup paused. Your local data is preserved.")
             throw e

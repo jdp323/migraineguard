@@ -7,9 +7,9 @@ class StepSyncMessageTest {
     @Test fun emptyReadExplainsSharingWithoutClaimingPermissionFailure() {
         assertTrue(stepSyncMessage(null, null).contains("returned no steps"))
     }
-    @Test fun missingSamsungDataGivesSharingAndSyncSteps() {
-        assertTrue(stepSyncMessage(12, null).contains("Allow Samsung Health to write Steps"))
-        assertTrue(stepSyncMessage(12, 0).contains("Sync now"))
+    @Test fun nonSamsungDataDoesNotRequireSamsungSharing() {
+        assertTrue(stepSyncMessage(12, null).contains("No Samsung count is required"))
+        assertTrue(stepSyncMessage(12, 0).contains("source app"))
     }
     @Test fun higherSamsungCountExplainsPriorityWithoutAddingCounts() {
         val message = stepSyncMessage(12, 180)

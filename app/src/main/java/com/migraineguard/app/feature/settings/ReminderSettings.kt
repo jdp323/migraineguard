@@ -10,15 +10,18 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.migraineguard.app.core.data.prefs.*
 import com.migraineguard.app.core.ui.SectionCard
 import com.migraineguard.app.feature.reminders.ReminderWorker
+import com.migraineguard.app.feature.reminders.MovementCheck
+import androidx.health.connect.client.PermissionController
 import kotlinx.coroutines.launch
 
 @Composable
-private fun ToggleRow(label:String,checked:Boolean,onChange:(Boolean)->Unit){Row(Modifier.fillMaxWidth(),verticalAlignment=androidx.compose.ui.Alignment.CenterVertically){Text(label,Modifier.weight(1f));Switch(checked=checked,onCheckedChange=onChange)}}
+private fun ToggleRow(label:String,checked:Boolean,onChange:(Boolean)->Unit){Row(Modifier.fillMaxWidth(),verticalAlignment=androidx.compose.ui.Alignment.CenterVertically){Text(label,Modifier.weight(1f));Switch(checked=checked,onCheckedChange=onChange,modifier=Modifier.testTag("reminder-"+label))}}
 @Composable
 private fun IntervalPicker(label:String,value:Int,onChange:(Int)->Unit){
     var expanded by remember{mutableStateOf(false)}
@@ -27,6 +30,10 @@ private fun IntervalPicker(label:String,value:Int,onChange:(Int)->Unit){
 @Composable
 fun ReminderSettings(repository:UserPreferencesRepository){
     val prefs by repository.preferences.collectAsStateWithLifecycle(UserPreferences());val scope=rememberCoroutineScope();val context=LocalContext.current
+    var backgroundAllowed by remember { mutableStateOf(false) }
+    val backgroundSupported = remember(context) { MovementCheck.supported(context) }
+    LaunchedEffect(prefs.movementReminders) { backgroundAllowed = runCatching { MovementCheck.allowed(context) }.getOrDefault(false) }
+    val backgroundPermission = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted -> backgroundAllowed = MovementCheck.BACKGROUND_PERMISSION in granted }
     var permissionMessage by remember{mutableStateOf("")}
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){ok->permissionMessage=if(ok)"Notification permission granted." else "Notifications are blocked by Android. Your saved preferences are kept."}
     fun saveIntervals(water:Int=prefs.waterReminderMinutes,food:Int=prefs.foodReminderMinutes,med:Int=prefs.medicationReminderMinutes,migraine:Int=prefs.migraineReminderMinutes,foodOn:Boolean=prefs.foodReminders,start:Int=prefs.reminderStartHour,end:Int=prefs.reminderEndHour){scope.launch{repository.setReminderOptions(foodOn,water,food,med,migraine,start,end)}}
@@ -37,6 +44,13 @@ fun ReminderSettings(repository:UserPreferencesRepository){
         OutlinedButton(onClick={if(Build.VERSION.SDK_INT>=33)permission.launch(Manifest.permission.POST_NOTIFICATIONS)else permissionMessage="Check Android's app notification settings."}){Text("Check notification permission")}
         ToggleRow("Drinking water",prefs.waterReminders){scope.launch{repository.setWaterReminders(it)}}
         if(prefs.waterReminders)IntervalPicker("Water",prefs.waterReminderMinutes){saveIntervals(water=it)}
+        ToggleRow("Stand, stretch or walk",prefs.movementReminders){scope.launch{repository.setMovementReminders(it,prefs.movementReminderMinutes)}}
+        if(prefs.movementReminders) {
+            IntervalPicker("Movement break",prefs.movementReminderMinutes){n->scope.launch{repository.setMovementReminders(true,n)}}
+            Text("An adjustable break reminder, not a sitting detector. With optional background Steps access, reminders are skipped when at least 20 steps were shared during the interval. Missing or delayed data uses a general break reminder.",style=MaterialTheme.typography.bodySmall)
+            if(backgroundSupported && !backgroundAllowed) OutlinedButton(onClick={backgroundPermission.launch(setOf(MovementCheck.BACKGROUND_PERMISSION,androidx.health.connect.client.permission.HealthPermission.getReadPermission(androidx.health.connect.client.records.StepsRecord::class)))}) { Text("Allow optional background step checks") }
+            Text(if(backgroundAllowed) "Background step permission allowed. Connect this account to device health in Fitness to use it." else "Using interval reminders; background step checks are not available or allowed.",style=MaterialTheme.typography.bodySmall)
+        }
         ToggleRow("Log meals / food photos",prefs.foodReminders){saveIntervals(foodOn=it)}
         if(prefs.foodReminders)IntervalPicker("Food",prefs.foodReminderMinutes){saveIntervals(food=it)}
         ToggleRow("Medication check-in",prefs.medicationReminders){scope.launch{repository.setMedicationReminders(it)}}

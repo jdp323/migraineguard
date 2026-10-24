@@ -34,6 +34,23 @@ class HealthReadingTest {
         startTime = end.minusSeconds(8 * 3600), startZoneOffset = null,
         endTime = end, endZoneOffset = null, metadata = Metadata.manualEntry())
 
+    @Test fun nonSamsungWritersReturnStepsHeartAndSleep() = runBlocking {
+        for (writer in listOf("com.garmin.android.apps.connectmobile", "com.fitbit.FitbitMobile")) {
+            val fake = FakeHealthConnectClient(packageName = writer)
+            var aggregateCalls = 0
+            fake.overrides.aggregate = Stub { _ ->
+                if (++aggregateCalls == 1) AggregationResult(metrics = mapOf(StepsRecord.COUNT_TOTAL to 420L))
+                else AggregationResult(metrics = emptyMap())
+            }
+            fake.insertRecords(listOf(heart(now.minusSeconds(120), 74), sleep(now.minusSeconds(3600))))
+            val repository = repo(fake)
+            val result = repository.latestFitness()
+            assertEquals(420, result.observedSteps); assertEquals(74, result.heartRateBpm)
+            assertEquals(writer, result.heartRateSource); assertEquals(writer, repository.latestSleep().sourceLabel)
+            assertFalse(result.stepSync!!.message.contains("Allow Samsung"))
+        }
+    }
+
     @Test fun dailyHeartBucketEndingTonightStillReturnsCurrentSample() = runBlocking {
         val fake = FakeHealthConnectClient()
         fake.overrides.aggregate = stub { AggregationResult(metrics = emptyMap()) }

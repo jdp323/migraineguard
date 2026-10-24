@@ -169,7 +169,7 @@ fun DriveBackupCard(repository: DriveSyncRepository, onConnect: () -> Unit) {
                 style = MaterialTheme.typography.labelMedium)
         }
         Text("Drive storage used by current backup: "+(state.backupBytes?.let { bytes -> if(bytes < 1024) "$bytes bytes" else "%.1f KiB".format(bytes/1024.0) } ?: "Not measured yet"), style = MaterialTheme.typography.titleSmall)
-        Text("Size of MigraineGuard's current snapshot, measured on restore/save. It includes settings, keys and journals; photos and Health Connect records are excluded. This is not total Google Drive account usage. Back up now refreshes it.", style = MaterialTheme.typography.bodySmall)
+        Text("Size of MigraineGuard's current snapshot, measured on restore/save. It includes settings, keys and journals; body progress is included only with its separate photo-backup switch. Meal/equipment photos and raw Health Connect records are excluded. This is not total Google Drive account usage. Back up now refreshes it.", style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(10.dp))
         if (state.connected) {
             Button(onClick = { scope.launch { runCatching { repository.backupNow() } } }, enabled = !state.busy) {

@@ -140,7 +140,7 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
     }
 
     LaunchedEffect(requestedRoute) {
-        if (requestedRoute in setOf(Routes.Food, Routes.Migraine)) {
+        if (requestedRoute in setOf(Routes.Food, Routes.Migraine, Routes.Track)) {
             goBottom(requestedRoute!!); onRouteConsumed()
         } else if (requestedRoute in setOf(Routes.Water, Routes.Medications, Routes.Settings)) {
             navController.navigate(requestedRoute!!) { launchSingleTop = true }; onRouteConsumed()
@@ -243,6 +243,7 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
             }
             composable(Routes.BodyMetrics) {
                 BodyMetricsScreen(
+                    progressRepository = container.bodyProgressRepository,
                     weightRepository = container.weightRepository,
                     preferencesRepository = container.preferencesRepository,
                     onBack = { navController.popBackStack() },

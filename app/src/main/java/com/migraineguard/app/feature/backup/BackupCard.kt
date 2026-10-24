@@ -28,7 +28,7 @@ fun BackupCard(repository: BackupRepository) {
                 password = ""
                 message = "Encrypted backup saved. Keep its password; it cannot be recovered."
             } catch (e: CancellationException) { throw e }
-            catch (_: Exception) { message = "Could not save the backup. Check the selected location and try again." }
+            catch (_: Exception) { message = "Could not save the backup. Check free storage and the 20 MB size limit, then retry. Remove any partial file." }
             finally { busy = false }
         }
     }
@@ -45,14 +45,14 @@ fun BackupCard(repository: BackupRepository) {
         }
     }
     SectionCard(title = "Encrypted backup") {
-        Text("Save or restore migraine, food, water, workout, weight, medication and AI history. API keys, photo files and Health Connect data are excluded.")
+        Text("Save or restore your profile, goals, preferences, journals and body-progress photos. API keys, meal/equipment photo files and raw Health Connect data are excluded. Maximum backup size: 20 MB.")
         Text("You choose the file location. A cloud folder stores only the password-encrypted file.")
         OutlinedTextField(value = password, onValueChange = { password = it }, enabled = !busy,
             label = { Text("Backup password (at least 8 characters)") },
             visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth())
         Row {
             Checkbox(checked = includeProfile, onCheckedChange = { includeProfile = it }, enabled = !busy)
-            Text("Also restore profile and goals")
+            Text("Also restore profile, goals and preferences")
         }
         Button(onClick = { exportFile.launch("MigraineGuard-${LocalDate.now()}.mgbak") },
             enabled = !busy && password.length >= 8, modifier = Modifier.fillMaxWidth()) {

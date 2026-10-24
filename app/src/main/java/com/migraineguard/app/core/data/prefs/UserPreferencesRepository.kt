@@ -42,6 +42,9 @@ data class UserPreferences(
     val aiConnections: Map<String, com.migraineguard.app.core.ai.AiConnection> = emptyMap(),
     val preferredAiProvider: String = "auto",
     val weeklyWorkoutGoal: Int = 3,
+    val movementReminders: Boolean = false,
+    val movementReminderMinutes: Int = 60,
+    val bodyPhotoDriveBackup: Boolean = false,
     val foodReminders: Boolean = false,
     val waterReminderMinutes: Int = 120,
     val foodReminderMinutes: Int = 240,
@@ -56,7 +59,7 @@ data class UserPreferences(
     val waterGoalCups: Int = 8,
     val waterUnit: WaterUnit = WaterUnit.CUPS,
     val dailyStepGoal: Int = 8000,
-    val stepSource: String = "samsung",
+    val stepSource: String = "combined",
     val sleepGoalHours: Float = 8f,
     val weightGoalKg: Float? = null,
     val notificationsEnabled: Boolean = true,
@@ -91,6 +94,9 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
     private val migraineReminderMinutesKey = intPreferencesKey("migraine_reminder_minutes")
     private val reminderStartHourKey = intPreferencesKey("reminder_start_hour")
     private val reminderEndHourKey = intPreferencesKey("reminder_end_hour")
+    private val movementRemindersKey = booleanPreferencesKey("movement_reminders")
+    private val movementMinutesKey = intPreferencesKey("movement_reminder_minutes")
+    private val bodyPhotoDriveKey = booleanPreferencesKey("body_photo_drive_backup")
     private val foodRemindersKey = booleanPreferencesKey("food_reminders")
     private val updateChecksKey = booleanPreferencesKey("update_checks")
     private val modifiedKey = androidx.datastore.preferences.core.longPreferencesKey("modified_at_millis")
@@ -152,6 +158,9 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
         emit(UserPreferences(
             aiConnections = decodeConnections(apiKeyVault.decrypt(p[connectionsKey].orEmpty())),
             preferredAiProvider = p[preferredAiKey] ?: "auto",
+            movementReminders = p[movementRemindersKey] ?: false,
+            movementReminderMinutes = p[movementMinutesKey] ?: 60,
+            bodyPhotoDriveBackup = p[bodyPhotoDriveKey] ?: false,
             foodReminders = p[foodRemindersKey] ?: false,
             updateChecksEnabled = p[updateChecksKey] ?: true,
             weeklyWorkoutGoal = p[weeklyWorkoutGoalKey] ?: 3,
@@ -169,7 +178,7 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
             waterUnit = runCatching { WaterUnit.valueOf(p[waterUnitKey] ?: WaterUnit.CUPS.name) }
                 .getOrDefault(WaterUnit.CUPS),
             dailyStepGoal = p[stepGoalKey] ?: 8000,
-            stepSource = p[stepSourceKey] ?: "samsung",
+            stepSource = p[stepSourceKey] ?: "combined",
             sleepGoalHours = p[sleepGoalKey] ?: 8f,
             weightGoalKg = p[weightGoalKey],
             notificationsEnabled = p[notifKey] ?: true,
@@ -384,6 +393,8 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
             p[openRouterKey] = apiKeyVault.encrypt(value.openRouterApiKey)
             p[connectionsKey] = apiKeyVault.encrypt(kotlinx.serialization.json.Json.encodeToString(value.aiConnections))
             p[preferredAiKey] = value.preferredAiProvider
+            p[movementRemindersKey] = value.movementReminders; p[movementMinutesKey] = value.movementReminderMinutes
+            p[bodyPhotoDriveKey] = value.bodyPhotoDriveBackup
             p[foodRemindersKey] = value.foodReminders; p[updateChecksKey] = value.updateChecksEnabled
             p[weeklyWorkoutGoalKey] = value.weeklyWorkoutGoal
             p[waterReminderMinutesKey] = value.waterReminderMinutes
@@ -416,6 +427,11 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
     }
     suspend fun setPreferredAiProvider(id: String) { require(id in listOf("auto", "offline") || com.migraineguard.app.core.ai.AiCatalog.service(id) != null); editUser { it[preferredAiKey] = id } }
     suspend fun setWeeklyWorkoutGoal(days: Int) { editUser { it[weeklyWorkoutGoalKey] = days.coerceIn(1, 7) } }
+    suspend fun setMovementReminders(enabled: Boolean, minutes: Int) {
+        require(minutes in 15..1440)
+        editUser { it[movementRemindersKey] = enabled; it[movementMinutesKey] = minutes }
+    }
+    suspend fun setBodyPhotoDriveBackup(enabled: Boolean) { editUser { it[bodyPhotoDriveKey] = enabled } }
     suspend fun setUpdateChecks(enabled: Boolean) { editUser { it[updateChecksKey] = enabled } }
     suspend fun setReminderOptions(food: Boolean, waterMinutes: Int, foodMinutes: Int, medMinutes: Int, migraineMinutes: Int, startHour: Int, endHour: Int) {
         require(listOf(waterMinutes, foodMinutes, medMinutes, migraineMinutes).all { it in 15..1440 })

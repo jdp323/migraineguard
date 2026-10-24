@@ -17,12 +17,14 @@ import androidx.room.TypeConverters
         MedicationEntity::class,
         AiSessionEntity::class,
         WaterActionReceipt::class,
+        BodyProgressEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun bodyProgressDao(): BodyProgressDao
     abstract fun waterActionDao(): WaterActionDao
     abstract fun backupDao(): BackupDao
     abstract fun migraineDao(): MigraineDao

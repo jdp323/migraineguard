@@ -26,8 +26,10 @@ class ReminderWorker(appContext:Context,params:WorkerParameters):CoroutineWorker
         val plan=ReminderPolicy.plan(prefs)
         if(kind !in plan.intervals || !plan.enabled)return Result.success()
         if(kind!="update"&&!ReminderPolicy.activeHour(java.time.LocalTime.now().hour,plan.startHour,plan.endHour))return Result.success()
-        var title=if(kind=="water") "Time for water" else "Your MigraineGuard reminder"
-        var text=when(kind){"water"->"Log what you drank: 1 glass = 250 ml. Choose 1, 2 or 3 below.";"food"->"Had a meal? Add a food photo or description to your journal.";"medication"->"Review your medication journal and mark what you took.";"migraine"->"Record any symptoms or triggers you noticed.";else->""}
+        val movementSteps = if(kind=="movement" && prefs.deviceHealthEnabled) MovementCheck.recentSteps(applicationContext,prefs.movementReminderMinutes) else null
+        if(kind=="movement" && !MovementPolicy.shouldRemind(movementSteps)) return Result.success()
+        var title=if(kind=="movement") "Time to move" else if(kind=="water") "Time for water" else "Your MigraineGuard reminder"
+        var text=when(kind){"water"->"Log what you drank: 1 glass = 250 ml. Choose 1, 2 or 3 below.";"movement"->MovementPolicy.message(movementSteps,prefs.movementReminderMinutes);"food"->"Had a meal? Add a food photo or description to your journal.";"medication"->"Review your medication journal and mark what you took.";"migraine"->"Record any symptoms or triggers you noticed.";else->""}
         var downloadUrl:String?=null
         if(kind=="update"){
             try{
@@ -45,7 +47,7 @@ class ReminderWorker(appContext:Context,params:WorkerParameters):CoroutineWorker
         if(owners.getString("active_account",null)!=account||!canPostNotifications(applicationContext))return Result.success()
         ensureChannel(applicationContext)
         val intent=if(downloadUrl!=null)Intent(Intent.ACTION_VIEW,android.net.Uri.parse(downloadUrl)) else Intent(applicationContext,MainActivity::class.java).putExtra("open_route",ReminderPolicy.route(kind)).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        val id=2000+listOf("water","food","medication","migraine","update").indexOf(kind)
+        val id=2000+listOf("water","food","medication","migraine","update","movement").indexOf(kind)
         val pending=PendingIntent.getActivity(applicationContext,id,intent,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         try{
             val builder = NotificationCompat.Builder(applicationContext,CHANNEL_ID).setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle(title).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text)).setContentIntent(pending).setAutoCancel(true).setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
@@ -57,7 +59,7 @@ class ReminderWorker(appContext:Context,params:WorkerParameters):CoroutineWorker
     }
     companion object {
         const val CHANNEL_ID="migraineguard_reminders"
-        private val kinds=listOf("water","food","medication","migraine","update")
+        private val kinds=listOf("water","food","medication","migraine","update","movement")
         fun ensureChannel(context:Context){if(Build.VERSION.SDK_INT>=26)context.getSystemService(NotificationManager::class.java)?.createNotificationChannel(NotificationChannel(CHANNEL_ID,"Health & app reminders",NotificationManager.IMPORTANCE_DEFAULT))}
         fun canPostNotifications(context:Context):Boolean = NotificationManagerCompat.from(context).areNotificationsEnabled() && (Build.VERSION.SDK_INT<33||ContextCompat.checkSelfPermission(context,Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED)
         fun schedule(context:Context,enabled:Boolean){if(!enabled){val wm=WorkManager.getInstance(context);wm.cancelUniqueWork("migraineguard_periodic_reminders");kinds.forEach{wm.cancelUniqueWork("migraineguard_reminder_"+it)}}}

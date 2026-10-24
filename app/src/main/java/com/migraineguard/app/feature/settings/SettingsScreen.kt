@@ -145,7 +145,7 @@ fun SettingsScreen(
         ) {
             Text("Make it yours.", style = MaterialTheme.typography.headlineSmall)
             androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Account", "AI", "Reminders", "App").forEach { group -> FilterChip(selected = settingsGroup == group, onClick = { settingsGroup = group }, label = { Text(group) }) }
+                listOf("Account", "AI", "Reminders", "Data", "App").forEach { group -> FilterChip(selected = settingsGroup == group, onClick = { settingsGroup = group }, label = { Text(group) }) }
             }
             if (settingsGroup == "App") AppUpdateCard()
             if (settingsGroup == "Account") {
@@ -219,7 +219,7 @@ fun SettingsScreen(
                     Text("Edit profile")
                 }
                 OutlinedButton(onClick = onOpenBody, modifier = Modifier.fillMaxWidth()) {
-                    Text("Body metrics / weight log")
+                    Text("Body progress / photos / weight")
                 }
                 OutlinedButton(onClick = onOpenMeds, modifier = Modifier.fillMaxWidth()) {
                     Text("Medications & supplements")
@@ -320,9 +320,9 @@ fun SettingsScreen(
 
             }
             if (settingsGroup == "Account") {
-            SectionCard(title = "Samsung Health / Health Connect", icon = Icons.Filled.Watch) {
+            SectionCard(title = "Health Connect / devices", icon = Icons.Filled.Watch) {
                 Text(
-                    "Grant permissions on the Fitness tab. Sideloaded debug apps appear in Connected apps after the first successful permission request.",
+                    "Connect compatible Samsung, Garmin, Fitbit / Google Health and other apps through Android Health Connect. Enable each source to write records, then grant MigraineGuard read access in Fitness. All Health Connect sources is the default for new profiles.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 OutlinedButton(
@@ -340,7 +340,8 @@ fun SettingsScreen(
             }
 
             }
-            if (settingsGroup == "Account") {
+            if (settingsGroup == "Data") {
+            com.migraineguard.app.feature.backup.DataExportCard(backupRepository)
             BackupCard(backupRepository)
 
             }
@@ -371,7 +372,7 @@ fun SettingsScreen(
             SectionCard(title = "Privacy", icon = Icons.Filled.PrivacyTip) {
                 Text(
                     "Logs stay on this device unless you enable Drive backup, export a backup or choose to share a health summary with cloud AI. " +
-                        "Weather shares approximate coordinates with Open-Meteo. Cloud AI uses your encrypted stored keys; photos are sent to your selected image-capable provider only when you choose. " +
+                        "Body progress photos remain local unless you separately enable including them in your own Drive backup; they are never sent to AI. There is no developer health-data server. Weather shares approximate coordinates with Open-Meteo. Cloud AI uses your encrypted stored keys; photos are sent to your selected image-capable provider only when you choose. " +
                         "On-device assistance is always available. Not a medical device — for personal awareness only.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
