@@ -17,7 +17,7 @@
 <article class="document"><span class="eyebrow">MIGRAINEGUARD · YOUR INFORMATION</span>
 <h1>Privacy policy</h1>
 
-<p class="date">Last updated: October 22, 2026 · Applies to Android v1.11.1 and this website</p>
+<p class="date">Last updated: October 24, 2026 · Applies to Android v1.12.0 and this website</p>
 
 <p class="intro">MigraineGuard helps you track your wellbeing. This policy explains what stays on your phone, what optional features send to other services, and how you control that data.</p>
 
@@ -46,6 +46,8 @@
 
 <tr><td>Health Connect steps, heart rate, sleep, exercise, distance and calorie records, including permitted history</td><td>Show permissioned phone health readings and context. Manual workouts stay in the account journal; exercise-write permission is no longer requested.</td></tr>
 
+<tr><td>Body progress photos, dated notes, weight, waist and scale-reported body-fat values</td><td>A private progress timeline, side-by-side comparisons and changes in the measurements you entered. Photos are never sent to AI or used to infer body fat.</td></tr>
+
 <tr><td>User-selected AI provider keys and model settings</td><td>Authenticate requests to your selected cloud AI providers; optionally restore your keys from your own Drive backup.</td></tr>
 
 <tr><td>Chosen meal/equipment photos and approximate location</td><td>Optional food-photo estimates, equipment-name suggestions and local weather. Location sent for weather is rounded to two decimal places.</td></tr>
@@ -59,7 +61,7 @@
 
 <h2>Health Connect and connected devices</h2>
 
-<p>The app reads Health Connect only after Android grants the relevant permissions. Samsung Health or another source app must first share its records with Health Connect. The app does not directly stream watch sensors, log in to Samsung Health or read your whole Google Fit account. You can revoke each health permission in Android Settings. Health Connect's underlying readings are not copied into the Drive backup.</p>
+<p>The app reads Health Connect only after Android grants the relevant permissions. Samsung Health, Garmin Connect, Fitbit / Google Health or another compatible source app must first share its records with Health Connect. New profiles use all Health Connect sources; saved source preferences remain editable. Optional movement alerts can separately request background Steps access on supported devices to skip a prompt after recent shared activity. Without usable data, they are timed break reminders, not sitting detection. The app does not directly stream watch sensors, log in to Samsung Health or read your whole Google Fit account. You can revoke each health permission in Android Settings. Health Connect's underlying readings are not copied into the Drive backup.</p>
 
 <p>Health data is used for your tracking and requested wellness features. MigraineGuard does not sell health data, use it for advertising, or send it to an advertising network. It is not used to make eligibility decisions about employment, credit or insurance.</p>
 
@@ -67,12 +69,15 @@
 
 <p>When you authorize backup, MigraineGuard requests <code>drive.appdata</code> and account-email access. It stores one current account backup in Google's hidden application-data folder. This permission is for this application's app-data storage; it does not request general access to your ordinary Drive documents.</p>
 
-<p>The snapshot includes your profile and birthday, measurements, goals, preferences, setup status, all configured AI provider keys/model settings, and the seven journal categories: migraine, nutrition, water, workouts, weights, medications and AI sessions. Photo files are not included; local photo references may not work on another phone. This can include sensitive information you entered into journal or conversation text.</p>
+<p>The snapshot includes your profile and birthday, measurements, goals, preferences, setup status, all configured AI provider keys/model settings, and the seven journal categories: migraine, nutrition, water, workouts, weights, medications and AI sessions. Body progress photos, notes and measurements are included only when you separately enable Include body photos in my Google Drive backup. Meal/equipment photo files and raw Health Connect records are excluded. A current snapshot has a 20 MB limit and an oversized save fails visibly. This can include sensitive information you entered into journal or conversation text.</p>
 
 <p>Backup uses HTTPS and Google's account/storage protections. To allow restoration on another phone, API keys are stored as portable values inside the backup JSON. <strong>The cloud backup is not separately password-encrypted or end-to-end encrypted by MigraineGuard.</strong> Anyone able to access the backup through your account or a compromised app authorization could obtain its contents and keys. Restored keys are encrypted again in that phone's local settings.</p>
 
 <p>Authorized backup observes saved changes and attempts to save before sign-out. Network failure, Android process termination, quotas or account restrictions can prevent completion; use the completed Back up now status to check. It is one snapshot, not a guaranteed archival or multi-device synchronization service. Standard and Preview builds using the same Google OAuth project should not be assumed to have independent cloud backups.</p>
 
+<h2>Body photos and manual exports</h2>
+<p>Selected body images are resized and JPEG re-encoded locally; original EXIF/location metadata and source URIs are not retained. The normalized photo is stored in the selected account’s private database. Original gallery files are not changed. Local body progress is the default; cloud inclusion requires the separate photo-backup switch and connected Drive. No developer photo or health-record server receives these images.</p>
+<p>Settings → Data can save a readable ZIP with structured JSON, eight CSV tables and body JPEGs, or a password-encrypted .mgbak recovery file. The ZIP is not encrypted. Manual formats exclude configured provider keys, Google tokens, raw Health Connect records and meal/equipment photo files. Journal text and AI conversation contents remain private data. The Android picker chooses the destination, including any cloud document provider you select. Encrypted recovery has a 20 MB limit; retain its password and verify copies before removing originals.</p>
 <h2>Optional AI providers</h2>
 <p>See the <a href="https://github.com/jdp323/migraineguard/blob/main/docs/AI_AND_PERMISSIONS.md">AI prompts and permissions guide</a> for the exact prompt templates, context fields, provider protocols and consent boundaries.</p>
 
@@ -97,7 +102,7 @@
 
 <li>Clear app storage or uninstall the relevant Standard/Preview package to remove its local account files. Signing out alone retains them. Local and cloud copies must be removed separately.</li>
 
-<li>Journal restore merges entries and currently has no deletion tombstones. A locally deleted entry can return from an existing cloud snapshot. To remove it across copies, stop backup and remove the cloud snapshot as well; check other devices before reconnecting.</li>
+<li>The original journal tables merge entries without deletion tombstones, so those deleted entries can return from an old snapshot. New body-progress check-ins retain a minimal ID/date/pose/timestamp deletion marker after clearing the photo, measurements and notes, preventing old snapshots from resurrecting that check-in. A connected photo-enabled Drive save propagates it. Disabling photo backup excludes body data on the next completed save but does not instantly erase older snapshots or independent exported copies. To remove it across copies, stop backup and remove the cloud snapshot as well; check other devices before reconnecting.</li>
 
 <li>Revoke or rotate AI keys with the provider if you no longer want them usable. Removing a local key or cloud snapshot does not revoke the provider's key.</li>
 
@@ -122,5 +127,5 @@
 <p>A clearer view of your everyday wellbeing.</p>
 
 <div><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a><a href="/support.html">Help &amp; data controls</a></div>
-<small>Independent Android app. Not affiliated with Samsung, Google, or Fitbit.</small></footer>
+<small>Independent Android app. Not affiliated with Samsung, Google, Garmin or Fitbit.</small></footer>
 </body></html>

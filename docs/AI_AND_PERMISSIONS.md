@@ -1,6 +1,6 @@
 # AI prompts, permissions and data flow
 
-Current implementation: v1.11.1 / code 20. This describes what the code sends and when. It is not a promise that a provider will always return accurate results. [User guide](USER_GUIDE.md) · [v1.9.1 implementation](UPDATE_1_9_0.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
+Current implementation: v1.12.0 / code 21. This describes what the code sends and when. It is not a promise that a provider will always return accurate results. [User guide](USER_GUIDE.md) · [v1.9.1 implementation](UPDATE_1_9_0.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
 
 ## Permissions and choices
 
@@ -8,9 +8,9 @@ Current implementation: v1.11.1 / code 20. This describes what the code sends an
 | --- | --- | --- |
 | Internet | Google sign-in/Drive, explicitly used cloud AI, optional weather and public GitHub release checks. Android grants this normal permission at installation. | Offline journals and local reports still work; network-dependent actions report failure/unavailable. |
 | Health Connect read Steps, Sleep, Heart rate, Exercise, Distance, Total calories | Setup or Fitness after this account opts into this phone's data. Individual grants are checked. Source apps must supply actual records. | Only allowed/received types appear. Missing data stays unavailable; permission alone does not check received data. |
-| Health Connect history | Supported Android providers may offer extended history access. Actual reads remain bounded by each feature's time window. | Supported recent-data reads may still work; historical availability is not guaranteed. |
+| Optional Health Connect background read | Settings → Reminders explicitly requests it on supported installations for recent-step movement checks. Steps and this account’s phone-data opt-in are also needed. The unused extended-history declaration was removed in v1.12. | Normal foreground reads still work; movement uses a timed reminder without claiming inactivity. |
 | Camera | Press Camera for a food/equipment picture, then use Android's capture app. Not required for typing or gallery selection. | Type a name/description or use the system document picker. No automatic capture is attempted. |
-| Selected document URI | Android's OpenDocument picker gives access to the chosen image/export file. Persistable URI read access is requested for a chosen image. No broad media-library permission is requested. | That selected file may not display later; other logs remain usable. |
+| Selected image/document URI | The system photo picker selects body images; OpenDocument/CreateDocument selects other images/export files. Persistable URI read access is requested for a chosen image. No broad media-library permission is requested. | That selected file may not display later; other logs remain usable. |
 | Approximate location | Explicit weather request from Migraine → Weather context. Coordinates are rounded before Open-Meteo. Precise location is no longer declared/requested. | Weather stays unavailable; journals remain usable. |
 | Notifications | Settings → Reminders, on Android 13+. The master toggle, category toggles, active hours and Android channel/OS settings all apply. | Preferences are kept; the app cannot override Android's denial. |
 | Boot/work scheduling | WorkManager's Android scheduling supports permitted reminders across process/reboot scheduling. | Force-stop/battery restrictions can delay or prevent work. No exact-alarm permission is requested. |
@@ -21,6 +21,8 @@ Current implementation: v1.11.1 / code 20. This describes what the code sends an
 | Automatic update checking | Optional Reminders setting. Public GitHub metadata is refreshed at most daily while connected. | Manual Check for updates in App settings still works when online. |
 
 The unused fine-location and exercise-write permissions were removed in v1.9.1. Manual exercise entries stay in the account journal; this app does not export them to Health Connect. Health Connect, Google sign-in, Drive authorization, camera, location and notifications are independent choices.
+
+Body progress uses the system photo picker and local JPEG normalization. Its photos are never sent to any AI provider. Optional background Health Connect Steps permission is requested only from movement reminder controls on supported devices; it is not needed for ordinary foreground reads.
 
 ## Where requests go
 
@@ -138,7 +140,7 @@ A successful nonempty provider response proves only that this small text request
 
 ## Backups, storage and update metadata
 
-Optional Drive snapshots restore account profile/DOB/measurements, preferences/goals/reminder choices, configured keys/models and seven journal tables. Structured exercise names/sets are included. Photo bytes/references and the Health Connect source database are excluded from portable snapshots. Snapshot size in Settings is confirmed from uploaded/downloaded bytes, not a quota query. An old snapshot can restore a locally deleted journal entry because deletion tombstones are not implemented.
+Optional Drive snapshots restore account profile/DOB/measurements, preferences/goals/reminder choices, configured keys/models and seven journal tables. Structured exercise names/sets are included. Body-progress photos/measurements enter private Drive only after a separate explicit opt-in, and enter manual exports when those buttons are chosen. Meal/equipment photo files and raw Health Connect records are excluded. Readable ZIP exports are not encrypted; .mgbak recovery is password-encrypted and excludes configured provider keys. Snapshot size in Settings is confirmed from uploaded/downloaded bytes, not a quota query. An old snapshot can restore a deleted original journal entry; the new body-progress table uses deletion markers to prevent photo resurrection.
 
 The update checker calls only GitHub's public latest-release metadata endpoint for jdp323/migraineguard, without a GitHub token or app health payload. GitHub receives ordinary network metadata. The release URL is checked against that exact repository/tag, and download/install requires your browser/Android action. Background work uses a persisted account marker and cached public release metadata; explicit sign-out clears the remembered identity and cancels reminders. A chosen identity is restored on a later app process start only while its device-encrypted remembered session remains; Google APIs still require independent authorization.
 
@@ -158,3 +160,5 @@ The update checker calls only GitHub's public latest-release metadata endpoint f
 In v1.10.0, explicitly shared recentExercises also includes activityType and present speedKmh/inclinePercent/distanceKm/holdSeconds/rounds. Remembered app identity and notification action receipts stay device-local and are not AI context or portable backup fields. See [session and quick-action design](UPDATE_1_10_0.md).
 
 The v1.11 navigation/design/copy refinements do not change these AI prompts, provider protocols or explicit sharing choices. On-device assistance is the UI name for the existing local implementation. Temporary saveable drafts are device-local UI state, not a new cloud payload or completed Drive backup.
+
+The v1.12 movement/body/export features add no AI prompt, provider endpoint or OAuth scope. [Permission, storage and format details](UPDATE_1_12_0.md).

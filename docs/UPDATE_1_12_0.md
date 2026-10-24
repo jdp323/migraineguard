@@ -1,6 +1,6 @@
 # v1.12.0 — movement breaks, private body progress and data export
 
-Application 1.12.0 / code 21. Extends [v1.11 navigation and design](UPDATE_1_11_0.md). This guide describes the implemented controls; final release evidence is appended after the hosted build passes.
+Application 1.12.0 / code 21. Extends [v1.11 navigation and design](UPDATE_1_11_0.md). This guide describes the implemented controls and verified public release.
 
 ## Movement reminders
 
@@ -83,3 +83,26 @@ All Kotlin paths below are relative to app/src/main/java/com/migraineguard/app/.
 Room 6 → 7 preserves existing records. Manual recovery format 2 reads old format 1; Drive format 3 reads old format 2. Older apps cannot read the new formats; update every device before editing/restoring the new snapshots. Existing Standard/Preview package separation and retained signing remain. No new developer backend, provider endpoint or Google OAuth scope is added. New body data is intentionally absent from previous releases' documented backup contracts.
 
 Raw Health Connect histories are still owned by their source/platform and are not duplicated into manual exports. Photo deletion markers are implemented for the new stable-ID body table; older journal tables retain their existing merge/deletion limitations. Backups are snapshots rather than conflict-free live multi-device sync. Do not edit the same account simultaneously on multiple devices.
+
+## Published verification and screenshots
+
+[Release v1.12.0](https://github.com/jdp323/migraineguard/releases/tag/v1.12.0-debug) was built from source `aa32d3281997769c3917406ed1dbc387fe304561`. [Run 40121259096](https://github.com/jdp323/migraineguard/actions/runs/40121259096) passed all gates: **81 JVM tests, 33 Android runtime tests**, lint with zero errors, Standard and Preview assembly and retained signing checks. The full Android suite took 109.381 seconds. Both gesture tests passed again with system animation scales at 1.0 in 19.349 seconds.
+
+The runtime suite includes normalized JPEG save/restore and idempotence, encrypted photo recovery, stable-ID deletion propagation, no configured credentials in readable exports, CSV formula escaping, Drive photo opt-in/off, movement interval UI, migration preservation from schemas 1–6, all-source non-Samsung steps/heart/sleep and the existing navigation/account tests. Drive transport uses an in-memory fixture; this is not proof of a live account transfer or wearable sync. Actual background permission prompts and OEM reminder timing remain phone checks. No frame-rate certification or body-image AI inference is claimed.
+
+Both public release APKs were downloaded without authentication, matched the built artifacts and report version 1.12.0/code 21:
+
+| Asset | SHA-256 |
+| --- | --- |
+| Standard: MigraineGuard-v1.12.0-debug.apk | `27c62a099f366c542d20beda12072c8aa70f1780e1237607e3837ad6c8277d36` |
+| Preview: MigraineGuard-v1.12.0-preview.apk | `3e41832322a89bf869722a87a3bafb5a3530c885d614ea951fafbe31a368d61e` |
+
+Both retain SHA-1 `FB:67:0D:1D:96:C2:8B:9E:27:0D:36:F8:D6:57:53:E3:6B:30:8D:E8`. Standard is com.migraineguard.app; Preview is com.migraineguard.app.preview. Update the compatible package in place without uninstalling records.
+
+Six genuine API-35 captures below were visually inspected. Profiles, notes and any images used by tests are synthetic. The body overview capture shows the private timeline entry point; runtime tests also exercise the comparison below it. These captures are screenshots of the app, not design mockups.
+
+<table><tr><td><img src="images/v1.12.0/body-progress-overview.png" width="280" alt="body progress overview"></td><td><img src="images/v1.12.0/settings-movement.png" width="280" alt="settings movement"></td></tr></table>
+
+<table><tr><td><img src="images/v1.12.0/settings-data-export.png" width="280" alt="settings data export"></td><td><img src="images/v1.12.0/fitness-light.png" width="280" alt="fitness light"></td></tr></table>
+
+<table><tr><td><img src="images/v1.12.0/setup-health.png" width="280" alt="setup health"></td><td><img src="images/v1.12.0/settings-updates.png" width="280" alt="settings updates"></td></tr></table>

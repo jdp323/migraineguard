@@ -1,4 +1,4 @@
-> Current v1.11.1: [swipe navigation, refreshed visual components, lifecycle/back behavior and verification](UPDATE_1_11_0.md).
+> Current v1.12.0: [movement breaks, private body progress, exports, multi-brand Health Connect and changed-file/function map](UPDATE_1_12_0.md). Previous [v1.11 design/navigation](UPDATE_1_11_0.md).
 
 > Historical v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
 
@@ -40,7 +40,7 @@ Both APKs are signed with the retained test certificate. The original temporary 
 | Google sign-in | Explicit account picker and actual installed-certificate diagnostics | Web/Standard/Preview clients registered; phone login confirmed; Google Audience is now External / In production, with non-sensitive app-data/email scopes. Additional-account Drive transfer still needs phone acceptance |
 | Watch app | Watch data reaches the phone via Samsung Health / Fitbit and Health Connect | No separate Wear OS application or direct live watch sensor stream |
 
-Password-encrypted manual exports exclude API keys, photo files and imported Health Connect records; optional account Drive snapshots do include portable API keys as described above. They contain the local journal data you choose to export and require the password to restore. Photos remain in their original app/provider storage.
+Current password-encrypted manual exports include body-progress photos and exclude API keys, meal/equipment photo files and imported Health Connect records; optional account Drive snapshots do include portable API keys as described above. They contain the local journal data you choose to export and require the password to restore. Meal/equipment photos remain in their original app/provider storage. Body-progress photos use private normalized JPEG storage and explicit export/Drive choices in v1.12.0.
 
 The all-in-one phone app is a working development build, not a validated medical device. The Android emulator cannot verify a real Samsung/Google device data pipeline or a user's cloud credentials.
 

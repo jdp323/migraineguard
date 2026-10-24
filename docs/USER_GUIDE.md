@@ -1,19 +1,19 @@
 # MigraineGuard user guide
 
-For Android v1.11.1 (version code 20). Start here if a friend shared the app with you. No programming or Google Cloud setup is needed to use the published APK.
+For Android v1.12.0 (version code 21). Start here if a friend shared the app with you. No programming or Google Cloud setup is needed to use the published APK.
 
 [Download the latest release](https://github.com/jdp323/migraineguard/releases/latest) · [Troubleshooting](TROUBLESHOOTING.md) · [How it works](HOW_IT_WORKS.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
 
-[v1.11: swipe navigation and the refreshed interface](UPDATE_1_11_0.md). [v1.10: water quick actions, cardio/stretch fields and returning Home](UPDATE_1_10_0.md). The previous feature-by-feature guide is [v1.9.0–1.9.1: training, reminder/AI/update settings and Drive size](UPDATE_1_9_0.md). Read [exact AI prompts and permissions](AI_AND_PERMISSIONS.md) to see what is sent and why.
+[v1.12: movement breaks, body photos and data export](UPDATE_1_12_0.md). [v1.11: swipe navigation and the refreshed interface](UPDATE_1_11_0.md). [v1.10: water quick actions, cardio/stretch fields and returning Home](UPDATE_1_10_0.md). The previous feature-by-feature guide is [v1.9.0–1.9.1: training, reminder/AI/update settings and Drive size](UPDATE_1_9_0.md). Read [exact AI prompts and permissions](AI_AND_PERMISSIONS.md) to see what is sent and why.
 
 ## 1. Install or update
 
 1. Open the release link on your Android phone. Expand **Assets** if needed.
-2. Download **MigraineGuard-v1.11.1-debug.apk** for the normal app. The word debug identifies the current signed test build; this is not a Play Store release.
+2. Download **MigraineGuard-v1.12.0-debug.apk** for the normal app. The word debug identifies the current signed test build; this is not a Play Store release.
 3. Open the downloaded APK. Android may ask whether your browser or file manager can install apps. Allow that source if you trust this download, install, then turn the source permission back off if you wish. Do not disable Play Protect or other device-wide protections.
 4. Updating the same Standard app with the retained certificate keeps its local data. Do not uninstall an existing app just to get past an installation conflict.
-5. For an incompatible older signing certificate, or to try a fresh setup beside your existing app, use **MigraineGuard-v1.11.1-preview.apk**. Preview is a separate app with its own records, permissions and setup. It does not automatically copy Standard's local data.
-6. Confirm **Settings → App → About** says **1.11.1 (20)** and the intended package: Standard is com.migraineguard.app; Preview ends in .preview.
+5. For an incompatible older signing certificate, or to try a fresh setup beside your existing app, use **MigraineGuard-v1.12.0-preview.apk**. Preview is a separate app with its own records, permissions and setup. It does not automatically copy Standard's local data.
+6. Confirm **Settings → App → About** says **1.12.0 (21)** and the intended package: Standard is com.migraineguard.app; Preview ends in .preview.
 
 The app supports Android 8 and later. Health Connect additionally depends on compatible Android/Google services and source health apps on the phone; an installable app does not guarantee every integration is available. This project contains a phone app, not a separate watch app or iPhone build.
 
@@ -32,18 +32,18 @@ Long pages scroll. The progress header shows Welcome, Account, Health, AI and Pr
 
 **Skipping AI verification preserves any keys already saved.** To stop cloud requests, remove your provider keys in Settings. With no configured keys, the on-device fallback remains available. A failed connection test does not receive a success check.
 
-### Connect Samsung Health and your Galaxy Watch
+### Connect Samsung, Garmin, Fitbit and other devices
 
-The path is **watch → Samsung Health on the phone → Health Connect → MigraineGuard**. Google sign-in is not health permission.
+The path is **wearable → compatible companion app on the Android phone → Health Connect → MigraineGuard**. Google sign-in is not health permission.
 
-1. Sync the watch in Samsung Health and let the phone finish receiving its records.
-2. In Samsung Health's Health Connect connection, allow sharing/writing the supported types you want, especially Steps, Heart rate and Sleep. Menu names can vary by installed version.
-3. In Android Health Connect, verify **actual dated records** are visible under those types. A permission switch by itself does not establish that records arrived.
-4. Allow the installed MigraineGuard app to read the relevant types. Standard and Preview each need their own grant.
-5. In MigraineGuard **Fitness**, choose **Connect this phone's health data** for your selected app account. This is a separate ownership choice, even when Android already granted permission.
-6. Select **Samsung Health**, then **Refresh steps now** or **Refresh data**. Review source, timestamp and the status message. Select **Health Connect** to compare the combined aggregate; these are alternative sources, not totals to add together.
+1. Sync your device in Samsung Health, Garmin Connect, Fitbit / Google Health or another supported companion app.
+2. In that app, enable sharing/writing supported types to Health Connect. Actual supported types depend on the app/device/version.
+3. In Android Health Connect → Data and access, confirm actual dated Steps, Heart rate and Sleep records exist.
+4. In MigraineGuard Fitness, connect this phone's data to this app account and grant the read types you want.
+5. Choose **All sources** for the combined Health Connect total, then Refresh. This is the default for new profiles. Existing Samsung preferences are kept until you change them. Samsung Health is an optional alternative; the totals are never added together.
+6. Check source/timestamps and the copyable sync report if a reading is delayed. Heart is the latest dated sample, not live pulse; sleep requires completed sessions.
 
-The same approach applies to Fitbit or other devices only if their companion app exports the required records to Health Connect. MigraineGuard does not sign into Fitbit directly or stream watch sensors. Heart rate is the latest available dated measurement, not a live pulse display. Sleep requires a completed session; an older available session is labeled. Missing data appears as unavailable, not a fabricated reading. See the [missing-data decision tree](TROUBLESHOOTING.md#steps-heart-rate-or-sleep-are-missing-or-different).
+No direct Garmin/Fitbit/Samsung login or watch app is used. A source must actually export records into Health Connect. [Detailed device setup](UPDATE_1_12_0.md#health-connect-across-brands) · [Missing-data checklist](TROUBLESHOOTING.md#steps-heart-rate-or-sleep-are-missing-or-different).
 
 ### Optional Gemini and other AI keys
 
@@ -66,7 +66,7 @@ Swipe left/right across the main page to move between the six labeled tabs, or t
 | Water | Use plus/minus to adjust today's cup count and watch progress toward the goal. | Water notifications also offer 1/2/3 glasses of 250 ml each. Expand the notification to see the buttons; one choice applies once. The stored quantity is integer cups; changing the display unit does not turn it into a measured sensor volume. |
 | Body metrics | Save weight in the selected display unit and review history/trend. Edit profile for height, DOB and units. | Measurements are stored consistently; switching units converts them. |
 | Medications | Add your own name/dose/time label, then mark taken for the day as appropriate. | This is a journal. Time labels do not schedule exact dose alarms or calculate doses. |
-| Settings | Choose Account, AI, Reminders or App. Change provider/key/model after setup, control per-type reminder intervals/active hours, check updates and inspect measured Drive snapshot size. | Android notification/channel/battery settings can affect reminder delivery. |
+| Settings | Choose Account, AI, Reminders, Data or App. Change provider/key/model after setup, control per-type reminder intervals/active hours, check updates and inspect measured Drive snapshot size. | Android notification/channel/battery settings can affect reminder delivery. |
 
 Optional weather requires the phone's approximate-location permission and location services. Approximate coordinates are sent to Open-Meteo for that request. Unavailable or stale weather is labeled.
 
@@ -78,17 +78,19 @@ On first Google connection, choose **Allow private Drive backup**. The app check
 
 In Settings, use **Back up now** and wait for a completed save before changing devices or signing out. Changes are saved automatically while the app is active after a short debounce; background/sign-out saves are best effort. A connection check does not prove your most recent edits were uploaded: check the save result/timestamp. If sign-out reports Backup needs attention, reconnect and retry, or knowingly keep only the local copy.
 
-Drive app-data is hidden from ordinary Drive files and belongs to the authorizing Google account. A blank Drive folder view is not evidence that backup failed. The snapshot includes profile/DOB/measurements/goals/settings, personal AI keys and seven journal tables. It excludes photo file contents and the Health Connect database.
+Drive app-data is hidden from ordinary Drive files and belongs to the authorizing Google account. A blank Drive folder view is not evidence that backup failed. The snapshot includes profile/DOB/measurements/goals/settings, personal AI keys and seven original journal tables. Body progress is included only after its separate photo-backup switch is enabled. Meal/equipment photo files and raw Health Connect records are excluded.
 
 **Cloud key storage:** Google protects transport/storage, and keys are encrypted again with Android Keystore locally. The portable keys inside the Drive JSON are not separately password-encrypted or end-to-end encrypted. Choose this optional feature only if that matches your preferences. Protect your Google account and provider accounts.
 
-This is a current snapshot with additive journal restore, not WhatsApp-compatible backup or a conflict-free multi-device sync service. A deleted journal entry can return from an older snapshot because deletion tombstones are not implemented. Prefer one active editing device and complete a save before moving to the next.
+This is a current snapshot with additive journal restore, not WhatsApp-compatible backup or a conflict-free multi-device sync service. A deleted original journal entry can return from an older snapshot; new body-progress check-ins have deletion markers to prevent that photo from returning. Prefer one active editing device and complete a save before moving to the next.
 
-## 5. Export a separate recovery file
+## 5. Export your data or a recovery file
 
-Settings also provides password-encrypted journal export/import using Android's file picker. Keep the file and its password somewhere you control. The password cannot be recovered by the app. This format covers the seven journal tables and optional profile/goals; it excludes AI keys, photo files and imported Health Connect records. It is separate from automatic account Drive app-data backup. Restore merges records and avoids duplicate content rather than replacing the whole journal.
+Open **Settings → Data**. Export readable data & body photos saves a ZIP with structured JSON, eight CSV tables and body JPEGs. It is **not encrypted**; use a location you trust and review it before sharing. The ZIP is for reading/analysis, not app import.
 
-Before clearing app storage, uninstalling or testing another signing identity, verify a usable backup first. A local-only profile has no automatic Google restore unless it was separately exported; Google login does not silently claim older local records.
+For recovery, enter a password of at least eight characters and Export encrypted backup. Import backup and keep existing records restores supported .mgbak files without duplicating the same content. Also restore profile, goals and preferences is optional. Body progress photos are included; configured API keys, sign-in tokens, raw Health Connect data and meal/equipment photo files are excluded. Existing local keys are preserved on preference restore. Snapshots have a 20 MB limit; an oversized backup fails visibly. Keep the password and check the file before removing any data. The Android file picker can choose local storage or a document provider such as your own Drive.
+
+These manual formats are separate from automatic private Drive app-data backup. [Exact formats and limitations](UPDATE_1_12_0.md#export-and-recovery).
 
 ## 6. Disconnect and remove data
 
@@ -109,3 +111,9 @@ This remains a development wellness/tracking build. Automated emulator checks do
 ## Returning after an app restart
 
 Your selected local/Google identity is remembered on this phone with device encryption. Once setup is complete, reopening the app goes to Home. Drive reconnects without blocking Home when permission was already granted; otherwise open Settings → Account to reconnect. Health permissions remain enforced in Fitness. Explicit Sign out clears the remembered identity; selecting a different/new account still opens its own records or first setup. Uninstall/clear-storage/new phones require sign-in and optional Drive restore again. Never uninstall records to troubleshoot a setup loop.
+
+## Movement breaks and body progress
+
+Settings → Reminders → Stand, stretch or walk enables adjustable break alerts. Optional background step access suppresses an alert after at least 20 shared steps during that interval. Without usable data it is a general timer; it cannot prove you were sitting. Active hours and Android battery/notification controls apply.
+
+Settings → Account → Body progress / photos / weight opens dated photos, optional measurements and notes. Choose two check-ins to compare photos and recorded weight/waist/scale-body-fat changes. Photos stay in this account on the phone by default and are never sent to AI. Separately enable Include body photos in my Google Drive backup if you want them in your own connected Drive snapshot. Use Delete this check-in to remove one; independent exports/cloud copies need their own controls.

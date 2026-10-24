@@ -17,13 +17,13 @@
 <article class="document"><span class="eyebrow">MIGRAINEGUARD · YOUR INFORMATION</span>
 <h1>Help &amp; data controls</h1>
 
-<p class="date">Last updated: October 22, 2026 · Applies to Android v1.11.1 and this website</p>
+<p class="date">Last updated: October 24, 2026 · Applies to Android v1.12.0 and this website</p>
 
 <p class="intro">A few clear steps to get your account, backup and health readings connected.</p>
 
 <h2>Install and update</h2>
 
-<p>Open <a href="https://github.com/jdp323/migraineguard/releases/latest">the public latest-release page</a>, expand Assets and download the Standard .apk. No GitHub invitation is needed. Update the same package/certificate without uninstalling to keep local data. Preview installs as a separate app with separate records and permissions. The latest verified build is v1.11.1, version code 20. Check Settings → App → About after installing.</p>
+<p>Open <a href="https://github.com/jdp323/migraineguard/releases/latest">the public latest-release page</a>, expand Assets and download the Standard .apk. No GitHub invitation is needed. Update the same package/certificate without uninstalling to keep local data. Preview installs as a separate app with separate records and permissions. The latest verified build is v1.12.0, version code 21. Check Settings → App → About after installing.</p>
 
 <p>APK files are hosted on public GitHub Releases; this free Firebase site hosts information and policies. Do not uninstall an old app with records just to resolve a signing conflict; try Preview or verify a recovery backup first.</p>
 
@@ -32,15 +32,19 @@
 <li><a href="https://github.com/jdp323/migraineguard/blob/main/docs/USER_GUIDE.md">User guide</a>: installation, checked setup, every main feature, backup and data controls.</li>
 <li><a href="https://github.com/jdp323/migraineguard/blob/main/docs/TROUBLESHOOTING.md">Errors and fixes</a>: sign-in, Drive, missing steps/BPM/sleep, AI, photos and reminders.</li>
 <li><a href="https://github.com/jdp323/migraineguard/blob/main/docs/HOW_IT_WORKS.md">How it works</a>: device data path, storage, account isolation and AI/backup boundaries.</li>
-<li><a href="https://github.com/jdp323/migraineguard/blob/main/docs/UPDATE_1_11_0.md">Release verification and screenshots</a>: 75 JVM tests, 27 Android tests and inspected synthetic captures.</li>
+<li><a href="https://github.com/jdp323/migraineguard/blob/main/docs/UPDATE_1_12_0.md">Release verification and screenshots</a>: 81 JVM tests, 33 Android tests and inspected synthetic captures.</li>
 </ul>
 
+<h2>Movement breaks, private body photos and export</h2>
+<p>Settings → Reminders → Stand, stretch or walk sets a break interval and active hours. Optional supported background Steps permission skips an alert when recent shared steps show activity. Missing data uses a general timer; the app cannot prove you are sitting. Android can delay reminders.</p>
+<p>Settings → Account → Body progress / photos / weight adds dated photos, notes and optional measurements. Compare two check-ins side by side and review recorded changes. Body photos stay local by default and are never sent to AI. A separate switch explicitly includes them in your own private Drive backup.</p>
+<p>Settings → Data exports readable JSON/CSV and body JPEGs as an unencrypted ZIP, or a password-encrypted recovery file. Manual exports exclude configured API keys, login tokens, raw Health Connect records and meal/equipment photo files. Recovery/Drive snapshots have 20 MB limits. Keep exports private and verify a copy before removing data. <a href="https://github.com/jdp323/migraineguard/blob/main/docs/UPDATE_1_12_0.md">Read the complete steps and format details</a>.</p>
 <h2>Swipe navigation and refreshed design</h2>
 <p>Swipe between all six main tabs or tap the moving dock. Detail pages use native Back and directional transitions; Profile and Drive return to Settings. Drafts remain with their page, and the keyboard-aware layout keeps controls reachable. The refreshed light/dark palette and compact cards keep the interface consistent. Android’s edge-back gesture and animation preferences remain under your phone’s control.</p>
 <h2>Water quick actions, activity fields and returning Home</h2>
 <p>Expand a water notification to log 1, 2 or 3 glasses (250 ml each). Training separates Strength, Cardio, Stretching and Other; treadmill uses speed/incline/distance, stretching uses duration/hold/rounds. A remembered device-encrypted identity reopens completed profiles at Home; explicit sign-out clears it. Previously enabled Drive reconnects without blocking Home, or offers reconnect in Account settings.</p>
 <h2>Training and Settings controls</h2>
-<p>Home is a compact overview; migraine tools/context have their own tab. Fitness → Training logs exercises or machines, weight/reps/sets, optional local photos, session history and a weekly active-day goal. Settings is organized into Account, AI, Reminders and App. Choose a provider/key/model after setup, set reminder types/intervals/active hours, view the confirmed Drive snapshot size, or Check for updates and open GitHub downloads. <a href="https://github.com/jdp323/migraineguard/blob/main/docs/AI_AND_PERMISSIONS.md">Read exact AI prompts and permissions</a>.</p>
+<p>Home is a compact overview; migraine tools/context have their own tab. Fitness → Training logs exercises or machines, weight/reps/sets, optional local photos, session history and a weekly active-day goal. Settings is organized into Account, AI, Reminders, Data and App. Choose a provider/key/model after setup, set reminder types/intervals/active hours, view the confirmed Drive snapshot size, or Check for updates and open GitHub downloads. <a href="https://github.com/jdp323/migraineguard/blob/main/docs/AI_AND_PERMISSIONS.md">Read exact AI prompts and permissions</a>.</p>
 <h2>Checked setup</h2>
 <p>Welcome, Account, Health, AI and Profile show distinct results. Health Connect availability and read grants do not automatically check received steps, heart or sleep. Real received records get their own checks. Optional skips stay marked Skipped in the final review. A successful Gemini or first manual Drive test stays visible until Continue. Skipping AI verification keeps saved keys; remove them in Settings to stop using them.</p>
 
@@ -67,7 +71,7 @@
 
 <li>Allow MigraineGuard to read the relevant record types. Standard and Preview have separate permission grants.</li>
 
-<li>In Fitness, choose Samsung Health or Combined Health Connect, then refresh. Source totals are alternatives, not added together.</li>
+<li>In Fitness, choose All sources for compatible Samsung, Garmin, Fitbit / Google Health and other writers (Samsung is an optional alternative), then refresh. Source totals are alternatives, not added together.</li>
 
 <li>Heart rate shows the latest available sample, not live watch BPM. Sleep requires completed sessions. Sharing from source apps can be delayed.</li>
 
@@ -90,5 +94,5 @@
 <p>A clearer view of your everyday wellbeing.</p>
 
 <div><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a><a href="/support.html">Help &amp; data controls</a></div>
-<small>Independent Android app. Not affiliated with Samsung, Google, or Fitbit.</small></footer>
+<small>Independent Android app. Not affiliated with Samsung, Google, Garmin or Fitbit.</small></footer>
 </body></html>

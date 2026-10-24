@@ -1,4 +1,4 @@
-> Current v1.11.1: [swipe navigation, refreshed visual components, lifecycle/back behavior and verification](UPDATE_1_11_0.md).
+> Current v1.12.0: [movement breaks, private body progress, exports, multi-brand Health Connect and changed-file/function map](UPDATE_1_12_0.md). Previous [v1.11 design/navigation](UPDATE_1_11_0.md).
 
 > Historical v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
 
@@ -103,3 +103,12 @@ Reference: https://android.googlesource.com/platform/packages/modules/HealthFitn
 2. Type unsaved Food, Coach, Training and Migraine fields. Visit a distant tab and return; check drafts and scroll. Rotate/recreate the activity, then check the selected page. Save important entries before force-stop or sign-out.
 3. Open Settings → Profile, Water, Body, Medications and Drive. Use toolbar Back and system edge-back with the phone in gesture mode. Confirm return to the previous detail/page; cancel a Drive check and retry without losing local data.
 4. Inspect light/dark and optional dynamic color, a larger font/display scale, the Samsung keyboard, and system reduced/disabled animations. Note real phone fluidity; no fixed display refresh rate is promised.
+
+## v1.12.0 acceptance
+
+1. Update Standard in place to 1.12.0/code21; check existing account records and all main tab gestures. In Fitness choose All sources. Verify actual Samsung, Garmin, Fitbit / Google Health or another source’s dated records in Health Connect before comparing values.
+2. In Settings → Reminders enable movement, choose 30/60/90 minutes and suitable active hours. Try permission denied/unsupported and optional background granted. Timed fallback must not claim sitting; at least 20 shared recent steps should suppress an occurrence. Check notification/channel and OEM battery controls; timing is approximate.
+3. Add front/side progress photos with dates, notes and optional measurements; restart and compare two check-ins. Confirm local retention and account separation. Use synthetic/non-sensitive photos when reporting public issues. Body photos must never trigger AI traffic.
+4. With your own connected Drive, leave photo inclusion off and save; enable it explicitly, save and restore on another updated installation. Delete a fixture check-in, save and reconnect to confirm it stays deleted. Test a temporary network failure; local data must remain.
+5. Settings → Data: save/read a ZIP locally, inspect JSON/CSV/JPEG files, confirm configured provider keys are absent. Export encrypted .mgbak and restore on a fixture installation; wrong password must fail. Verify body photos and preferences while existing keys remain. Check cancellation, insufficient disk space and oversized snapshots without deleting real records.
+6. Disable movement/master notifications and sign out; old-account alerts must stop. Test a larger font, keyboard, light/dark themes and Android photo picker on the actual phone.

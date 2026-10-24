@@ -1,14 +1,14 @@
 # How MigraineGuard works
 
-Current behavior: v1.11.1 / code 20. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
+Current behavior: v1.12.0 / code 21. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
 
 ## From your device to the screen
 
-The native Kotlin/Jetpack Compose phone app reads allowed records from Android Health Connect. A Galaxy Watch first syncs to Samsung Health on the phone; Samsung Health must then write supported records to Health Connect. Other companion apps, including compatible Fitbit setups, must do the equivalent. There is no direct live watch sensor service or Wear OS app in this repository.
+The native Kotlin/Jetpack Compose phone app reads allowed records from Android Health Connect. A Galaxy Watch first syncs to Samsung Health on the phone; Samsung Health must then write supported records to Health Connect. Other companion apps, including compatible Garmin and Fitbit / Google Health setups, must do the equivalent. There is no direct live watch sensor service or Wear OS app in this repository.
 
 Health Connect availability, Android permissions, the selected app account's phone-health opt-in and actual records are separate conditions. A success in one does not imply success in all. Setup checks each one and shows received-record checks only when it has evidence.
 
-Daily cumulative steps use the full local calendar day, including daily Samsung buckets that end at the next midnight. Samsung is the default source; the combined Health Connect aggregate is an alternative. Aggregation preserves provider/source handling. If an aggregate is zero but usable raw records exist, conservative single-writer recovery avoids overlapping intervals and is labeled an estimate. The app never adds Samsung and combined totals together.
+Daily cumulative steps use the full local calendar day, including daily Samsung buckets that end at the next midnight. All-source Health Connect aggregation is the default for new profiles; existing saved Samsung preferences are preserved. Aggregation preserves provider/source handling. If an aggregate is zero but usable raw records exist, conservative single-writer recovery avoids overlapping intervals and is labeled an estimate. The app never adds Samsung and combined totals together.
 
 Heart reads include recent record buckets but exclude future samples; the display is the latest dated sample, not live pulse. Completed sleep sessions are searched across fourteen days and older results are labeled. Missing results stay unavailable through Home, Fitness, Insights and offline coaching. See [the current query supplement](UPDATE_1_7_0.md) for exact helpers and edge cases.
 
@@ -16,12 +16,12 @@ Heart reads include recent record buckets but exclude future samples; the displa
 
 | Location | Contents | Boundaries |
 | --- | --- | --- |
-| Account-local Room database | Migraine episodes, food analysis records, water history, workouts, weight entries, medications and AI sessions | Seven journal tables plus a local-only water-action receipt table. Google accounts and the preserved local profile use separate storage namespaces. This is not a claim that every journal column is encrypted. |
+| Account-local Room database | Migraine episodes, food analysis records, water history, workouts, weight entries, medications and AI sessions | Eight journal categories including body progress photos/measurements, plus local-only water-action receipts. Google accounts and the preserved local profile use separate storage namespaces. This is not a claim that every journal column is encrypted. |
 | Account-local Preferences DataStore | Profile/DOB/units, goals, appearance, setup flags, connection choices and encrypted provider-key values | API key encryption uses device-bound Android Keystore; decrypted values are used only in app memory for configuration/requests. |
 | Health Connect / source apps | Device health records | These remain controlled by Android and source apps; the app does not back up the full Health Connect database to Drive or GitHub. |
-| Optional Google Drive appDataFolder | Current account snapshot: settings/profile, portable provider keys and seven journal tables | Hidden app-specific storage authorized by that Google account. Google transport/storage protection; no separate password/end-to-end encryption for the portable keys. |
-| Optional manual encrypted file | Seven journal tables and optional profile/goals | Password-derived AES-GCM. Excludes provider keys, photo files and raw imported health records. |
-| Local/source image storage | Selected meal/equipment-photo references or camera files | Snapshots do not include photo bytes. A restored URI is not a cross-device photo backup. |
+| Optional Google Drive appDataFolder | Current account snapshot: settings/profile, portable provider keys and seven original journal tables; body progress only after its separate opt-in | Hidden app-specific storage authorized by that Google account. Google transport/storage protection; no separate password/end-to-end encryption for the portable keys. |
+| Optional manual encrypted file | Journals, body photos and profile/goals/preferences | Password-derived AES-GCM. Excludes provider keys, meal/equipment photos and raw Health Connect records. |
+| Local/source image storage | Selected meal/equipment-photo references or camera files | Meal/equipment references are not portable. Body progress uses normalized JPEG bytes in the private database and optional exports/Drive. |
 | GitHub / public website | Source, docs, synthetic test screenshots and signed test APKs | No user journal or user Drive backup is intentionally uploaded here. See the limited [public exposure audit](PUBLICATION_AUDIT.md). |
 
 Room Flow and DataStore updates drive Compose screens. Manual dependency construction is in AppContainer. MainActivity triggers foreground refresh; HealthRefreshCoordinator shares/debounces health reads. Active health screens also refresh periodically while resumed. A keyed native HorizontalPager now owns the six main tabs, with saveable drafts/scroll state and limited neighboring pages. Detail destinations stay on Navigation Compose’s back stack, including Profile and Drive. The dock reads pager position during drawing, while only the active Home/Fitness page runs its periodic refresh loop. Persisted entries still belong in repositories rather than only in UI state. [Navigation/design details](UPDATE_1_11_0.md).
@@ -54,11 +54,15 @@ Setup check states distinguish waiting, checking, verified, attention and skippe
 
 ## Reminder and update checks
 
-Settings → Reminders saves per-account toggles, intervals and active hours. Separate WorkManager jobs use a durable account marker to deliver generic notifications after process restart. Sign-out clears the marker, jobs and notifications. Food/water taps open their logs; no photo is taken automatically. Android timing is approximate.
+Settings → Reminders saves per-account toggles, intervals and active hours. Separate WorkManager jobs use a durable account marker to deliver generic notifications after process restart. Sign-out clears the marker, jobs and notifications. Food/water taps open their logs; no photo is taken automatically. Android timing is approximate. Movement reminders optionally check all-source recent steps using separately granted background access; missing data produces a timed break prompt, not a sitting diagnosis.
 
 Settings → App checks public GitHub latest-release metadata, validates the repository URL and compares numeric versions. Optional background checks cache metadata for 24 hours and notify once per newer release during active hours. A tap opens GitHub downloads; nothing installs silently. Only ordinary request metadata reaches GitHub, not health records or provider keys. Account Settings measures the current Drive snapshot bytes, not total account usage/quota.
 
 Water notifications add three fixed glass actions. Immutable PendingIntents target a private receiver, which enqueues account-bound work. A receipt and water increment share one Room transaction, so each notification applies one choice. Invalid owner, expiry or disabled preferences reject the action. Receipts and the remembered session are excluded from journal exports/Drive. [Current changed files and limits](UPDATE_1_10_0.md).
+
+## Body progress and export
+
+The body-progress table uses stable UUIDs and permanent deletion markers. Selected images are resized and re-encoded locally; no body photo enters an AI prompt. Side-by-side comparisons and numerical deltas use user-entered measurements. A separate opt-in controls body contents in Drive. Settings → Data streams a readable ZIP or creates a password-encrypted recovery snapshot. Configured keys are excluded from manual exports. [Exact functions, migration, limits and formats](UPDATE_1_12_0.md).
 
 ## Source map and detailed code documentation
 
@@ -84,8 +88,8 @@ Run the unit/lint/Standard assembly tasks before making a release; build Preview
 
 The pipeline restores its signing key from a GitHub Actions secret for eligible push builds, checks the retained SHA-1, runs checks and builds both APKs. Pull requests do not receive that secret or publish. A release requires successful build and Android runtime jobs and the retained signer. Existing version tags are not overwritten; app binary changes need a new version/code.
 
-For v1.11.1, [run 39719987641](https://github.com/jdp323/migraineguard/actions/runs/39719987641) passed **75 JVM tests and 27 Android runtime tests**, lint and signature checks. Two gesture tests also passed with animations enabled; the draft survived three consecutive activity recreations in each mode. Released APK hashes match the inspected downloaded build artifacts. Tests use synthetic health/account data and simulated Drive transport. Real Samsung/Fitbit transfer, native authorization and live AI still require phone acceptance. See [current changed files, captures and evidence](UPDATE_1_11_0.md).
+For v1.12.0, [run 40121259096](https://github.com/jdp323/migraineguard/actions/runs/40121259096) passed **81 JVM tests and 33 Android runtime tests**, lint and retained Standard/Preview signature checks. The two gesture tests also passed with animations enabled. Synthetic fixtures cover body-photo normalization/recovery/deletion, manual export privacy, photo-Drive opt-in, original schema migrations 1–6 and non-Samsung health sources. Both public APK hashes match the inspected artifacts. Actual device sync, native Google transfer and OEM reminder timing still need phone acceptance. [Current functions, captures and evidence](UPDATE_1_12_0.md).
 
 ## Current limits
 
-No direct watch app/live pulse, exact-dose alarm scheduler, barcode nutrition database, historical Health Connect series/correlation engine, portable photo backup or conflict-free multi-device sync is implemented. Public Google audience access is enabled, but custom branding is not represented as verified. These limits are documented so missing behavior can be diagnosed rather than mistaken for an already completed feature.
+No direct watch app/live pulse, exact-dose alarm scheduler, barcode nutrition database, historical Health Connect series/correlation engine, portable meal/equipment photo backup or conflict-free multi-device sync is implemented. Public Google audience access is enabled, but custom branding is not represented as verified. These limits are documented so missing behavior can be diagnosed rather than mistaken for an already completed feature.

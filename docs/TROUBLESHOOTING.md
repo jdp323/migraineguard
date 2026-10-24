@@ -2,7 +2,7 @@
 
 # Troubleshooting MigraineGuard
 
-Applies to v1.11.1 (20). Check **Settings → App → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
+Applies to v1.12.0 (20). Check **Settings → App → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
 
 [User guide](USER_GUIDE.md) · [Latest download](https://github.com/jdp323/migraineguard/releases/latest) · [Technical guide](HOW_IT_WORKS.md)
 
@@ -107,6 +107,16 @@ Use Fitness → Training → Log exercise and choose the matching tile. Cardio �
 
 ## Swipe or back gesture does not behave as expected
 
-Confirm v1.11.1/code20. Swipe within the main page to move between neighboring tabs; the first/last page does not wrap. A drag on the head map, slider, text selection or horizontally scrolling chips belongs to that control; swipe another part of the page or tap the dock. Screen-edge back is Android’s system gesture and depends on gesture-navigation settings; toolbar and three-button Back still work. Back inside the migraine journal returns through its panes; from another main tab it returns Home. Profile and Drive editing now return to Settings instead of resetting the main screen.
+Confirm v1.12.0/code20. Swipe within the main page to move between neighboring tabs; the first/last page does not wrap. A drag on the head map, slider, text selection or horizontally scrolling chips belongs to that control; swipe another part of the page or tap the dock. Screen-edge back is Android’s system gesture and depends on gesture-navigation settings; toolbar and three-button Back still work. Back inside the migraine journal returns through its panes; from another main tab it returns Home. Profile and Drive editing now return to Settings instead of resetting the main screen.
 
 If transitions snap, check Android’s animation/accessibility preferences: a zero duration scale intentionally removes animations. No app setting forces them back on. Screen-scoped AI work may be cancelled if its page is disposed; saved replies remain in history, and requests are not automatically retried. Report app version, Android version, screen, font/display scale and reproducible gesture; remove private data from screenshots. Emulator gesture checks are not a frame-rate certification.
+
+## Movement alert is late, appears while active, or does not appear
+
+Check Settings → Reminders: master switch, Stand/stretch/walk, interval and active hours. Android notification permission/channel and battery restrictions also apply. The timer is approximate (15-minute minimum). Optional background Steps checks require supported Health Connect, its extra grant and this account’s device-health connection. At least 20 shared steps suppress an occurrence. Missing/delayed sync uses a general timer; this is not a sitting detector. For Garmin/Fitbit or other devices, select All sources and confirm records in Health Connect.
+
+## Body photo, backup or export needs attention
+
+Use Settings → Account → Body progress / photos / weight. Choose an image with the system picker, check the YYYY-MM-DD date, and save. Photos are resized/re-encoded; oversized or unreadable files fail without adding a record. Body-fat percentage comes from your scale, never photo inference. Photos are local by default; the separate photo-Drive switch and a connected Drive backup are both needed for cloud inclusion.
+
+Settings → Data has readable ZIP and encrypted .mgbak options. ZIPs are not encrypted and cannot be imported by the app. The .mgbak password is unrecoverable. Manual recovery and Drive snapshots have 20 MB limits; if too large, export readable data first, retain your original images and remove entries only after verifying copies. Remove partial files after cancelled/failed writes. Older app versions cannot read the new formats; update all devices. New body deletion markers prevent old snapshots from restoring a deleted check-in, but independent exported copies remain until you delete them.

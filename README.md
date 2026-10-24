@@ -2,14 +2,14 @@
 
 A native Android companion for migraine journaling, movement, sleep, hydration, meals, body measurements, medication check-ins and optional educational AI coaching.
 
-**Latest verified build: v1.11.1 (20)** · Android 8+ · Public signed test APKs
+**Latest verified build: v1.12.0 (21)** · Android 8+ · Public signed test APKs
 
 ## Download and share
 
 **[Download MigraineGuard](https://github.com/jdp323/migraineguard/releases/latest)** — share this link with friends. Open **Assets** and choose the Standard .apk. No GitHub repository invitation is needed.
 
-- [Standard v1.11.1 APK](https://github.com/jdp323/migraineguard/releases/download/v1.11.1-debug/MigraineGuard-v1.11.1-debug.apk): normal app, com.migraineguard.app. Update in place when the signing certificate matches; keep local records.
-- [Preview v1.11.1 APK](https://github.com/jdp323/migraineguard/releases/download/v1.11.1-debug/MigraineGuard-v1.11.1-preview.apk): separate installation beside Standard, with its own storage and permissions.
+- [Standard v1.12.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.12.0-debug/MigraineGuard-v1.12.0-debug.apk): normal app, com.migraineguard.app. Update in place when the signing certificate matches; keep local records.
+- [Preview v1.12.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.12.0-debug/MigraineGuard-v1.12.0-preview.apk): separate installation beside Standard, with its own storage and permissions.
 - [User guide](docs/USER_GUIDE.md): installation, checked setup, daily features, Google Drive restore and data controls.
 - [Troubleshooting](docs/TROUBLESHOOTING.md): possible errors, what they mean and how to resolve them.
 - [How it works](docs/HOW_IT_WORKS.md): device path, account isolation, AI/backup boundaries and code map.
@@ -17,17 +17,19 @@ A native Android companion for migraine journaling, movement, sleep, hydration, 
 
 Do not uninstall an old installation containing records to resolve a signature conflict. Use Preview or verify a recovery export first. These are development builds, distributed outside the Play Store; app updates are downloaded from Releases.
 
-## What's new in v1.11.1
+## What's new in v1.12.0
 
-Swipe between all six main tabs, with a floating dock that follows your finger. Detail pages use directional transitions and native Back; profile and Drive settings return through the same back stack. Meal, coaching, migraine and training drafts stay with their page when switching tabs, and the keyboard-aware layout keeps controls reachable.
+Adjustable stand/stretch/walk reminders can optionally check recent shared steps and skip an alert after activity. Without usable data they are timed break prompts; the app cannot prove someone is sitting. Configure interval, active hours and the optional background grant in Settings → Reminders.
 
-The interface now shares an indigo/teal palette, compact gradient summaries, consistent rounded cards, lighter visual hierarchy and subtle shortcut press feedback. System/dynamic color preferences and explicit cloud/health choices remain available.
+Body progress keeps dated photos, notes and optional weight, waist and scale body-fat measurements privately on the phone. Compare check-ins side by side and review recorded measurement changes. Body photos are never sent to AI. A separate explicit switch includes them in your own connected Google Drive snapshot.
 
-<table><tr><td><img src="docs/images/v1.11.1/home-light.png" width="250" alt="Refreshed focused Home in light theme"></td><td><img src="docs/images/v1.11.1/home-dark.png" width="250" alt="Refreshed focused Home in dark theme"></td><td><img src="docs/images/v1.11.1/fitness-light.png" width="250" alt="Fitness with consistent compact feature header and swipe dock"></td></tr></table>
+Settings → Data exports readable JSON/CSV plus body JPEGs in a ZIP, or a password-encrypted recovery backup. Manual formats exclude configured API keys, Google tokens, raw Health Connect records and meal/equipment photo files. The ZIP is not encrypted. New profiles default to all Health Connect sources, including records written by compatible Samsung, Garmin, Fitbit / Google Health and other apps.
 
-[Navigation, design, changed files, screenshots and verification](docs/UPDATE_1_11_0.md) · [AI prompts and permissions](docs/AI_AND_PERMISSIONS.md).
+<table><tr><td><img src="docs/images/v1.12.0/body-progress-overview.png" width="250" alt="Private body progress overview"></td><td><img src="docs/images/v1.12.0/settings-movement.png" width="250" alt="Adjustable movement reminder interval"></td><td><img src="docs/images/v1.12.0/settings-data-export.png" width="250" alt="Readable and encrypted export choices"></td></tr></table>
 
-All [v1.10 features](docs/UPDATE_1_10_0.md) remain: 1/2/3-glass water actions, exercise-specific logs, remembered sign-in, weekly goals, eleven AI choices, adjustable reminders, Drive snapshot size and GitHub update checks. Captures use synthetic data.
+[Complete steps, code/function map, permissions, privacy and format limits](docs/UPDATE_1_12_0.md) · [AI prompts and permissions](docs/AI_AND_PERMISSIONS.md).
+
+The [v1.11 swipe navigation and design](docs/UPDATE_1_11_0.md) and [v1.10 features](docs/UPDATE_1_10_0.md) remain. No developer health-data or photo backend is used; optional cloud AI/weather still send only the data described in the privacy guide when those features are chosen.
 
 ## Start in a few steps
 
@@ -41,15 +43,15 @@ Google audience access is **External / In production**; each Google account auth
 
 ## Devices and health readings
 
-Galaxy Watch data travels through **Samsung Health on the phone → Android Health Connect → MigraineGuard**. Fitbit/other companion apps must export supported records to Health Connect too. There is no direct watch app or live sensor stream.
+Wearable data travels through **a compatible companion app on the phone → Android Health Connect → MigraineGuard**. Samsung Health, Garmin Connect, Fitbit / Google Health and other source apps must export supported records to Health Connect. There is no direct watch app or live sensor stream.
 
-Fitness shows Samsung and combined Health Connect alternatives, source/timestamp diagnostics and a copyable sync report. Full-day aggregates and conservative labeled raw recovery handle supported Samsung daily buckets. Heart is a dated latest measurement, not live BPM; sleep requires completed sessions. Missing readings remain unavailable. See the [missing-data checklist](docs/TROUBLESHOOTING.md#steps-heart-rate-or-sleep-are-missing-or-different).
+Fitness defaults new profiles to All sources, with an optional Samsung alternative, source/timestamp diagnostics and a copyable sync report. Full-day aggregates and conservative labeled raw recovery handle supported Samsung daily buckets. Heart is a dated latest measurement, not live BPM; sleep requires completed sessions. Missing readings remain unavailable. See the [missing-data checklist](docs/TROUBLESHOOTING.md#steps-heart-rate-or-sleep-are-missing-or-different).
 
 ## Accounts, backup and privacy
 
-A device-encrypted remembered identity restores the selected profile after restart, without storing Google API tokens. Explicit sign-out clears that session. Each Google account keeps its own local profile, settings, keys and journal. Continue locally preserves its own records. Optional Drive backup restores profile, DOB, measurements, goals, settings, personal provider keys and seven journal tables. Photos and the Health Connect database are excluded.
+A device-encrypted remembered identity restores the selected profile after restart, without storing Google API tokens. Explicit sign-out clears that session. Each Google account keeps its own local profile, settings, keys and journal. Continue locally preserves its own records. Optional Drive backup restores profile, DOB, measurements, goals, settings, personal provider keys and seven original journal tables. Body progress enters Drive only after its separate opt-in; meal/equipment photos and raw Health Connect records are excluded.
 
-Drive snapshots use Google's transport/storage protection; portable keys inside the JSON are **not separately password-encrypted or end-to-end encrypted**. Keys are encrypted with Android Keystore locally. Manual password-encrypted journal exports are a separate recovery format and exclude provider keys. Restore merges journals; deletion tombstones and conflict-free simultaneous-device sync are not implemented.
+Drive snapshots use Google's transport/storage protection; portable keys inside the JSON are **not separately password-encrypted or end-to-end encrypted**. Keys are encrypted with Android Keystore locally. Manual password-encrypted exports are a separate recovery format and exclude provider keys. Readable ZIP exports are not encrypted. New body progress has deletion markers; original journal tables retain their older merge/deletion limits. Conflict-free simultaneous-device sync is not implemented.
 
 Cloud AI uses your selected provider/key, then offline fallback. Optional legacy Auto uses Gemini → Groq → OpenRouter → offline. Sending the health summary or a meal photo requires the corresponding explicit choice. Opening Insights does not automatically upload health context. Provider quotas/charges vary; historical class names containing Free are not a pricing promise.
 
@@ -57,7 +59,7 @@ Cloud AI uses your selected provider/key, then offline fallback. Optional legacy
 
 ## Verification and remaining phone checks
 
-[Release run 39719987641](https://github.com/jdp323/migraineguard/actions/runs/39719987641) passed **75 JVM tests + 27 Android runtime tests**, compilation, lint (0 errors) and both APK signing checks. The two gesture tests also passed with system animations enabled, including three consecutive activity recreations in each mode. Fourteen inspected API-35 screenshots cover all six main tabs in light/dark themes, Settings updates and the cardio picker. Both public APK downloads were fetched without authentication and their SHA-256 hashes match the built assets.
+[Release run 40121259096](https://github.com/jdp323/migraineguard/actions/runs/40121259096) passed **81 JVM tests + 33 Android runtime tests**, compilation, lint (0 errors) and both retained APK signing checks. Two gesture tests passed again with system animations enabled. Six inspected API-35 screenshots cover body progress, movement controls, data export, all-source Fitness, setup and installed version. Photo tests verify normalization, encrypted recovery, duplicate-free restore, deletion protection and explicit Drive inclusion; readable exports exclude configured keys. Both public APK downloads were fetched without authentication and match the built hashes.
 
 These tests use synthetic data and simulated Drive transport. Actual watch synchronization, friend-account native Drive transfer, live AI and OEM notification delivery still require phone acceptance. [Phone test checklist](docs/PHONE_TESTING.md) · [Feature status](docs/FEATURE_STATUS.md)
 
