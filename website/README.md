@@ -35,3 +35,7 @@ Deployed reviewed static source 0d6628c629f0b7d41961172517358522a1d8f752 via the
 ## v1.11.1 update (2026-10-22)
 
 Deployed reviewed static source d1a9352eec922180c8cfe0ba450d920c83f4697d through the existing authorized Cloud Shell and Firebase CLI, Hosting only. All seven live files returned 200 and matched the committed bytes; CSP and nosniff headers remained present. The help page was visually verified showing v1.11.1/code 20, swipe navigation, native Back and current public screenshot/documentation links. Exact hashes and browser proof remain in ignored verification/v1.11.1. No billing or service expansion; APK downloads remain on public GitHub Releases.
+
+## v1.12.0 update (2026-10-24)
+
+Deployed reviewed static source 70ca75152860ea994f17365c3cc83b0e3dba49b8 through the existing authorized Cloud Shell and Firebase CLI, Hosting only. All seven live files returned 200 and matched committed bytes; CSP and nosniff remained present. Visually verified the help page showing v1.12.0/code21, 81 JVM / 33 Android tests, movement timing and optional background-read limits, local body progress with separate Drive inclusion, manual export protection and multi-brand Health Connect steps. Privacy and homepage match those implemented flows. No billing/service expansion; APKs remain public GitHub releases. Exact hashes and browser proof are retained in ignored verification/v1.12.0.
