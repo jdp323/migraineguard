@@ -113,13 +113,13 @@ jobs:
             adb shell am instrument -w com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-runtime-results.txt
             adb pull /sdcard/Android/data/com.migraineguard.app/files/verification ui-verification || true
             cat android-runtime-results.txt
-            grep -q 'OK (33 tests)' android-runtime-results.txt
+            grep -q 'OK (37 tests)' android-runtime-results.txt
             adb shell settings put global window_animation_scale 1.0
             adb shell settings put global transition_animation_scale 1.0
             adb shell settings put global animator_duration_scale 1.0
-            adb shell am instrument -w -e class com.migraineguard.app.SwipeNavigationTest com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-gesture-results.txt
+            adb shell am instrument -w -e class com.migraineguard.app.SwipeNavigationTest,com.migraineguard.app.TrainerFlowTest com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-gesture-results.txt
             cat android-gesture-results.txt
-            grep -q 'OK (2 tests)' android-gesture-results.txt
+            grep -q 'OK (6 tests)' android-gesture-results.txt
             adb shell am start -n com.migraineguard.app/.MainActivity
             sleep 5
             adb exec-out screencap -p > android-startup.png
@@ -160,17 +160,17 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
-          Added adjustable stand/stretch/walk reminders in Settings → Reminders. Optional Health Connect background step access suppresses a break alert when recent shared steps show activity. Missing access/data uses an honest timed reminder; this is not a sitting/posture detector. Android schedules reminders approximately.
+          A new layered glass appearance adds translucent tinted cards, reflective edges, atmospheric light/dark backgrounds, glossy shortcut feedback and a moving glass dock. Text stays sharp. Settings → App → Reduce transparency gives cards a solid fill. This is an original Android treatment, not Apple's rendering engine.
 
-          Body progress now keeps dated photos, notes and optional weight, waist and scale body-fat measurements in the current account's private local database. Compare two check-ins side by side and see recorded measurement changes. Body photos are never sent to AI. A separate opt-in includes body progress in the user's own private Google Drive snapshot.
+          Fitness → Trainer adds an original locally rendered rotating human muscle map. Swipe to rotate, choose front/back, and select several muscle regions by touch or labeled accessible chips. The map keeps its own horizontal gesture; main tab navigation is retained.
 
-          Settings → Data exports readable JSON/CSV plus saved body photos in a ZIP, or a password-encrypted recovery backup. Readable ZIPs are not encrypted. Neither manual format includes configured provider keys, login tokens or raw Health Connect records. Meal/equipment photo files are excluded.
+          Save training experience, goal, equipment, session time, weekly frequency and areas to skip. Build a focused workout with sets, rep ranges or timed holds, rest, technique cues and editable load guidance. Unknown equipment loads require a comfortable test set; body mass is not converted into a made-up lifting prescription. Recent comparable completed sets and optional actual reps-in-reserve guide conservative repeat/progression suggestions.
 
-          New profiles default to all Health Connect sources; Samsung remains an optional source preference. Compatible Garmin, Fitbit / Google Health and other source apps must write records into Health Connect. There is no direct watch connection. Source totals are alternatives, never added together.
+          Use in exercise log fills an editable draft, protects existing unsaved fields, and never marks proposed sets complete. Actual logged sets/holds track progress. A rest timer, on-device weekly templates, up to five saved schedules and an optional cloud AI week arrangement are included. AI sharing requires a separate checkbox and explicit action; unknown/excluded exercises, unsuitable schedules and invented load prescriptions are rejected or replaced by a labeled local plan.
 
-          Adds one optional background health-read permission and preserving Room migration 6 → 7. No developer health-data backend, new AI endpoint or Drive scope. Current Drive format 3 and recovery format 2 accept older snapshots; update all devices before using new backups.
+          Plans/preferences remain account-local, with the existing optional private Drive/manual settings backup. No developer fitness-data backend, new permission, external model asset or Google scope is added. Manual format 3 accepts 1–2; Drive format 4 accepts 2–3. Update all devices before using new backups.
 
-          Release gates include JVM tests, lint, retained Standard/Preview signing, 33 Android tests, and a second run of gesture/back/draft tests with animations enabled. Actual wearable sync and OEM background delivery still need phone testing. See docs/UPDATE_1_12_0.md for controls, storage, export formats, tests and limitations.
+          Release gates include JVM tests, lint, retained signing, 37 Android runtime tests and six repeated gesture/trainer tests with animations enabled. These do not certify a real phone frame rate, live provider responses or wearable transport. See docs/UPDATE_1_13_0.md for exact controls, prompts, tests and remaining limits.
 
           Use Standard to update com.migraineguard.app with the retained FB:67 certificate, or Preview alongside it with separate records/permissions. Do not uninstall an older app containing records to resolve a signing conflict.
           NOTES

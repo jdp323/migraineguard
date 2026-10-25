@@ -50,8 +50,9 @@ class MainActivity : ComponentActivity() {
                 MigraineGuardTheme(
                     themeMode = prefs.themeMode,
                     dynamicColor = prefs.dynamicColor,
+                    reduceTransparency = prefs.reduceTransparency,
                 ) {
-                    Surface(modifier = Modifier.fillMaxSize().imePadding()) {
+                    Surface(modifier = Modifier.fillMaxSize().imePadding(), color = androidx.compose.ui.graphics.Color.Transparent) {
                         MigraineGuardNavHost(container = container, requestedRoute = requestedRoute.value, onRouteConsumed = { requestedRoute.value = null; intent.removeExtra("open_route") })
                     }
                 }

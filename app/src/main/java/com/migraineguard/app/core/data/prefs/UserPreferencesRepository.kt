@@ -39,6 +39,9 @@ private object AccountPreferenceStores {
 
 @kotlinx.serialization.Serializable
 data class UserPreferences(
+    val reduceTransparency: Boolean = false,
+    val trainerProfile: com.migraineguard.app.feature.fitness.TrainerProfile = com.migraineguard.app.feature.fitness.TrainerProfile(),
+    val trainingPlans: List<com.migraineguard.app.feature.fitness.TrainingWeek> = emptyList(),
     val aiConnections: Map<String, com.migraineguard.app.core.ai.AiConnection> = emptyMap(),
     val preferredAiProvider: String = "auto",
     val weeklyWorkoutGoal: Int = 3,
@@ -85,6 +88,10 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
     private val dataStore = AccountPreferenceStores.get(context, account)
     private val apiKeyVault = ApiKeyVault()
 
+    private val reduceTransparencyKey = booleanPreferencesKey("reduce_transparency")
+    private val trainerProfileKey = stringPreferencesKey("trainer_profile_v1")
+    private val trainingPlansKey = stringPreferencesKey("training_plans_v1")
+    private val trainerJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val connectionsKey = stringPreferencesKey("ai_connections_v1")
     private val preferredAiKey = stringPreferencesKey("preferred_ai_provider")
     private val weeklyWorkoutGoalKey = intPreferencesKey("weekly_workout_goal")
@@ -156,6 +163,9 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
             return@transform
         }
         emit(UserPreferences(
+            reduceTransparency = p[reduceTransparencyKey] ?: false,
+            trainerProfile = p[trainerProfileKey]?.let { trainerJson.decodeFromString<com.migraineguard.app.feature.fitness.TrainerProfile>(it) } ?: com.migraineguard.app.feature.fitness.TrainerProfile(),
+            trainingPlans = p[trainingPlansKey]?.let { trainerJson.decodeFromString<List<com.migraineguard.app.feature.fitness.TrainingWeek>>(it) } ?: emptyList(),
             aiConnections = decodeConnections(apiKeyVault.decrypt(p[connectionsKey].orEmpty())),
             preferredAiProvider = p[preferredAiKey] ?: "auto",
             movementReminders = p[movementRemindersKey] ?: false,
@@ -221,6 +231,19 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
     suspend fun getGoogleWebClientId(): String =
         preferences.first().googleWebClientId
 
+    suspend fun setReduceTransparency(enabled: Boolean) { editUser { it[reduceTransparencyKey] = enabled } }
+    suspend fun saveTrainerProfile(profile: com.migraineguard.app.feature.fitness.TrainerProfile) { profile.validate(); editUser { it[trainerProfileKey] = trainerJson.encodeToString(profile) } }
+    suspend fun saveTrainingPlan(plan: com.migraineguard.app.feature.fitness.TrainingWeek) {
+        plan.validate()
+        editUser { p ->
+            val old = p[trainingPlansKey]?.let { trainerJson.decodeFromString<List<com.migraineguard.app.feature.fitness.TrainingWeek>>(it) }.orEmpty()
+            p[trainingPlansKey] = trainerJson.encodeToString((listOf(plan) + old.filter { it.id != plan.id }).take(5))
+        }
+    }
+    suspend fun deleteTrainingPlan(id: String) { editUser { p ->
+        val plans = p[trainingPlansKey]?.let { trainerJson.decodeFromString<List<com.migraineguard.app.feature.fitness.TrainingWeek>>(it) }.orEmpty()
+        p[trainingPlansKey] = trainerJson.encodeToString(plans.filter { it.id != id })
+    } }
     suspend fun setThemeMode(mode: ThemeMode) {
         editUser { it[themeKey] = mode.name }
     }
@@ -372,6 +395,9 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
         var applied = false
         dataStore.edit { p ->
             if ((p[modifiedKey] ?: 0L) > value.modifiedAtMillis) return@edit
+            p[reduceTransparencyKey] = value.reduceTransparency
+            p[trainerProfileKey] = trainerJson.encodeToString(value.trainerProfile)
+            p[trainingPlansKey] = trainerJson.encodeToString(value.trainingPlans)
             p[themeKey] = value.themeMode.name; p[dynamicKey] = value.dynamicColor
             p[waterGoalKey] = value.waterGoalCups; p[waterUnitKey] = value.waterUnit.name
             p[stepSourceKey] = value.stepSource; p[stepGoalKey] = value.dailyStepGoal; p[sleepGoalKey] = value.sleepGoalHours

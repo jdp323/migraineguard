@@ -19,7 +19,7 @@ import java.time.LocalDate
 
 @Serializable
 data class JournalBackup(
-    val formatVersion: Int = 2,
+    val formatVersion: Int = 3,
     val createdAtMillis: Long,
     val appVersion: String,
     val profile: BodyProfile? = null,
@@ -37,7 +37,7 @@ data class JournalBackup(
     val settings: com.migraineguard.app.core.data.prefs.UserPreferences? = null,
 ) {
     fun validate() {
-        require(formatVersion in 1..2) { "Unsupported backup version." }
+        require(formatVersion in 1..3) { "Unsupported backup version." }
         require(listOf(migraines.size, nutrition.size, water.size, workouts.size,
             weights.size, medications.size, sessions.size, bodyProgress.size).sum() <= 50_000)
         require(waterGoalCups in 1..20 && stepGoal in 1000..30000 && sleepGoalHours in 4f..12f)
@@ -52,6 +52,7 @@ data class JournalBackup(
         }
         require(weights.all { it.weightKg > 0 && it.weightKg <= 1000 && it.timestampMillis >= 0 })
         settings?.let { p ->
+            p.trainerProfile.validate(); require(p.trainingPlans.size <= 5); p.trainingPlans.forEach { it.validate() }
             require(listOf(p.waterReminderMinutes,p.foodReminderMinutes,p.medicationReminderMinutes,p.migraineReminderMinutes,p.movementReminderMinutes).all { it in 15..1440 })
             require(p.weeklyWorkoutGoal in 1..7 && p.stepSource in setOf("combined","samsung"))
             require(p.reminderStartHour in 0..23 && p.reminderEndHour in 0..23 && p.reminderStartHour != p.reminderEndHour)

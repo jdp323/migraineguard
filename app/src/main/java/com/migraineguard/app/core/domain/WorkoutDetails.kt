@@ -5,6 +5,8 @@ import kotlinx.serialization.Serializable
 /** Optional, canonical metric values. Empty details keep all older workouts compatible. */
 @Serializable
 data class WorkoutDetails(
+    val repsInReserve: Int? = null,
+    val trainerExerciseId: String? = null,
     val speedKmh: Float? = null,
     val inclinePercent: Float? = null,
     val distanceKm: Float? = null,
@@ -12,6 +14,8 @@ data class WorkoutDetails(
     val rounds: Int? = null,
 ) {
     fun validate() {
+        require(repsInReserve == null || repsInReserve in 0..10) { "Reps in reserve must be 0–10." }
+        require(trainerExerciseId == null || trainerExerciseId.matches(Regex("[a-z0-9-]{1,60}")))
         require(speedKmh == null || speedKmh.isFinite() && speedKmh > 0f && speedKmh <= 150f) { "Speed must be greater than 0 and at most 150 km/h." }
         require(inclinePercent == null || inclinePercent.isFinite() && inclinePercent in -30f..50f) { "Incline must be between -30% and 50%." }
         require(distanceKm == null || distanceKm.isFinite() && distanceKm > 0f && distanceKm <= 1000f) { "Distance must be greater than 0 and at most 1000 km." }

@@ -1,5 +1,8 @@
 package com.migraineguard.app.navigation
 
+import com.migraineguard.app.core.design.glassPanel
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -44,15 +47,16 @@ internal fun ModernTabDock(state: PagerState, onSelect: (String)->Unit) {
     val haptic=LocalHapticFeedback.current
     val rtl=androidx.compose.ui.platform.LocalLayoutDirection.current==androidx.compose.ui.unit.LayoutDirection.Rtl
     Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal=12.dp,vertical=8.dp),contentAlignment=Alignment.Center) {
-        Surface(Modifier.widthIn(max=640.dp).fillMaxWidth(),shape=RoundedCornerShape(28.dp),
-            color=colors.surface.copy(alpha=.98f),border=BorderStroke(1.dp,colors.outlineVariant.copy(alpha=.55f)),shadowElevation=8.dp) {
+        Surface(Modifier.widthIn(max=640.dp).fillMaxWidth().glassPanel(RoundedCornerShape(32.dp),elevated=true),shape=RoundedCornerShape(32.dp),
+            color=Color.Transparent) {
             Box {
                 Canvas(Modifier.matchParentSize()) {
                     val cell=size.width/MainTabs.size
                     val logical=(state.currentPage+state.currentPageOffsetFraction).coerceIn(0f,MainTabs.lastIndex.toFloat())
                     val position=if(rtl) MainTabs.lastIndex-logical else logical
-                    drawRoundRect(colors.primaryContainer,topLeft=Offset(cell*(position+.5f)-24.dp.toPx(),6.dp.toPx()),
+                    drawRoundRect(Brush.linearGradient(listOf(colors.primary.copy(alpha=.25f), colors.secondary.copy(alpha=.20f))),topLeft=Offset(cell*(position+.5f)-24.dp.toPx(),6.dp.toPx()),
                         size=Size(48.dp.toPx(),32.dp.toPx()),cornerRadius=CornerRadius(18.dp.toPx()))
+                    drawLine(Color.White.copy(alpha=.45f),Offset(cell*(position+.5f)-15.dp.toPx(),8.dp.toPx()),Offset(cell*(position+.5f)+15.dp.toPx(),8.dp.toPx()),1.dp.toPx())
                 }
                 Row(Modifier.fillMaxWidth().padding(horizontal=2.dp,vertical=6.dp)) {
                     MainTabs.forEachIndexed { index,item ->

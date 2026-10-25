@@ -229,6 +229,8 @@ fun SettingsScreen(
             }
             if (settingsGroup == "App") {
             SectionCard(title = "Appearance", icon = Icons.Filled.DarkMode) {
+                PrefSwitch("Reduce transparency", prefs.reduceTransparency) { scope.launch { preferencesRepository.setReduceTransparency(it) } }
+                Text("Glass surfaces keep text sharp. Reduce transparency gives cards a solid fill.",style=MaterialTheme.typography.bodySmall)
                 Text("Theme", style = MaterialTheme.typography.labelLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ThemeMode.entries.forEach { mode ->

@@ -5,6 +5,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -44,12 +45,14 @@ private val DarkColors = darkColorScheme(
 
 @Composable
 fun MigraineGuardTheme(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = false,
-    content: @Composable () -> Unit) {
+    reduceTransparency: Boolean = false, content: @Composable () -> Unit) {
     val dark = when (themeMode) { ThemeMode.SYSTEM -> isSystemInDarkTheme(); ThemeMode.DARK -> true; ThemeMode.LIGHT -> false }
     val colors = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         if (dark) dynamicDarkColorScheme(LocalContext.current) else dynamicLightColorScheme(LocalContext.current)
     } else if (dark) DarkColors else LightColors
-    MaterialTheme(colorScheme = colors, typography = MigraineGuardTypography,
+    CompositionLocalProvider(LocalReduceTransparency provides reduceTransparency) {
+    MaterialTheme(colorScheme = colors.copy(background = Color.Transparent), typography = MigraineGuardTypography,
         shapes = Shapes(small = RoundedCornerShape(12.dp), medium = RoundedCornerShape(20.dp),
-            large = RoundedCornerShape(26.dp), extraLarge = RoundedCornerShape(32.dp)), content = content)
+            large = RoundedCornerShape(26.dp), extraLarge = RoundedCornerShape(32.dp))) { GlassBackdrop(dark, content) }
+    }
 }

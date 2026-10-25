@@ -1,5 +1,6 @@
 package com.migraineguard.app.core.ui
 
+import com.migraineguard.app.core.design.glassPanel
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -27,10 +28,11 @@ import java.text.NumberFormat
 @Composable
 fun DailyOverview(steps: Int?,stepGoal: Int,water: Int,waterGoal: Int,sleep: Float?,
     sleepGoal: Float,refreshed: String?,onFitness: ()->Unit,onWater: ()->Unit) {
-    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp))
-        .background(Brush.linearGradient(listOf(Color(0xFF303C83),Color(0xFF135F69))))) {
+    Box(Modifier.fillMaxWidth().glassPanel(elevated=true)
+        .background(Brush.linearGradient(listOf(Color(0xFF39468E).copy(alpha=.92f),Color(0xFF146776).copy(alpha=.87f))))) {
         Canvas(Modifier.matchParentSize()) {
-            drawCircle(Color.White.copy(alpha=.04f),size.width*.55f,Offset(size.width,size.height))
+            drawRect(Brush.linearGradient(listOf(Color.White.copy(alpha=.24f),Color.Transparent,Color.White.copy(alpha=.03f)),Offset.Zero,Offset(size.width*.7f,size.height)))
+            drawCircle(Color.White.copy(alpha=.07f),size.width*.55f,Offset(size.width,size.height))
             drawCircle(Color.White.copy(alpha=.04f),size.width*.32f,Offset(size.width*.9f,0f))
         }
         Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {

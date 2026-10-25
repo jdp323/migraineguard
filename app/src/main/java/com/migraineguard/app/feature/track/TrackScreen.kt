@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -89,6 +90,7 @@ fun TrackScreen(
     healthRefreshCoordinator: HealthRefreshCoordinator? = null,
     workoutRepository: WorkoutRepository,
     preferencesRepository: UserPreferencesRepository,
+    trainerRepository: com.migraineguard.app.feature.fitness.TrainerRepository? = null,
     modifier: Modifier = Modifier,
     isActive: Boolean = true,
 ) {
@@ -121,9 +123,11 @@ fun TrackScreen(
     var logCalories by remember { mutableStateOf("") }
     var logNotes by remember { mutableStateOf("") }
     val pageScroll = rememberScrollState()
-    var training by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    var lastSection by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(training) }
-    LaunchedEffect(training) { if(lastSection != training) { pageScroll.scrollTo(0); lastSection=training } }
+    var fitnessMode by rememberSaveable { mutableStateOf("Health") }
+    val modeStateHolder = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
+    var trainerRequest by rememberSaveable { mutableStateOf<String?>(null) }
+    var lastSection by rememberSaveable { mutableStateOf(fitnessMode) }
+    LaunchedEffect(fitnessMode) { if(lastSection != fitnessMode) { pageScroll.scrollTo(0); lastSection=fitnessMode } }
     var showConnectionDetails by rememberSaveable { mutableStateOf(false) }
     val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
     var manualSteps by rememberSaveable { mutableStateOf("") }
@@ -372,12 +376,21 @@ fun TrackScreen(
                 .verticalScroll(pageScroll),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            FeatureHeader("Move, rest, recover.", "Your movement and training, together.", Icons.Filled.FitnessCenter, eyebrow="Your activity")
+            if(fitnessMode != "Trainer") FeatureHeader("Move, rest, recover.", "Your movement and training, together.", Icons.Filled.FitnessCenter, eyebrow="Your activity")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = !training, onClick = { training = false }, label = { Text("Health") })
-                FilterChip(selected = training, onClick = { training = true }, label = { Text("Training") })
+                listOf("Health","Trainer","Training").forEach { section -> FilterChip(selected=fitnessMode==section,onClick={fitnessMode=section},label={Text(section)},modifier=Modifier.testTag("fitness-"+section.lowercase())) }
             }
-            if (training) com.migraineguard.app.feature.fitness.WorkoutJournal(workoutRepository, preferencesRepository, onSectionChanged = { scope.launch { pageScroll.animateScrollTo(0) } }) else {
+            if(fitnessMode == "Trainer") {
+                modeStateHolder.SaveableStateProvider("trainer") {
+                    val trainer = trainerRepository ?: remember { com.migraineguard.app.feature.fitness.TrainerRepository(preferencesRepository,workoutRepository) }
+                    com.migraineguard.app.feature.fitness.TrainerScreen(trainer,preferencesRepository,workoutRepository) { prescription ->
+                        trainerRequest = kotlinx.serialization.json.Json.encodeToString(com.migraineguard.app.feature.fitness.TrainerLogRequest.serializer(),com.migraineguard.app.feature.fitness.TrainerLogRequest(java.util.UUID.randomUUID().toString(),prescription))
+                        fitnessMode="Training"
+                    }
+                }
+            } else if(fitnessMode == "Training") {
+                modeStateHolder.SaveableStateProvider("training") { com.migraineguard.app.feature.fitness.WorkoutJournal(workoutRepository, preferencesRepository, onSectionChanged = { scope.launch { pageScroll.animateScrollTo(0) } }, trainerRequestJson=trainerRequest) }
+            } else {
             if (!prefs.deviceHealthEnabled) Button(onClick = { scope.launch {
                 healthDataRepository.allowDeviceHealth(); healthRefreshCoordinator?.refresh(force = true); connectHealth()
             } }, modifier = Modifier.fillMaxWidth()) { Text("Connect this phone's health data") }

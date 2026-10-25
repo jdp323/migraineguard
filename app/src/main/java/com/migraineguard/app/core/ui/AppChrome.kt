@@ -1,5 +1,7 @@
 package com.migraineguard.app.core.ui
 
+import com.migraineguard.app.core.design.glassPanel
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -36,16 +38,16 @@ import androidx.compose.ui.unit.sp
 fun AppTopBar(title: @Composable () -> Unit, modifier: Modifier = Modifier,
     navigationIcon: @Composable () -> Unit = {}, actions: @Composable RowScope.() -> Unit = {}) {
     TopAppBar(title = { ProvideTextStyle(MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp), title) },
-        modifier = modifier, navigationIcon = navigationIcon, actions = actions,
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background))
+        modifier = modifier.glassPanel(RoundedCornerShape(bottomStart=24.dp,bottomEnd=24.dp)), navigationIcon = navigationIcon, actions = actions,
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent))
 }
 
 @Composable
 fun FeatureHeader(title: String, subtitle: String, icon: ImageVector,
     modifier: Modifier = Modifier, eyebrow: String? = null) {
     val colors = MaterialTheme.colorScheme
-    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
-        .background(Brush.linearGradient(listOf(colors.primaryContainer, colors.secondaryContainer.copy(alpha = .65f))))) {
+    Box(modifier.fillMaxWidth().glassPanel(RoundedCornerShape(28.dp))
+        .background(Brush.linearGradient(listOf(colors.primary.copy(alpha=.12f), colors.secondary.copy(alpha=.10f), Color.Transparent)))) {
         Canvas(Modifier.matchParentSize()) {
             drawCircle(colors.primary.copy(alpha=.05f),size.width*.36f,Offset(size.width,size.height*.1f))
         }
@@ -69,9 +71,9 @@ fun ActionTile(title: String, subtitle: String, icon: ImageVector, onClick: () -
     val scale by androidx.compose.animation.core.animateFloatAsState(if(pressed).975f else 1f,
         androidx.compose.animation.core.spring(stiffness=650f,dampingRatio=.85f),label="tile press")
     Card(onClick=onClick,interactionSource=interaction,
-        modifier=modifier.graphicsLayer { scaleX=scale; scaleY=scale },shape=RoundedCornerShape(24.dp),
-        colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface),
-        border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant.copy(alpha=.5f))) {
+        modifier=modifier.graphicsLayer { scaleX=scale; scaleY=scale }.glassPanel(),shape=RoundedCornerShape(28.dp),
+        colors=CardDefaults.cardColors(containerColor=Color.Transparent),
+        border=null) {
         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
                 Box(Modifier.size(34.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.secondaryContainer),Alignment.Center) {

@@ -200,7 +200,7 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
                             onAnalyst = { openCoach(AiPersona.ANALYST) }, isActive = active)
                         Routes.Track -> TrackScreen(healthDataRepository = container.healthDataRepository,
                             healthRefreshCoordinator = container.healthRefreshCoordinator, workoutRepository = container.workoutRepository,
-                            preferencesRepository = container.preferencesRepository, isActive = active)
+                            preferencesRepository = container.preferencesRepository, trainerRepository = container.trainerRepository, isActive = active)
                         Routes.Food -> NutritionScreen(nutritionAnalyzer = container.nutritionAnalyzer)
                         Routes.Insights -> InsightsScreen(insightsAnalyzer = container.insightsAnalyzer, aiClient = container.aiClient,
                             onOpenCoach = { openCoach(AiPersona.COACH) }, onOpenAnalyst = { openCoach(AiPersona.ANALYST) },

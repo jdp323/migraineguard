@@ -11,16 +11,17 @@ import java.security.MessageDigest
 
 @Serializable
 data class CloudAccountBackup(
-    val formatVersion: Int = 3,
+    val formatVersion: Int = 4,
     val owner: String,
     val savedAtMillis: Long,
     val settings: UserPreferences,
     val journal: JournalBackup,
 ) {
     fun validate(account: String) {
-        require(formatVersion in 2..3 && owner == account && account.startsWith("google-")) {
+        require(formatVersion in 2..4 && owner == account && account.startsWith("google-")) {
             "This backup belongs to a different account or an unsupported app version."
         }
+        settings.trainerProfile.validate(); require(settings.trainingPlans.size <= 5); settings.trainingPlans.forEach { it.validate() }
         require(savedAtMillis >= 0 && settings.modifiedAtMillis >= 0)
         require(listOf(settings.geminiApiKey, settings.groqApiKey, settings.openRouterApiKey).all { it.length <= 4096 })
         require(settings.aiConnections.size <= 20 && settings.aiConnections.all { (id, c) -> com.migraineguard.app.core.ai.AiCatalog.service(id) != null && c.apiKey.length <= 4096 && c.model.length <= 160 })
