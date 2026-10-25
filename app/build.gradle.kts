@@ -33,8 +33,8 @@ android {
         manifestPlaceholders["appLabel"] = if (preview) "@string/preview_app_name" else "@string/app_name"
         minSdk = 26
         targetSdk = 35
-        versionCode = 23
-        versionName = "1.13.1"
+        versionCode = 24
+        versionName = "1.14.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

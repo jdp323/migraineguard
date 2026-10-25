@@ -160,17 +160,13 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
-          A new layered glass appearance adds translucent tinted cards, reflective edges, atmospheric light/dark backgrounds, glossy shortcut feedback and a moving glass dock. Text stays sharp. Settings → App → Reduce transparency gives cards a solid fill. This is an original Android treatment, not Apple's rendering engine.
+          Fitness → Trainer now uses clean anatomical front/back illustrations instead of the polygon mannequin. Choose Male or Female as a display-only illustration, tap several muscles, and use coral highlights to review your focus. Swipe inside the map or use Front/Back and Flip view for animated side changes. Labeled muscle chips remain available.
 
-          Fitness → Trainer adds an original locally rendered rotating human muscle map. Swipe to rotate, choose front/back, and select several muscle regions by touch or labeled accessible chips. The map keeps its own horizontal gesture; main tab navigation is retained.
+          Drawing and touch hit testing share the same vector paths and coordinate transforms. Selection survives illustration/side changes. The anatomical vectors are adapted from MIT-licensed react-native-body-highlighter, with the full notice included in the app and repository. No MuscleWiki asset or service is used.
 
-          Save training experience, goal, equipment, session time, weekly frequency and areas to skip. Build a focused workout with sets, rep ranges or timed holds, rest, technique cues and editable load guidance. Unknown equipment loads require a comfortable test set; body mass is not converted into a made-up lifting prescription. Recent comparable completed sets and optional actual reps-in-reserve guide conservative repeat/progression suggestions.
+          Existing personalized sessions, confirmed/history-based load guidance, sets/reps/holds, rest timer, editable actual logging and optional AI weekly planning remain. No new health permission, cloud scope, database schema or backup format is introduced.
 
-          Use in exercise log fills an editable draft, protects existing unsaved fields, and never marks proposed sets complete. Actual logged sets/holds track progress. A rest timer, on-device weekly templates, up to five saved schedules and an optional cloud AI week arrangement are included. AI sharing requires a separate checkbox and explicit action; unknown/excluded exercises, unsuitable schedules and invented load prescriptions are rejected or replaced by a labeled local plan.
-
-          Plans/preferences remain account-local, with the existing optional private Drive/manual settings backup. No developer fitness-data backend, new permission, external model asset or Google scope is added. Manual format 3 reads 1–3; Drive format 4 reads 2–4. Update all devices before using new backups.
-
-          Release gates include JVM tests, lint, retained signing, 37 Android runtime tests and six repeated gesture/trainer tests with animations enabled. These do not certify a real phone frame rate, live provider responses or wearable transport. See docs/UPDATE_1_13_0.md for exact controls, prompts, tests and remaining limits.
+          Publication requires JVM tests, lint, retained signing, 37 Android runtime tests and six repeated gesture/trainer tests with animations enabled. This does not certify phone frame rate, wearable transport or live AI quality. See docs/UPDATE_1_14_0.md for controls, attribution, implementation and evidence.
 
           Use Standard to update com.migraineguard.app with the retained FB:67 certificate, or Preview alongside it with separate records/permissions. Do not uninstall an older app containing records to resolve a signing conflict.
           NOTES

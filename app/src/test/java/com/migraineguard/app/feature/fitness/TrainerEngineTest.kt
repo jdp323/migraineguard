@@ -61,13 +61,17 @@ class TrainerEngineTest {
         val week=TrainerEngine.weekly(profile,body,emptyList(),emptySet())
         assertEquals(week,Json.decodeFromString<TrainingWeek>(Json.encodeToString(week)))
     }
-    @Test fun bodyMeshContainsFrontBackRegionsAndHitTestingUsesVisibleSurface() {
-        assertTrue(MuscleBodyMesh.faces.size>500)
-        val front=MuscleBodyMesh.project(0f,400f,600f)
-        assertTrue(front.all { it.a.x.isFinite() && it.b.y.isFinite() })
-        assertNull(MuscleBodyMesh.hit(0f,400f,600f,0f,0f))
-        assertEquals(Muscle.CHEST,MuscleBodyMesh.hit(0f,400f,600f,200f,210f))
-        val back=MuscleBodyMesh.hit(180f,400f,600f,200f,210f)
-        assertTrue(back==Muscle.UPPER_BACK || back==Muscle.LATS)
+    @Test fun anatomicalRegionsAndViewportTransformsPreserveAllTrainingTargets() {
+        val slugs=listOf("chest","deltoids","biceps","triceps","abs","obliques","trapezius","upper-back","gluteal","quadriceps","hamstring","calves")
+        assertEquals(Muscle.entries.toSet(),slugs.mapNotNull(AnatomyRegionMapping::muscleFor).toSet())
+        assertNull(AnatomyRegionMapping.muscleFor("knees"))
+        assertNull(AnatomyRegionMapping.muscleFor("adductors"))
+        for(box in listOf(listOf(0f,0f,724f,1448f),listOf(724f,0f,724f,1448f),listOf(-50f,-40f,734f,1538f),listOf(756f,0f,774f,1448f))) {
+            val t=AnatomyTransform.fit(box,324f,350f)
+            val x=box[0]+box[2]*.4f;val y=box[1]+box[3]*.3f
+            assertEquals(x,t.bodyX(t.canvasX(x)),.001f)
+            assertEquals(y,t.bodyY(t.canvasY(y)),.001f)
+            assertTrue(t.scale>0 && t.left>=0 && t.top>=0)
+        }
     }
 }

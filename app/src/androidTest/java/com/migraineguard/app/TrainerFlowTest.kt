@@ -52,16 +52,29 @@ class TrainerFlowTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.onNodeWithTag("tab-fitness").performClick();compose.onNodeWithTag("fitness-trainer").performScrollTo().performClick()
             compose.onNodeWithTag("body-front").performScrollTo().performClick()
-            compose.onNodeWithTag("muscle-body").performScrollTo().performTouchInput { click(androidx.compose.ui.geometry.Offset(width*.5f,height*.31f)) }
+            compose.onNodeWithTag("muscle-body").performScrollTo().performTouchInput { val t=AnatomyTransform.fit(listOf(0f,0f,724f,1448f),width.toFloat(),height.toFloat());click(androidx.compose.ui.geometry.Offset(t.canvasX(310f),t.canvasY(380f))) }
             compose.onNodeWithTag("muscle-CHEST").performScrollTo().assertIsSelected()
             compose.onNodeWithTag("muscle-QUADS").performScrollTo().performClick().assertIsSelected()
             compose.onNodeWithTag("muscle-body").performScrollTo();capture("trainer-body-front-light")
             compose.onNodeWithTag("muscle-body").performTouchInput{swipeLeft(durationMillis=500)}
             compose.onNodeWithTag("tab-fitness").assertIsSelected()
+            compose.waitUntil(10000){compose.onNodeWithTag("muscle-body").fetchSemanticsNode().config[SemanticsProperties.StateDescription].startsWith("Back")}
             compose.onNodeWithTag("body-back").performScrollTo().performClick()
             compose.waitUntil(10000){compose.onNodeWithTag("muscle-body").fetchSemanticsNode().config[SemanticsProperties.StateDescription].startsWith("Back")}
             compose.onNodeWithTag("muscle-body").performScrollTo();capture("trainer-body-back-light")
             compose.onNodeWithTag("muscle-CHEST").assertIsSelected();compose.onNodeWithTag("muscle-QUADS").assertIsSelected()
+            compose.onNodeWithTag("body-illustration-FEMALE").performScrollTo().performClick()
+            compose.onNodeWithTag("muscle-body").performScrollTo().performTouchInput { val t=AnatomyTransform.fit(listOf(756f,0f,774f,1448f),width.toFloat(),height.toFloat());click(androidx.compose.ui.geometry.Offset(t.canvasX(1080f),t.canvasY(700f))) }
+            compose.onNodeWithTag("muscle-GLUTES").performScrollTo().assertIsSelected()
+            compose.onNodeWithTag("muscle-body").performScrollTo();capture("anatomy-female-back-light")
+            compose.onNodeWithTag("body-front").performScrollTo().performClick()
+            compose.onNodeWithTag("muscle-body").performScrollTo().performTouchInput { val t=AnatomyTransform.fit(listOf(-50f,-40f,734f,1538f),width.toFloat(),height.toFloat());click(androidx.compose.ui.geometry.Offset(t.canvasX(270f),t.canvasY(370f))) }
+            compose.onNodeWithTag("muscle-CHEST").performScrollTo().assertIsNotSelected()
+            compose.onNodeWithTag("muscle-body").performScrollTo().performTouchInput { val t=AnatomyTransform.fit(listOf(-50f,-40f,734f,1538f),width.toFloat(),height.toFloat());click(androidx.compose.ui.geometry.Offset(t.canvasX(270f),t.canvasY(370f))) }
+            compose.onNodeWithTag("muscle-CHEST").performScrollTo().assertIsSelected()
+            compose.onNodeWithTag("muscle-body").performScrollTo();capture("anatomy-female-front-light")
+            compose.onNodeWithTag("muscle-GLUTES").performScrollTo().performClick().assertIsNotSelected()
+            compose.onNodeWithTag("body-illustration-MALE").performScrollTo().performClick()
             compose.onNodeWithTag("trainer-build-session").performScrollTo().performClick();await("Today's focus")
             compose.onNodeWithTag("trainer-log-machine-chest").performScrollTo();capture("trainer-prescription-light")
             compose.onNodeWithTag("trainer-log-machine-chest").performClick();await("Trainer draft")
