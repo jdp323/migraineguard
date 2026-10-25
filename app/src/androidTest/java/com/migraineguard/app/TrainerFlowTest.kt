@@ -51,7 +51,9 @@ class TrainerFlowTest {
         runBlocking { c.preferencesRepository.saveBodyProfile(body);c.preferencesRepository.setSetupComplete(true);c.preferencesRepository.setNotificationsEnabled(false);c.preferencesRepository.setUpdateChecks(false);c.preferencesRepository.clearAllAiKeys();c.preferencesRepository.setThemeMode(ThemeMode.LIGHT);c.preferencesRepository.setDynamicColor(false);c.preferencesRepository.saveTrainerProfile(profile) }
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.onNodeWithTag("tab-fitness").performClick();compose.onNodeWithTag("fitness-trainer").performScrollTo().performClick()
-            compose.onNodeWithTag("muscle-CHEST").performScrollTo().performClick().assertIsSelected()
+            compose.onNodeWithTag("body-front").performScrollTo().performClick()
+            compose.onNodeWithTag("muscle-body").performScrollTo().performTouchInput { click(androidx.compose.ui.geometry.Offset(width*.5f,height*.31f)) }
+            compose.onNodeWithTag("muscle-CHEST").performScrollTo().assertIsSelected()
             compose.onNodeWithTag("muscle-QUADS").performScrollTo().performClick().assertIsSelected()
             compose.onNodeWithTag("muscle-body").performScrollTo();capture("trainer-body-front-light")
             compose.onNodeWithTag("muscle-body").performTouchInput{swipeLeft(durationMillis=500)}

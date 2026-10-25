@@ -15,6 +15,7 @@ import com.migraineguard.app.core.ui.SectionCard
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.*
@@ -50,7 +51,7 @@ fun TrainerScreen(repository:TrainerRepository,preferences:UserPreferencesReposi
         Text(prefs.trainerProfile.experience.label+" · "+prefs.trainerProfile.goal.label+" · "+prefs.trainerProfile.minutesPerSession+" min",style=MaterialTheme.typography.titleSmall)
         Text("Starting volume adapts to your routine and experience. Working loads use your own test loads or comparable completed sets.",style=MaterialTheme.typography.bodySmall)
         OutlinedButton(onClick={editing=!editing},modifier=Modifier.fillMaxWidth().testTag("trainer-preferences")) { Text(if(editing)"Close preferences" else "Training preferences") }
-        if(editing || !prefs.trainerProfile.ready) TrainerProfileEditor(prefs.trainerProfile) { value -> scope.launch { preferences.saveTrainerProfile(value);editing=false;message="Training preferences saved.";todayJson="[]" } }
+        if(editing || !prefs.trainerProfile.ready) TrainerProfileEditor(prefs.trainerProfile) { value -> scope.launch { val latest=preferences.preferences.first().trainerProfile;preferences.saveTrainerProfile(value.copy(testedLoadsKg=latest.testedLoadsKg,testedLoadsAt=latest.testedLoadsAt));editing=false;message="Training preferences saved.";todayJson="[]" } }
         Button(onClick={scope.launch { busy=true;message="";try { todayJson=Json.encodeToString(repository.session(muscles));message="Your session is ready. Review the loads and choose each exercise to log it." } catch(e:CancellationException){throw e} catch(e:Exception){message=e.message?:"Could not build this session."} finally{busy=false} }},enabled=!busy && muscles.isNotEmpty(),modifier=Modifier.fillMaxWidth().testTag("trainer-build-session")) { Text(if(busy)"Building…" else "Build today's workout") }
         if(message.isNotBlank()) Text(message,modifier=Modifier.testTag("trainer-message"),style=MaterialTheme.typography.bodySmall)
     }
@@ -58,7 +59,7 @@ fun TrainerScreen(repository:TrainerRepository,preferences:UserPreferencesReposi
         SectionCard("Today's focus") {
             Text(muscles.joinToString { it.label },style=MaterialTheme.typography.titleMedium)
             Text("Warm up with about 5 minutes of easy movement and a light practice set. Leave 2–4 good reps in reserve; breathe throughout. Skip painful movements and get individual advice for an injury or unfamiliar technique.",style=MaterialTheme.typography.bodySmall)
-            RestTimer()
+            RestTimer(today.maxOf{it.restSeconds})
         }
         today.forEach { prescription -> PrescriptionCard(prescription,prefs,entries.any { loggedToday(it,prescription.exerciseId) },preferences,entries,onLog) }
     }
@@ -147,7 +148,7 @@ private fun PrescriptionCard(p:ExercisePrescription,prefs:UserPreferences,logged
         Text(e.muscles.joinToString { it.label }+if(logged)" · Logged today ✓" else "",style=MaterialTheme.typography.labelMedium,color=MaterialTheme.colorScheme.secondary)
         Text(if(p.holdSeconds!=null)"${p.sets} rounds · ${p.holdSeconds}s hold" else "${p.sets} sets · ${p.minReps}–${p.maxReps} reps"+(if(e.perSide)" each side" else ""),style=MaterialTheme.typography.titleLarge)
         Text("Rest ${p.restSeconds}s · finish with about ${p.targetRir} reps in reserve",style=MaterialTheme.typography.bodySmall)
-        Text(if(effective.loadKg==null)"Choose a comfortable test load" else if(effective.loadKg==0f)"Bodyweight / self-resistance" else "Suggested load: %.1f %s".format(if(metric)effective.loadKg else effective.loadKg*2.2046226f,if(metric)"kg" else "lb"),style=MaterialTheme.typography.titleMedium)
+        Text(if(effective.loadKg==null)"Choose a comfortable test load" else if(e.equipment==TrainingEquipment.BODYWEIGHT)"Bodyweight / self-resistance" else if(effective.loadKg==0f)"0 added load recorded · check the equipment’s own resistance" else "Suggested load: %.1f %s".format(if(metric)effective.loadKg else effective.loadKg*2.2046226f,if(metric)"kg" else "lb"),style=MaterialTheme.typography.titleMedium)
         if(e.equipment==TrainingEquipment.DUMBBELLS) Text(if(e.id=="db-squat")"Load is the single dumbbell held at your chest." else "Load is per dumbbell / per hand.",style=MaterialTheme.typography.bodySmall)
         Text(effective.loadReason,style=MaterialTheme.typography.bodySmall)
         Text(e.cue)
@@ -164,12 +165,12 @@ private fun PrescriptionCard(p:ExercisePrescription,prefs:UserPreferences,logged
 }
 
 @Composable
-private fun RestTimer() {
+private fun RestTimer(seconds:Int) {
     var ends by rememberSaveable { mutableLongStateOf(0L) }
     var left by remember { mutableIntStateOf(0) }
     LaunchedEffect(ends) { do { left=if(ends==0L)0 else ((ends-System.currentTimeMillis()+999)/1000).toInt().coerceIn(0,180);if(left>0)delay(250) }while(left>0) }
     Row(verticalAlignment=androidx.compose.ui.Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick={ends=System.currentTimeMillis()+90000}){Icon(Icons.Default.Timer,null);Spacer(Modifier.width(6.dp));Text(if(left>0)"Rest %02d:%02d".format(left/60,left%60) else "Start 90s rest")}
+        OutlinedButton(onClick={ends=System.currentTimeMillis()+seconds*1000L}){Icon(Icons.Default.Timer,null);Spacer(Modifier.width(6.dp));Text(if(left>0)"Rest %02d:%02d".format(left/60,left%60) else "Start "+seconds+"s rest")}
         if(left>0)TextButton(onClick={ends=0}){Text("Skip rest timer")}
     }
 }

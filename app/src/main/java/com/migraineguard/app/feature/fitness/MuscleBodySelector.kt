@@ -48,7 +48,7 @@ fun MuscleBodySelector(selected:Set<Muscle>,onToggle:(Muscle)->Unit) {
         projected.forEach { f ->
             path.reset();path.moveTo(f.a.x,f.a.y);path.lineTo(f.b.x,f.b.y);path.lineTo(f.c.x,f.c.y);path.close()
             val picked=f.muscle in selection
-            val base=if(picked) colors.secondary else if(f.muscle!=null) colors.primary.copy(alpha=.72f) else colors.onSurfaceVariant.copy(alpha=.50f)
+            val base=if(picked) colors.secondary else if(f.muscle!=null) lerp(colors.primary,colors.onSurfaceVariant,.48f).copy(alpha=1f) else colors.onSurfaceVariant.copy(alpha=1f)
             val lit=lerp(base,Color.White,(f.light-.4f)*if(picked).38f else .62f)
             drawPath(path,lit)
             if(picked)drawPath(path,colors.secondary.copy(alpha=.18f),style=androidx.compose.ui.graphics.drawscope.Stroke(.7f))

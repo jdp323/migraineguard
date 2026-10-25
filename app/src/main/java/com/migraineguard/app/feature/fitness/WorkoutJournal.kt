@@ -203,7 +203,7 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
                 MetricInput(distance,{distance=it},if(metric) "Distance (km, optional)" else "Distance (mi, optional)","cardio-distance")
             }
             if (type.isMobility || (type == WorkoutType.STRENGTH && strengthTimed)) {
-                Text("Log your own stretch or mobility session. Weight and lifting sets are not used.",style=MaterialTheme.typography.bodySmall)
+                Text(if(type==WorkoutType.STRENGTH) "Record the hold time and rounds you completed. Keep breathing; stop if your form changes." else "Log your own stretch or mobility session. Weight and lifting sets are not used.",style=MaterialTheme.typography.bodySmall)
                 MetricInput(hold,{hold=it},"Hold per stretch (seconds, optional)","stretch-hold",integer=true)
                 MetricInput(rounds,{rounds=it},"Rounds (optional)","stretch-rounds",integer=true)
             }

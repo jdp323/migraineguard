@@ -1,6 +1,6 @@
 # v1.13.0 — glass design and the training studio
 
-Android 1.13.0 / code 22. Extends [v1.12 movement, body progress and export](UPDATE_1_12_0.md) and [v1.11 gestures](UPDATE_1_11_0.md). Final release evidence and genuine captures are appended after hosted verification.
+Current Android 1.13.1 / code 23, including the v1.13.0 features below. Extends [v1.12 movement, body progress and export](UPDATE_1_12_0.md) and [v1.11 gestures](UPDATE_1_11_0.md). Final release evidence and genuine captures are appended after hosted verification.
 
 ## Glass appearance
 
@@ -74,7 +74,7 @@ Kotlin paths below are relative to app/src/main/java/com/migraineguard/app/.
 | core/design/Glass.kt: GlassBackdrop, glassPanel, LocalReduceTransparency | Original static ambient gradient field, translucent/solid surfaces, edge sheen and shadows; sharp text |
 | core/design/Theme.kt; MainActivity.kt | Theme-level backdrop, transparent scaffold root and account appearance preference |
 | core/ui/AppChrome.kt, SectionCard.kt, DailyOverview.kt; navigation/ModernTabDock.kt | Shared reflective headers/cards/tiles/hero and moving dock |
-| feature/fitness/MuscleBodyMesh.kt: faces, geometry, project, hit | Original body mesh, cached shared vertices/normals, yaw/perspective, depth ordering, lighting and visible-surface hit test |
+| feature/fitness/MuscleBodyMesh.kt: faces, geometry, project, hit | Original continuous-limb body mesh with sculpted chest/core surfaces, cached shared vertices/normals, yaw/perspective, depth ordering, lighting and visible-surface hit test |
 | feature/fitness/MuscleBodySelector.kt | Horizontal drag/velocity projection/spring rotation, front/back controls, multi-select chips and accessibility semantics |
 | feature/fitness/TrainerModels.kt: TrainerProfile, TrainerExerciseCatalog, ExercisePrescription, TrainingWeek | Validated profile/canonical loads, original cue catalog and bounded plan models |
 | feature/fitness/TrainerModels.kt: TrainerEngine.ensureReady, prescription, session, weekly | Adult gate, matching history, explicit unknown loads, conservative progression, coverage/time/weekly layout |
@@ -89,4 +89,8 @@ Kotlin paths below are relative to app/src/main/java/com/migraineguard/app/.
 | di/AppContainer.kt; navigation/MigraineGuardNavHost.kt | Account-scoped trainer repository wiring |
 | app/src/test/.../TrainerEngineTest.kt | Multi-target selection, unknown/tested/history loads, adult/avoid gates, week coverage, AI schema/privacy and mesh hits |
 | app/src/androidTest/.../TrainerFlowTest.kt | Real rotation/multi-selection, outer gesture ownership, log handoff, timed holds, save/restore/isolation, explicit AI consent and synthetic captures |
-| .github/workflows/android.yml; app/build.gradle.kts | Version 1.13.0/code22, JVM/lint/signing gates, 37 runtime tests and six animation-enabled repeats |
+| .github/workflows/android.yml; app/build.gradle.kts | Version 1.13.1/code23, JVM/lint/signing gates, 37 runtime tests and six animation-enabled repeats |
+
+## v1.13.1 visual refinement
+
+Review of the first runtime captures led to a smoother continuous-limb mannequin, clearer pectoral/core contours and opaque surface lighting that avoids back-surface show-through. Mesh vertex caching, rotation, hit tests and the accessible controls are retained. Preference editing now preserves separately confirmed test loads, and external equipment with a genuinely logged zero load is displayed as zero added load rather than mislabeled bodyweight. Timed-strength form copy now describes holds rather than stretching.
