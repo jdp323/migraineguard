@@ -168,7 +168,7 @@ jobs:
 
           Use in exercise log fills an editable draft, protects existing unsaved fields, and never marks proposed sets complete. Actual logged sets/holds track progress. A rest timer, on-device weekly templates, up to five saved schedules and an optional cloud AI week arrangement are included. AI sharing requires a separate checkbox and explicit action; unknown/excluded exercises, unsuitable schedules and invented load prescriptions are rejected or replaced by a labeled local plan.
 
-          Plans/preferences remain account-local, with the existing optional private Drive/manual settings backup. No developer fitness-data backend, new permission, external model asset or Google scope is added. Manual format 3 accepts 1–2; Drive format 4 accepts 2–3. Update all devices before using new backups.
+          Plans/preferences remain account-local, with the existing optional private Drive/manual settings backup. No developer fitness-data backend, new permission, external model asset or Google scope is added. Manual format 3 reads 1–3; Drive format 4 reads 2–4. Update all devices before using new backups.
 
           Release gates include JVM tests, lint, retained signing, 37 Android runtime tests and six repeated gesture/trainer tests with animations enabled. These do not certify a real phone frame rate, live provider responses or wearable transport. See docs/UPDATE_1_13_0.md for exact controls, prompts, tests and remaining limits.
 

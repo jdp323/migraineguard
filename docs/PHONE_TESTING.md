@@ -1,4 +1,4 @@
-> Current v1.12.0: [movement breaks, private body progress, exports, multi-brand Health Connect and changed-file/function map](UPDATE_1_12_0.md). Previous [v1.11 design/navigation](UPDATE_1_11_0.md).
+> Current v1.13.1: [glass design, rotating muscle map, session/load rules, weekly planner, exact AI prompt and changed functions](UPDATE_1_13_0.md). Previous [v1.12 movement/body/export](UPDATE_1_12_0.md).
 
 > Historical v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
 
@@ -112,3 +112,13 @@ Reference: https://android.googlesource.com/platform/packages/modules/HealthFitn
 4. With your own connected Drive, leave photo inclusion off and save; enable it explicitly, save and restore on another updated installation. Delete a fixture check-in, save and reconnect to confirm it stays deleted. Test a temporary network failure; local data must remain.
 5. Settings → Data: save/read a ZIP locally, inspect JSON/CSV/JPEG files, confirm configured provider keys are absent. Export encrypted .mgbak and restore on a fixture installation; wrong password must fail. Verify body photos and preferences while existing keys remain. Check cancellation, insufficient disk space and oversized snapshots without deleting real records.
 6. Disable movement/master notifications and sign out; old-account alerts must stop. Test a larger font, keyboard, light/dark themes and Android photo picker on the actual phone.
+
+## v1.13.1 acceptance
+
+1. Update Standard in place to 1.13.1/code23. Inspect glass surfaces, ambient backgrounds, sharp text and dock in light/dark/dynamic color. Enable Reduce transparency, larger fonts and Android reduced/disabled animations. Check contrast and real phone fluidity; no fixed frame rate is promised.
+2. Fitness → Trainer: rotate slowly/quickly both directions; switch Front/Back; tap chest and thighs and add multiple chips. Confirm selected regions persist across views and that a figure drag does not change main tabs. Outside the figure, main pager and Android edge-back still work. Test labeled controls with TalkBack.
+3. Save adult training preferences and build a session with your actual equipment/time. Verify excluded areas are not used. Unknown load must remain a test-set choice. Test metric/imperial and a confirmed comfortable load; compare with the same equipment’s actual logged sets and RIR. Do not test unfamiliar heavy loads to validate software.
+4. Use in exercise log: retain or explicitly replace an unsaved draft; check manual load/reps/set edits, timed holds and actual RIR. Only checked real sets should save as completed. Switch Fitness modes and main tabs, rotate/recreate, and review supported draft retention.
+5. Build/review/save an on-device week, reopen it and log a real day. Logged markers must follow actual matching exercise/date; future schedules must not fabricate workouts. Confirm latest-five retention and that removing a plan keeps actual history.
+6. Without the training-sharing checkbox, no AI planner request should run. With a selected provider/key and explicit consent, request a week and inspect its allowed exercises/time/rest arrangement. Missing keys/errors/unsuitable responses must label a local alternative. Live provider response quality still requires real-key testing.
+7. Back up/restore a fixture account through encrypted .mgbak and connected private Drive on updated installations. Verify trainer preferences/plans, glass setting, actual RIR/trainer IDs and account isolation. Manual export must exclude configured keys and body photos must never enter trainer AI. Update all devices for manual format3/Drive format4 before restoring.

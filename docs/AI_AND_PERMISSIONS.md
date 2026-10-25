@@ -1,6 +1,6 @@
 # AI prompts, permissions and data flow
 
-Current implementation: v1.12.0 / code 21. This describes what the code sends and when. It is not a promise that a provider will always return accurate results. [User guide](USER_GUIDE.md) · [v1.9.1 implementation](UPDATE_1_9_0.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
+Current implementation: v1.13.1 / code 23. This describes what the code sends and when. It is not a promise that a provider will always return accurate results. [User guide](USER_GUIDE.md) · [v1.9.1 implementation](UPDATE_1_9_0.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
 
 ## Permissions and choices
 
@@ -162,3 +162,11 @@ In v1.10.0, explicitly shared recentExercises also includes activityType and pre
 The v1.11 navigation/design/copy refinements do not change these AI prompts, provider protocols or explicit sharing choices. On-device assistance is the UI name for the existing local implementation. Temporary saveable drafts are device-local UI state, not a new cloud payload or completed Drive backup.
 
 The v1.12 movement/body/export features add no AI prompt, provider endpoint or OAuth scope. [Permission, storage and format details](UPDATE_1_12_0.md).
+
+## Training studio weekly arrangement
+
+Fitness → Trainer adds a separate explicit checkbox/action for cloud weekly planning. Without that choice, muscle selection, focused workouts and weekly templates run on-device. The payload contains adult age in years when available, height/weight, activity level, training experience/goal, equipment-derived allowed exercise catalog, session time/weekdays, priorities, areas to skip and up to twelve comparable recent workouts with up to eight completed weight/repetition sets and optional actual RIR each. Name/email/exact birthday, photos/URIs, free-text notes, medications, migraine records and provider keys are excluded. The configured provider handles the request; legacy Auto retains its existing behavior.
+
+The exact instruction and JSON field map are in [v1.13 training prompt](UPDATE_1_13_0.md#optional-ai-weekly-arrangement) and TrainerPrompt in feature/fitness/TrainerRepository.kt. AI may arrange allowed IDs; unknown/excluded exercises, inappropriate day structure/coverage/time and consecutive repeated regions fail validation. The app sets weights/sets/reps/cues locally and ignores arbitrary model prescriptions/commentary. Cancellation propagates; an unusable response produces a clearly labeled local alternative. Live model quality is not established by mock tests.
+
+Trainer preferences, test loads, five recent saved schedules and reduced-transparency appearance join existing optional settings backups/exports. RIR/trainer IDs are optional structured workout details. Manual format 3 accepts 1–2; Drive format 4 accepts 2–3. No new permission, OAuth scope, photo transmission, developer backend or continuous sensor tracking is added.

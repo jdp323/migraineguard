@@ -2,7 +2,7 @@
 
 # Troubleshooting MigraineGuard
 
-Applies to v1.12.0 (20). Check **Settings → App → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
+Applies to v1.13.1 (23). Check **Settings → App → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
 
 [User guide](USER_GUIDE.md) · [Latest download](https://github.com/jdp323/migraineguard/releases/latest) · [Technical guide](HOW_IT_WORKS.md)
 
@@ -107,7 +107,7 @@ Use Fitness → Training → Log exercise and choose the matching tile. Cardio �
 
 ## Swipe or back gesture does not behave as expected
 
-Confirm v1.12.0/code20. Swipe within the main page to move between neighboring tabs; the first/last page does not wrap. A drag on the head map, slider, text selection or horizontally scrolling chips belongs to that control; swipe another part of the page or tap the dock. Screen-edge back is Android’s system gesture and depends on gesture-navigation settings; toolbar and three-button Back still work. Back inside the migraine journal returns through its panes; from another main tab it returns Home. Profile and Drive editing now return to Settings instead of resetting the main screen.
+Confirm v1.13.1/code23. Swipe within the main page to move between neighboring tabs; the first/last page does not wrap. A drag on the head map, slider, text selection or horizontally scrolling chips belongs to that control; swipe another part of the page or tap the dock. Screen-edge back is Android’s system gesture and depends on gesture-navigation settings; toolbar and three-button Back still work. Back inside the migraine journal returns through its panes; from another main tab it returns Home. Profile and Drive editing now return to Settings instead of resetting the main screen.
 
 If transitions snap, check Android’s animation/accessibility preferences: a zero duration scale intentionally removes animations. No app setting forces them back on. Screen-scoped AI work may be cancelled if its page is disposed; saved replies remain in history, and requests are not automatically retried. Report app version, Android version, screen, font/display scale and reproducible gesture; remove private data from screenshots. Emulator gesture checks are not a frame-rate certification.
 
@@ -120,3 +120,13 @@ Check Settings → Reminders: master switch, Stand/stretch/walk, interval and ac
 Use Settings → Account → Body progress / photos / weight. Choose an image with the system picker, check the YYYY-MM-DD date, and save. Photos are resized/re-encoded; oversized or unreadable files fail without adding a record. Body-fat percentage comes from your scale, never photo inference. Photos are local by default; the separate photo-Drive switch and a connected Drive backup are both needed for cloud inclusion.
 
 Settings → Data has readable ZIP and encrypted .mgbak options. ZIPs are not encrypted and cannot be imported by the app. The .mgbak password is unrecoverable. Manual recovery and Drive snapshots have 20 MB limits; if too large, export readable data first, retain your original images and remove entries only after verifying copies. Remove partial files after cancelled/failed writes. Older app versions cannot read the new formats; update all devices. New body deletion markers prevent old snapshots from restoring a deleted check-in, but independent exported copies remain until you delete them.
+
+## Muscle map, training loads or AI weekly plan
+
+Open Fitness → Trainer. Swipe within the figure to rotate it; swipe outside it to change main tabs. Front/Back and labeled muscle chips avoid precise touch targets. Select at least one region and save adult training preferences. If targets cannot be covered, choose fewer regions, more session time, suitable equipment or review areas to skip. The app does not offer injury rehabilitation.
+
+An unknown machine/dumbbell load is intentional: height and body weight cannot establish a safe working load. Use a controlled light test set and record a comfortable load with roughly three repetitions left. Verify the same equipment and kg/lb/per-hand convention. A newer comparable logged session supersedes an older test; stale/future/uncompleted records do not establish progression. Actual reps-in-reserve is optional; lack of effort feedback keeps the suggestion conservative.
+
+Use in exercise log fills editable fields and never checks sets complete. Confirm replacing an unsaved draft or keep it. A held movement uses Timed hold fields; repetition sets use load/reps and completion checks. A weekly logged marker counts an actual matching exercise/date, not every prescribed set. Future plans do not create future workouts. Only the latest five saved schedules are retained; actual logs remain separate.
+
+AI weekly arrangement requires the training-sharing checkbox, an explicit button and a configured selected provider. A missing key, unsuitable response or invalid catalog/time/rest arrangement uses a labeled on-device alternative. Check Settings → AI; no body photo is involved. Reduce transparency in App settings for solid cards, and check Android animation settings if transitions differ. Real frame rate and model quality need device/provider acceptance.

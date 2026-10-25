@@ -1,6 +1,6 @@
-# v1.13.0 — glass design and the training studio
+# v1.13.1 — glass design and the training studio
 
-Current Android 1.13.1 / code 23, including the v1.13.0 features below. Extends [v1.12 movement, body progress and export](UPDATE_1_12_0.md) and [v1.11 gestures](UPDATE_1_11_0.md). Final release evidence and genuine captures are appended after hosted verification.
+Current Android 1.13.1 / code 23, including the v1.13.0 features below. Extends [v1.12 movement, body progress and export](UPDATE_1_12_0.md) and [v1.11 gestures](UPDATE_1_11_0.md). The final release evidence and genuine captures follow below.
 
 ## Glass appearance
 
@@ -63,7 +63,24 @@ Training preferences, calibrated load/time references, glass appearance and up t
 
 Existing optional private Google Drive settings backups and manual settings exports include trainer preferences/plans and glass appearance. Existing workout export includes the structured RIR/trainer ID fields. Manual exports still exclude configured keys; private Drive snapshots retain their previously documented portable-key behavior. JSON/CSV ZIP export is readable and not encrypted; .mgbak recovery is password-encrypted. Snapshot size limits and photo choices are unchanged.
 
-Manual recovery format 3 accepts versions 1–2; Drive format 4 accepts versions 2–3. The private Drive app-data filename is retained for in-place upgrade. Older apps reject the new formats rather than silently overwriting unknown trainer settings. Update all devices before sharing these snapshots. Existing timestamp-based preference conflict rules apply; this is not conflict-free live multi-device sync. Removing a saved schedule does not remove actual workout records or independent exported copies.
+Manual recovery format 3 reads versions 1–3; Drive format 4 reads versions 2–4. The private Drive app-data filename is retained for in-place upgrade. Older apps reject the new formats rather than silently overwriting unknown trainer settings. Update all devices before sharing these snapshots. Existing timestamp-based preference conflict rules apply; this is not conflict-free live multi-device sync. Removing a saved schedule does not remove actual workout records or independent exported copies.
+
+## Training data flow
+
+```mermaid
+flowchart TD
+  A["Account profile, training preferences and selected muscles"] --> B["Local catalog, coverage, time and load rules"]
+  B --> C["Review session or weekly schedule"]
+  C --> D["Editable exercise draft"]
+  D --> E["Save actual sets or holds to account journal"]
+  E --> B
+  A --> F["Separate sharing checkbox and explicit AI action"]
+  F --> G["Selected provider arranges allowed exercise IDs"]
+  G --> H["Validate coverage, time, exclusions and recovery"]
+  H --> B
+```
+
+Saving a schedule stores a plan, not completed exercise. Only saving actual performance creates journal history for future load guidance. The cloud branch is optional; photos and migraine/medication journals never enter it.
 
 ## File and function reference
 
@@ -94,3 +111,38 @@ Kotlin paths below are relative to app/src/main/java/com/migraineguard/app/.
 ## v1.13.1 visual refinement
 
 Review of the first runtime captures led to a smoother continuous-limb mannequin, clearer pectoral/core contours and opaque surface lighting that avoids back-surface show-through. Mesh vertex caching, rotation, hit tests and the accessible controls are retained. Preference editing now preserves separately confirmed test loads, and external equipment with a genuinely logged zero load is displayed as zero added load rather than mislabeled bodyweight. Timed-strength form copy now describes holds rather than stretching.
+
+
+## Published v1.13.1 verification
+
+[Release](https://github.com/jdp323/migraineguard/releases/tag/v1.13.1-debug) · [Complete run 40242472927](https://github.com/jdp323/migraineguard/actions/runs/40242472927) · [Exact APK source bcaad4093fc064bb017f5a21d1951d64696bc1f3](https://github.com/jdp323/migraineguard/tree/bcaad4093fc064bb017f5a21d1951d64696bc1f3). Current packages are version 1.13.1 / code23. Source code and test gates match both published APKs; later documentation-only commits do not rebuild them.
+
+- 88 JVM tests: zero failures/errors. Standard assembly, Android-test assembly and lint passed locally and on the hosted gate. Lint reports zero errors and 118 warnings; the warnings have not all been resolved. Preview assembly also passed on GitHub.
+- 37 Android API-35 runtime tests: OK, 138.790 seconds. The trainer test taps the front chest on the rendered figure, asserts selected chips, selects quads, rotates, checks outer-tab ownership, hands off and saves an actual completed set/RIR, retains selection across modes and saves a weekly plan. Additional tests cover timed holds/draft replacement, encrypted settings recovery and cross-account isolation, explicit AI consent, invalid-response fallback and cancellation.
+- Six SwipeNavigationTest/TrainerFlowTest tests repeated with window, transition and animator scales at 1.0: OK, 48.759 seconds. This checks interactions with animations enabled; it does not measure real-device frame rate.
+- Both APKs independently pass apksigner verification with retained SHA-1 FB:67:0D:1D:96:C2:8B:9E:27:0D:36:F8:D6:57:53:E3:6B:30:8D:E8. Standard package is com.migraineguard.app; Preview is com.migraineguard.app.preview.
+- Both public APKs, SHA256SUMS and certificate text were downloaded without account authentication. The APK hashes match the tested artifacts and the release checksum file.
+
+| APK | SHA-256 |
+| --- | --- |
+| MigraineGuard-v1.13.1-debug.apk | 61d771a345fdfd173299f10285d0e1776a3db64b22221bd1a2b34df5e6ed64ab |
+| MigraineGuard-v1.13.1-preview.apk | cd3b217a1d7beeda811d2cac925ab799506638df237159a82bc0a90d126da6f5 |
+
+### Genuine screenshots
+
+Eight captures below were visually inspected from the running API-35 app. Names, readings and exercise records are synthetic fixtures, not user health data or image-generation mockups. These capture the app content; Android status/navigation bars and keyboard are not included. Some images deliberately scroll to a control, so the whole card or page is not visible at once.
+
+| Screen | Capture |
+| --- | --- |
+| Light glass Home | [Open](screenshots/v1.13.1/home-light.png) |
+| Dark glass Home | [Open](screenshots/v1.13.1/glass-home-dark.png) |
+| Front, chest and thighs selected | [Open](screenshots/v1.13.1/trainer-body-front-light.png) |
+| Rotated back, dark theme | [Open](screenshots/v1.13.1/trainer-body-dark.png) |
+| Test-load explanation and editable-log handoff | [Open](screenshots/v1.13.1/trainer-prescription-light.png) |
+| Review an on-device weekly plan | [Open](screenshots/v1.13.1/trainer-week-review.png) |
+| Health / Trainer / Training navigation | [Open](screenshots/v1.13.1/fitness-light.png) |
+| Installed 1.13.1/code23 and update controls | [Open](screenshots/v1.13.1/settings-updates.png) |
+
+<table><tr><td><img src="screenshots/v1.13.1/trainer-body-front-light.png" width="260" alt="Front muscle map, chest and thighs selected"></td><td><img src="screenshots/v1.13.1/trainer-body-dark.png" width="260" alt="Rotated back in dark glass theme"></td></tr></table>
+
+Live provider quality, native Google Drive account transport, watch synchronization, Samsung notification timing, TalkBack/larger-font acceptance and actual S26 Ultra frame rate remain device checks. No real provider key or private record was used to manufacture these captures. Follow the [current phone checklist](PHONE_TESTING.md#v1131-acceptance).

@@ -1,6 +1,6 @@
 # How MigraineGuard works
 
-Current behavior: v1.12.0 / code 21. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
+Current behavior: v1.13.1 / code 23. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
 
 ## From your device to the screen
 
@@ -60,6 +60,12 @@ Settings → App checks public GitHub latest-release metadata, validates the rep
 
 Water notifications add three fixed glass actions. Immutable PendingIntents target a private receiver, which enqueues account-bound work. A receipt and water increment share one Room transaction, so each notification applies one choice. Invalid owner, expiry or disabled preferences reject the action. Receipts and the remembered session are excluded from journal exports/Drive. [Current changed files and limits](UPDATE_1_10_0.md).
 
+## Training studio and shared glass design
+
+The glass system draws a static ambient gradient field behind transparent scaffolds, tinted translucent surfaces, edge sheen and shadows. Text is not blurred; reduced transparency gives cards solid fills. The original body mesh uses cached shared vertices/normals, perspective, depth ordering and visible-triangle hit tests. Horizontal gestures belong to the figure; labeled chips provide accessible selection.
+
+Trainer preferences/plans are account-local settings. Deterministic catalog/coverage/time/effort rules build a session and bounded weekly template. Current comparable actual logs and timestamped test loads drive load guidance; demographic mass is never converted into a fabricated machine load. Structured workout details now include optional actual RIR and trainer exercise ID. Explicit AI sharing can request an allowed-ID week arrangement, which is validated and assigned local prescriptions. No cloud request runs merely by opening Trainer. [Exact functions, schema, prompt, storage and limits](UPDATE_1_13_0.md).
+
 ## Body progress and export
 
 The body-progress table uses stable UUIDs and permanent deletion markers. Selected images are resized and re-encoded locally; no body photo enters an AI prompt. Side-by-side comparisons and numerical deltas use user-entered measurements. A separate opt-in controls body contents in Drive. Settings → Data streams a readable ZIP or creates a password-encrypted recovery snapshot. Configured keys are excluded from manual exports. [Exact functions, migration, limits and formats](UPDATE_1_12_0.md).
@@ -88,7 +94,7 @@ Run the unit/lint/Standard assembly tasks before making a release; build Preview
 
 The pipeline restores its signing key from a GitHub Actions secret for eligible push builds, checks the retained SHA-1, runs checks and builds both APKs. Pull requests do not receive that secret or publish. A release requires successful build and Android runtime jobs and the retained signer. Existing version tags are not overwritten; app binary changes need a new version/code.
 
-For v1.12.0, [run 40121259096](https://github.com/jdp323/migraineguard/actions/runs/40121259096) passed **81 JVM tests and 33 Android runtime tests**, lint and retained Standard/Preview signature checks. The two gesture tests also passed with animations enabled. Synthetic fixtures cover body-photo normalization/recovery/deletion, manual export privacy, photo-Drive opt-in, original schema migrations 1–6 and non-Samsung health sources. Both public APK hashes match the inspected artifacts. Actual device sync, native Google transfer and OEM reminder timing still need phone acceptance. [Current functions, captures and evidence](UPDATE_1_12_0.md).
+For v1.13.1, [run 40242472927](https://github.com/jdp323/migraineguard/actions/runs/40242472927) passed **88 JVM tests and 37 Android runtime tests**, compilation, lint with zero errors and retained Standard/Preview signature checks. All six gesture/trainer tests passed again with animations enabled. Direct body tapping, rotation, plan/log handoff, actual effort/holds, encrypted restore/account isolation and explicit AI consent/cancellation are covered. Both anonymous public APK downloads match inspected artifacts. Actual watch transport, native Drive transfer, live AI quality and OEM timing/fluidity still need phone acceptance. [Exact verification and genuine captures](UPDATE_1_13_0.md#published-v1131-verification).
 
 ## Current limits
 
