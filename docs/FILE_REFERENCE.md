@@ -1,4 +1,4 @@
-> Current v1.13.1: [glass design, rotating muscle map, session/load rules, weekly planner, exact AI prompt and changed functions](UPDATE_1_13_0.md). Previous [v1.12 movement/body/export](UPDATE_1_12_0.md).
+> Current v1.14.0: [anatomical front/back illustrations, multi-muscle selection, native hit testing, credits and verification](UPDATE_1_14_0.md). [v1.13 training rules, plans and exact AI prompt](UPDATE_1_13_0.md).
 
 > Historical v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
 

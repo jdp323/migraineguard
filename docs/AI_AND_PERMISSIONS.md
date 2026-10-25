@@ -1,6 +1,6 @@
 # AI prompts, permissions and data flow
 
-Current implementation: v1.13.1 / code 23. This describes what the code sends and when. It is not a promise that a provider will always return accurate results. [User guide](USER_GUIDE.md) · [v1.9.1 implementation](UPDATE_1_9_0.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
+Current implementation: v1.14.0 / code 24. This describes what the code sends and when. It is not a promise that a provider will always return accurate results. [User guide](USER_GUIDE.md) · [v1.9.1 implementation](UPDATE_1_9_0.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
 
 ## Permissions and choices
 

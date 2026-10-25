@@ -1,19 +1,19 @@
 # MigraineGuard user guide
 
-For Android v1.13.1 (version code 23). Start here if a friend shared the app with you. No programming or Google Cloud setup is needed to use the published APK.
+For Android v1.14.0 (version code 24). Start here if a friend shared the app with you. No programming or Google Cloud setup is needed to use the published APK.
 
 [Download the latest release](https://github.com/jdp323/migraineguard/releases/latest) · [Troubleshooting](TROUBLESHOOTING.md) · [How it works](HOW_IT_WORKS.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
 
-[v1.13: glass design, muscle selection and the training studio](UPDATE_1_13_0.md). [v1.12: movement breaks, body photos and data export](UPDATE_1_12_0.md). [v1.11: swipe navigation and the refreshed interface](UPDATE_1_11_0.md). [v1.10: water quick actions, cardio/stretch fields and returning Home](UPDATE_1_10_0.md). The previous feature-by-feature guide is [v1.9.0–1.9.1: training, reminder/AI/update settings and Drive size](UPDATE_1_9_0.md). Read [exact AI prompts and permissions](AI_AND_PERMISSIONS.md) to see what is sent and why.
+[v1.14: anatomical illustrations and side controls](UPDATE_1_14_0.md). [v1.13: glass design, muscle selection and the training studio](UPDATE_1_13_0.md). [v1.12: movement breaks, body photos and data export](UPDATE_1_12_0.md). [v1.11: swipe navigation and the refreshed interface](UPDATE_1_11_0.md). [v1.10: water quick actions, cardio/stretch fields and returning Home](UPDATE_1_10_0.md). The previous feature-by-feature guide is [v1.9.0–1.9.1: training, reminder/AI/update settings and Drive size](UPDATE_1_9_0.md). Read [exact AI prompts and permissions](AI_AND_PERMISSIONS.md) to see what is sent and why.
 
 ## 1. Install or update
 
 1. Open the release link on your Android phone. Expand **Assets** if needed.
-2. Download **MigraineGuard-v1.13.1-debug.apk** for the normal app. The word debug identifies the current signed test build; this is not a Play Store release.
+2. Download **MigraineGuard-v1.14.0-debug.apk** for the normal app. The word debug identifies the current signed test build; this is not a Play Store release.
 3. Open the downloaded APK. Android may ask whether your browser or file manager can install apps. Allow that source if you trust this download, install, then turn the source permission back off if you wish. Do not disable Play Protect or other device-wide protections.
 4. Updating the same Standard app with the retained certificate keeps its local data. Do not uninstall an existing app just to get past an installation conflict.
-5. For an incompatible older signing certificate, or to try a fresh setup beside your existing app, use **MigraineGuard-v1.13.1-preview.apk**. Preview is a separate app with its own records, permissions and setup. It does not automatically copy Standard's local data.
-6. Confirm **Settings → App → About** says **1.13.1 (23)** and the intended package: Standard is com.migraineguard.app; Preview ends in .preview.
+5. For an incompatible older signing certificate, or to try a fresh setup beside your existing app, use **MigraineGuard-v1.14.0-preview.apk**. Preview is a separate app with its own records, permissions and setup. It does not automatically copy Standard's local data.
+6. Confirm **Settings → App → About** says **1.14.0 (24)** and the intended package: Standard is com.migraineguard.app; Preview ends in .preview.
 
 The app supports Android 8 and later. Health Connect additionally depends on compatible Android/Google services and source health apps on the phone; an installable app does not guarantee every integration is available. This project contains a phone app, not a separate watch app or iPhone build.
 
@@ -120,7 +120,7 @@ Settings → Account → Body progress / photos / weight opens dated photos, opt
 
 ## Fitness trainer and glass appearance
 
-Open Fitness → Trainer. Swipe the figure or use Front/Back, then choose multiple muscle regions. Training preferences asks for experience, goal, equipment, time, frequency and areas to skip. Build today’s workout shows sets/reps or holds, rest, cues and load guidance. Unknown machine/dumbbell loads remain a test-set choice; known comparable loads can be repeated conservatively. Use in exercise log fills an editable draft; confirm replacing an existing unsaved draft, then mark only completed sets and optionally record actual reps left.
+Open Fitness → Trainer. Choose Male or Female as the display illustration, swipe the figure or use Front/Back to switch sides, then tap multiple muscle regions. Coral means selected; chips provide another way to choose. The illustration does not change your account profile. Training preferences asks for experience, goal, equipment, time, frequency and areas to skip. Build today’s workout shows sets/reps or holds, rest, cues and load guidance. Unknown machine/dumbbell loads remain a test-set choice; known comparable loads can be repeated conservatively. Use in exercise log fills an editable draft; confirm replacing an existing unsaved draft, then mark only completed sets and optionally record actual reps left.
 
 Build week on this device works offline. Optional Arrange week with my AI requires the separate checkbox sharing age/height/weight, preferences and comparable recent workout sets with the selected provider. Review before saving. The latest five schedules are retained; actual journal history is separate. No photos or migraine/medication journal enters this request. Read [exact rules and limits](UPDATE_1_13_0.md).
 

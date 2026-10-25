@@ -47,6 +47,34 @@ MuscleBodyMesh.kt is removed. References to it in the v1.13 guide describe that 
 - Transitions snap: check Android's animation/accessibility settings. The app respects disabled system animations.
 - An old model remains: check Settings → App → About for 1.14.0/code24 and the intended Standard/Preview installation.
 
-## Verification
+## Published v1.14.0 verification
 
-Hosted release results, public download hashes and actual Android captures are appended after the final checks. The artwork proof sheet used for visual review is not represented as an Android screenshot.
+[Release](https://github.com/jdp323/migraineguard/releases/tag/v1.14.0-debug) · [Run 40245349190](https://github.com/jdp323/migraineguard/actions/runs/40245349190) · [Exact APK source b63b8deb651e30173bab1bb906c9f7bf574c2e8d](https://github.com/jdp323/migraineguard/tree/b63b8deb651e30173bab1bb906c9f7bf574c2e8d). Both packages are 1.14.0/code24. Later documentation-only commits do not change the tested app source.
+
+- 88 JVM tests passed, zero failures/errors. Compilation, Standard assembly, Android-test assembly and lint passed locally and on GitHub; Preview assembly passed on GitHub. Lint has zero errors and 118 warnings.
+- All 37 API-35 Android runtime tests passed in 157.385 seconds. The trainer flow directly taps male chest and female chest/glute paths, checks deselection/reselection, keeps quads across side/illustration changes, asserts map-owned swipes, then builds/logs a real editable set/RIR and saves a week. Existing recovery/account-isolation, timed hold/draft protection and explicit AI consent/cancellation checks also passed.
+- All six SwipeNavigationTest/TrainerFlowTest repeats passed with window, transition and animator scales at 1.0, in 61.591 seconds.
+- Both APKs independently verify with the retained SHA-1 FB:67:0D:1D:96:C2:8B:9E:27:0D:36:F8:D6:57:53:E3:6B:30:8D:E8. The full artwork license is present inside both signed APKs.
+- Public Standard, Preview, checksum and certificate assets were downloaded without account credentials. Both APKs match the tested artifacts and the release checksum file.
+
+| APK | SHA-256 |
+| --- | --- |
+| MigraineGuard-v1.14.0-debug.apk | 945e5bc17596eff2efd3c1073dddc872efae4b16c346b46aadac2028914beb60 |
+| MigraineGuard-v1.14.0-preview.apk | ff756e35b5bba1725e095aa59a38a64a8f186d0ed313f5c555d5c4513fc8b183 |
+
+### Actual Android captures
+
+These six running-app captures were visually inspected. They use synthetic test profiles and exercise records. Some views intentionally scroll to show the figure; the illustration-choice row is above the viewport. Android status/navigation bars are not included. The earlier browser artwork sheet is a separate design preview, not runtime evidence.
+
+| Screen | Capture |
+| --- | --- |
+| Male Front, chest and quads selected | [Open](screenshots/v1.14.0/trainer-body-front-light.png) |
+| Male Back, selections retained | [Open](screenshots/v1.14.0/trainer-body-back-light.png) |
+| Female Front, chest and quads selected | [Open](screenshots/v1.14.0/anatomy-female-front-light.png) |
+| Female Back, glutes added | [Open](screenshots/v1.14.0/anatomy-female-back-light.png) |
+| Dark anatomical selector | [Open](screenshots/v1.14.0/trainer-body-dark.png) |
+| Installed 1.14.0/code24 | [Open](screenshots/v1.14.0/settings-updates.png) |
+
+<table><tr><td><img src="screenshots/v1.14.0/trainer-body-front-light.png" width="260" alt="Male front anatomical muscle selector"></td><td><img src="screenshots/v1.14.0/anatomy-female-front-light.png" width="260" alt="Female front anatomical muscle selector"></td></tr></table>
+
+Real-phone frame rate, TalkBack/larger-font acceptance, live provider quality and native wearable/Drive transport are not established by these synthetic emulator checks. Follow the [phone acceptance steps](PHONE_TESTING.md#v1140-acceptance).

@@ -1,4 +1,4 @@
-> Current v1.13.1: [glass design, rotating muscle map, session/load rules, weekly planner, exact AI prompt and changed functions](UPDATE_1_13_0.md). Previous [v1.12 movement/body/export](UPDATE_1_12_0.md).
+> Current v1.14.0: [anatomical front/back illustrations, multi-muscle selection, native hit testing, credits and verification](UPDATE_1_14_0.md). [v1.13 training rules, plans and exact AI prompt](UPDATE_1_13_0.md).
 
 > Historical v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
 
@@ -113,7 +113,7 @@ Reference: https://android.googlesource.com/platform/packages/modules/HealthFitn
 5. Settings → Data: save/read a ZIP locally, inspect JSON/CSV/JPEG files, confirm configured provider keys are absent. Export encrypted .mgbak and restore on a fixture installation; wrong password must fail. Verify body photos and preferences while existing keys remain. Check cancellation, insufficient disk space and oversized snapshots without deleting real records.
 6. Disable movement/master notifications and sign out; old-account alerts must stop. Test a larger font, keyboard, light/dark themes and Android photo picker on the actual phone.
 
-## v1.13.1 acceptance
+## Historical v1.13.1 acceptance
 
 1. Update Standard in place to 1.13.1/code23. Inspect glass surfaces, ambient backgrounds, sharp text and dock in light/dark/dynamic color. Enable Reduce transparency, larger fonts and Android reduced/disabled animations. Check contrast and real phone fluidity; no fixed frame rate is promised.
 2. Fitness → Trainer: rotate slowly/quickly both directions; switch Front/Back; tap chest and thighs and add multiple chips. Confirm selected regions persist across views and that a figure drag does not change main tabs. Outside the figure, main pager and Android edge-back still work. Test labeled controls with TalkBack.
@@ -122,3 +122,10 @@ Reference: https://android.googlesource.com/platform/packages/modules/HealthFitn
 5. Build/review/save an on-device week, reopen it and log a real day. Logged markers must follow actual matching exercise/date; future schedules must not fabricate workouts. Confirm latest-five retention and that removing a plan keeps actual history.
 6. Without the training-sharing checkbox, no AI planner request should run. With a selected provider/key and explicit consent, request a week and inspect its allowed exercises/time/rest arrangement. Missing keys/errors/unsuitable responses must label a local alternative. Live provider response quality still requires real-key testing.
 7. Back up/restore a fixture account through encrypted .mgbak and connected private Drive on updated installations. Verify trainer preferences/plans, glass setting, actual RIR/trainer IDs and account isolation. Manual export must exclude configured keys and body photos must never enter trainer AI. Update all devices for manual format3/Drive format4 before restoring.
+
+## v1.14.0 acceptance
+
+1. Confirm 1.14.0/code24. Fitness → Trainer should show the flat anatomical illustration, not a faceted 3D mannequin. Try both Male/Female drawings and Front/Back in light/dark themes, larger fonts and TalkBack. This display choice must not alter your account profile.
+2. Tap a filled chest region, add quads, deselect/reselect, switch sides and illustrations. Coral highlights and labeled chips must agree. Select glutes/hamstrings on Back. Head/joints/unsupported details must not trigger a different target.
+3. Swipe within the map to switch sides, outside it to navigate main tabs. Check native Back and disabled/reduced system animations. Selections must remain across Fitness modes.
+4. Generate a multi-target session and use it in the actual editable exercise log. Existing weekly planning, load/history rules, backup formats, account isolation and AI explicit consent still follow the v1.13 checklist; no permission should be newly requested by opening the map.

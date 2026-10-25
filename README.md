@@ -2,14 +2,14 @@
 
 A native Android companion for migraine journaling, movement, sleep, hydration, meals, body measurements, medication check-ins and optional educational AI coaching.
 
-**Latest verified build: v1.13.1 (23)** · Android 8+ · Public signed test APKs
+**Latest verified build: v1.14.0 (24)** · Android 8+ · Public signed test APKs
 
 ## Download and share
 
 **[Download MigraineGuard](https://github.com/jdp323/migraineguard/releases/latest)** — share this link with friends. Open **Assets** and choose the Standard .apk. No GitHub repository invitation is needed.
 
-- [Standard v1.13.1 APK](https://github.com/jdp323/migraineguard/releases/download/v1.13.1-debug/MigraineGuard-v1.13.1-debug.apk): normal app, com.migraineguard.app. Update in place when the signing certificate matches; keep local records.
-- [Preview v1.13.1 APK](https://github.com/jdp323/migraineguard/releases/download/v1.13.1-debug/MigraineGuard-v1.13.1-preview.apk): separate installation beside Standard, with its own storage and permissions.
+- [Standard v1.14.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.14.0-debug/MigraineGuard-v1.14.0-debug.apk): normal app, com.migraineguard.app. Update in place when the signing certificate matches; keep local records.
+- [Preview v1.14.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.14.0-debug/MigraineGuard-v1.14.0-preview.apk): separate installation beside Standard, with its own storage and permissions.
 - [User guide](docs/USER_GUIDE.md): installation, checked setup, daily features, Google Drive restore and data controls.
 - [Troubleshooting](docs/TROUBLESHOOTING.md): possible errors, what they mean and how to resolve them.
 - [How it works](docs/HOW_IT_WORKS.md): device path, account isolation, AI/backup boundaries and code map.
@@ -17,23 +17,25 @@ A native Android companion for migraine journaling, movement, sleep, hydration, 
 
 Do not uninstall an old installation containing records to resolve a signature conflict. Use Preview or verify a recovery export first. These are development builds, distributed outside the Play Store; app updates are downloaded from Releases.
 
-## What's new in v1.13.1
+## What's new in v1.14.0
 
 The shared interface now uses layered glass surfaces, reflective edges, atmospheric light/dark backdrops, a glossy Home summary and a moving glass dock. Text remains sharp. Settings → App → Reduce transparency offers solid card fills.
 
-Fitness → Trainer adds an original rotating human muscle map. Swipe the figure, switch front/back and select several regions. Save experience, goal, equipment, available time and areas to skip, then build a session with sets, rep ranges or holds, rest, cues and editable load guidance. Unknown equipment loads require a comfortable test set; body mass is not turned into an invented lifting prescription. Comparable actual sets and optional reps-in-reserve guide conservative repeat/progression suggestions.
+Fitness → Trainer now has clean anatomical front/back illustrations with detailed muscle boundaries and coral selection highlights. Choose Male or Female as a display-only illustration, tap several regions, and swipe or use Front/Back to switch sides. Save experience, goal, equipment, available time and areas to skip, then build a session with sets, rep ranges or holds, rest, cues and editable load guidance. Unknown equipment loads require a comfortable test set; body mass is not turned into an invented lifting prescription. Comparable actual sets and optional reps-in-reserve guide conservative repeat/progression suggestions.
 
 Use in exercise log creates an editable draft and protects existing unsaved fields. An on-screen rest timer, saved weekly templates and optional AI week arrangement complete the flow. Cloud planning needs its own explicit sharing checkbox/action; the app validates the arrangement and applies local load/volume rules. Plans, preferences and actual exercise logs stay account-local, with the existing optional private Drive/manual backup choices.
 
-[Complete steps, load rules, exact AI prompt, file/function map and verification](docs/UPDATE_1_13_0.md) · [AI and permissions](docs/AI_AND_PERMISSIONS.md).
+[New anatomy controls, implementation, credits and verification](docs/UPDATE_1_14_0.md) · [Training/load rules and exact AI prompt](docs/UPDATE_1_13_0.md) · [AI and permissions](docs/AI_AND_PERMISSIONS.md).
 
 All [v1.12 movement breaks, private body photos and export](docs/UPDATE_1_12_0.md), [v1.11 swipe navigation](docs/UPDATE_1_11_0.md) and [v1.10 tracking features](docs/UPDATE_1_10_0.md) remain. No developer health-data or photo backend is used.
 
 ## A look inside
 
-Synthetic emulator fixtures, captured from the running app. [More screens and exact test scope](docs/UPDATE_1_13_0.md#published-v1131-verification).
+Synthetic emulator fixtures, captured from the running app. [More screens and exact test scope](docs/UPDATE_1_14_0.md#published-v1140-verification).
 
-<table><tr><td><img src="docs/screenshots/v1.13.1/home-light.png" width="250" alt="Light glass Home"></td><td><img src="docs/screenshots/v1.13.1/trainer-body-front-light.png" width="250" alt="Interactive muscle map with chest and thighs selected"></td></tr></table>
+<table><tr><td><img src="docs/screenshots/v1.14.0/trainer-body-front-light.png" width="250" alt="Male front anatomy with chest and thighs selected"></td><td><img src="docs/screenshots/v1.14.0/anatomy-female-front-light.png" width="250" alt="Female front anatomical illustration with the same training selection"></td></tr></table>
+
+Anatomical vector paths are adapted from MIT-licensed react-native-body-highlighter. [Source and full license](THIRD_PARTY_NOTICES.md).
 
 ## Start in a few steps
 
@@ -63,7 +65,7 @@ Cloud AI uses your selected provider/key, then offline fallback. Optional legacy
 
 ## Verification and remaining phone checks
 
-[Release run 40242472927](https://github.com/jdp323/migraineguard/actions/runs/40242472927) passed **88 JVM tests + 37 Android runtime tests**, compilation, lint (0 errors) and retained Standard/Preview signing checks. All six gesture/trainer tests passed again with system animation scales at 1.0. Tests cover direct body tapping, multi-selection, rotation gesture ownership, editable log handoff, actual effort/timed holds, saved plans, encrypted recovery/account isolation and explicit AI consent/cancellation. Eight genuine API-35 captures were inspected. Both public APKs were downloaded without authentication and match the tested hashes. [Exact evidence and screenshots](docs/UPDATE_1_13_0.md#published-v1131-verification).
+[Release run 40245349190](https://github.com/jdp323/migraineguard/actions/runs/40245349190) passed **88 JVM tests + 37 Android runtime tests**, compilation, lint (0 errors) and retained Standard/Preview signing checks. All six gesture/trainer tests passed again with system animations enabled. Direct male/female chest and glute taps, deselection, side/illustration selection retention, map-owned swipes and the existing trainer/logger/recovery/AI flows passed. Six actual API-35 captures were inspected. Both public APK downloads match the tested hashes, and both contain the artwork license. [Exact evidence and screenshots](docs/UPDATE_1_14_0.md#published-v1140-verification).
 
 These tests use synthetic data and simulated Drive transport. Actual watch synchronization, friend-account native Drive transfer, live AI and OEM notification delivery still require phone acceptance. [Phone test checklist](docs/PHONE_TESTING.md) · [Feature status](docs/FEATURE_STATUS.md)
 

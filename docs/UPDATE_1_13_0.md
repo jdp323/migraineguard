@@ -1,3 +1,5 @@
+> Historical v1.13 implementation and captures. The polygon mannequin was replaced in [v1.14: anatomical illustrations](UPDATE_1_14_0.md); training/AI/load rules below remain applicable.
+
 # v1.13.1 — glass design and the training studio
 
 Current Android 1.13.1 / code 23, including the v1.13.0 features below. Extends [v1.12 movement, body progress and export](UPDATE_1_12_0.md) and [v1.11 gestures](UPDATE_1_11_0.md). The final release evidence and genuine captures follow below.
