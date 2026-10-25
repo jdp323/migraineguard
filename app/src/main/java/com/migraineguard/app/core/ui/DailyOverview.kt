@@ -29,9 +29,9 @@ import java.text.NumberFormat
 fun DailyOverview(steps: Int?,stepGoal: Int,water: Int,waterGoal: Int,sleep: Float?,
     sleepGoal: Float,refreshed: String?,onFitness: ()->Unit,onWater: ()->Unit) {
     Box(Modifier.fillMaxWidth().glassPanel(elevated=true)
-        .background(Brush.linearGradient(listOf(Color(0xFF39468E).copy(alpha=.92f),Color(0xFF146776).copy(alpha=.87f))))) {
+        .background(Brush.linearGradient(listOf(Color(0xFF263268).copy(alpha=.94f),Color(0xFF10505B).copy(alpha=.92f))))) {
         Canvas(Modifier.matchParentSize()) {
-            drawRect(Brush.linearGradient(listOf(Color.White.copy(alpha=.24f),Color.Transparent,Color.White.copy(alpha=.03f)),Offset.Zero,Offset(size.width*.7f,size.height)))
+            drawRect(Brush.linearGradient(listOf(Color.White.copy(alpha=.12f),Color.Transparent,Color.White.copy(alpha=.03f)),Offset.Zero,Offset(size.width*.7f,size.height)))
             drawCircle(Color.White.copy(alpha=.07f),size.width*.55f,Offset(size.width,size.height))
             drawCircle(Color.White.copy(alpha=.04f),size.width*.32f,Offset(size.width*.9f,0f))
         }

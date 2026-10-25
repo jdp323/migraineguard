@@ -71,6 +71,7 @@ fun TrainerScreen(repository:TrainerRepository,preferences:UserPreferencesReposi
         }
         Text("No photos, name, email, birthday, medication or migraine journal is included. Your provider handles this request under its own settings.",style=MaterialTheme.typography.bodySmall)
         OutlinedButton(onClick={scope.launch {busy=true;message="";try{val result=repository.week(muscles,true,share);weekJson=Json.encodeToString(result.plan);selectedDay=0;message=result.message}catch(e:CancellationException){throw e}catch(e:Exception){message=e.message?:"AI could not plan this week."}finally{busy=false}}},enabled=share&&!busy,modifier=Modifier.fillMaxWidth().testTag("trainer-ai-week")) { Text(if(busy)"Planning…" else "Arrange week with my AI") }
+        if(message.isNotBlank()) Text(message,style=MaterialTheme.typography.bodySmall)
         TextButton(onClick={showPlans=!showPlans}) { Text(if(showPlans)"Hide saved plans" else "Saved plans (${prefs.trainingPlans.size})") }
     }
     draftWeek?.let { week ->
@@ -80,7 +81,7 @@ fun TrainerScreen(repository:TrainerRepository,preferences:UserPreferencesReposi
             FlowRow(horizontalArrangement=Arrangement.spacedBy(6.dp)) { week.days.forEachIndexed { index,d -> FilterChip(selectedDay==index,{selectedDay=index},label={Text(DayOfWeek.of(d.weekday+1).name.take(3))}) } }
             val day=week.days.getOrNull(selectedDay)?:week.days.first()
             Text(day.title+" · "+day.exercises.size+" movements")
-            Button(onClick={scope.launch {try{preferences.saveTrainingPlan(week);message="Week saved to this account. Optional Drive/manual settings backups include it."}catch(e:CancellationException){throw e}catch(_:Exception){message="Could not save the plan. Your preview is kept."}}},modifier=Modifier.fillMaxWidth().testTag("trainer-save-week")) { Text("Save this week") }
+            Button(onClick={scope.launch {try{preferences.saveTrainingPlan(week);message="Week saved to this account. Optional Drive/manual settings backups include it."}catch(e:CancellationException){throw e}catch(_:Exception){message="Could not save the plan. Your preview is kept."}}},enabled=prefs.trainingPlans.none{it.id==week.id},modifier=Modifier.fillMaxWidth().testTag("trainer-save-week")) { Text(if(prefs.trainingPlans.any{it.id==week.id})"Week saved ✓" else "Save this week") }
             TextButton(onClick={weekJson=null}) { Text("Discard preview") }
             Text("Keeps your latest five saved schedules; actual workout history is kept separately.",style=MaterialTheme.typography.bodySmall)
             Text("Logging records what you do today; future planned sessions are not marked complete.",style=MaterialTheme.typography.bodySmall)
