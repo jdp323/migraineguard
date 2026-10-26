@@ -119,6 +119,8 @@ jobs:
             adb shell settings put global animator_duration_scale 1.0
             adb shell settings put system font_scale 1.25
             adb shell am instrument -w -e class com.migraineguard.app.SwipeNavigationTest,com.migraineguard.app.TrainerFlowTest,com.migraineguard.app.FullAppSimulationTest com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-gesture-results.txt
+            adb pull /sdcard/Android/data/com.migraineguard.app/files/verification ui-verification-large-font || true
+            adb logcat -d -s AndroidRuntime:E > android-crash-log.txt
             cat android-gesture-results.txt
             grep -q 'OK (13 tests)' android-gesture-results.txt
             adb shell settings put system font_scale 1.0
@@ -141,7 +143,9 @@ jobs:
             android-crash-log.txt
             android-startup.png
             ui-verification/*.png
-            ui-verification/updates-check-status.txt
+            ui-verification/*.txt
+            ui-verification-large-font/*.png
+            ui-verification-large-font/*.txt
           if-no-files-found: ignore
           retention-days: 7
   publish:

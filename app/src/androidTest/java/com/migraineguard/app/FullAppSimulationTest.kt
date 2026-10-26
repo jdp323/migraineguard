@@ -13,7 +13,11 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.core.view.WindowCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.migraineguard.app.core.domain.*
 import com.migraineguard.app.core.ai.connection
 import com.migraineguard.app.feature.fitness.*
@@ -43,10 +47,31 @@ class FullAppSimulationTest {
         }
     }
     private fun await(text:String){compose.waitUntil(20000){compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()}}
-    private fun capture(name:String,tag:String?=null){
+    private fun capture(name:String){
         compose.waitForIdle()
         val dir=File(context.getExternalFilesDir(null),"verification").apply{mkdirs()}
-        File(dir,name+".png").outputStream().use{(if(tag==null)compose.onRoot()else compose.onNodeWithTag(tag)).captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG,100,it)}
+        File(dir,name+".png").outputStream().use{compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG,100,it)}
+    }
+    private fun captureWindow(name:String){
+        compose.waitForIdle()
+        val bitmap=requireNotNull(InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot())
+        val dir=File(context.getExternalFilesDir(null),"verification").apply{mkdirs()}
+        try { File(dir,name+".png").outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)} } finally { bitmap.recycle() }
+    }
+    private fun hideKeyboard(scenario: ActivityScenario<MainActivity>){
+        scenario.onActivity { activity -> WindowCompat.getInsetsController(activity.window,activity.window.decorView).hide(WindowInsetsCompat.Type.ime()) }
+        compose.waitUntil(10000){
+            var hidden=false
+            scenario.onActivity { activity -> hidden=ViewCompat.getRootWindowInsets(activity.window.decorView)?.isVisible(WindowInsetsCompat.Type.ime())!=true }
+            hidden
+        }
+        compose.waitForIdle()
+    }
+    private fun expectRecord(name:String,timeout:Long,predicate:()->Boolean){
+        try { compose.waitUntil(timeout,predicate) } catch(e:Exception){
+            runCatching { captureWindow("failure-"+name); File(context.getExternalFilesDir(null),"verification/failure-"+name+".txt").writeText(compose.onRoot().printToString()) }
+            throw e
+        }
     }
     private fun settings(){compose.onNodeWithTag("tab-home").performClick();compose.onNodeWithContentDescription("Settings").performClick();await("Make it yours.")}
     private fun trainer(){compose.onNodeWithTag("tab-fitness").performClick();compose.onNodeWithTag("fitness-trainer").performScrollTo().performClick()}
@@ -153,7 +178,7 @@ class FullAppSimulationTest {
             compose.onNodeWithTag("demo-play").performClick()
             compose.onNodeWithTag("demo-status").assertTextContains("Paused", substring = true)
             compose.onNodeWithTag("demo-restart").performClick()
-            capture("simulation-exercise-gif","exercise-guide-list")
+            captureWindow("simulation-exercise-gif")
             compose.onNodeWithTag("demo-close").performClick()
             compose.onNodeWithTag("exercise-library-list").performScrollToNode(hasTestTag("library-use-leg-press"))
             compose.onNodeWithTag("library-use-leg-press").performClick()
@@ -202,7 +227,7 @@ class FullAppSimulationTest {
     @Test fun waterFoodMedicationAndWeightActionsPersistActualSyntheticRecords(){
         setup()
         val c=app.container
-        ActivityScenario.launch(MainActivity::class.java).use{
+        ActivityScenario.launch(MainActivity::class.java).use{ scenario ->
             compose.onAllNodesWithText("Add water").onFirst().performScrollTo().performClick();await("One sip at a time.")
             val cups=runBlocking{c.waterIntakeRepository.cupsToday.first()}
             compose.onNodeWithContentDescription("Add cup").performScrollTo().performClick()
@@ -213,8 +238,9 @@ class FullAppSimulationTest {
             compose.onNodeWithTag("tab-food").performClick()
             val before=runBlocking{c.nutritionAnalyzer.observeRecent(100).first()}.size
             compose.onNodeWithTag("food-description").performScrollTo().performTextInput("Simulation banana and plain yogurt")
-            compose.onNodeWithText("Analyze description").performScrollTo().performClick()
-            compose.waitUntil(20000){runBlocking{c.nutritionAnalyzer.observeRecent(100).first()}.size>before}
+            hideKeyboard(scenario)
+            compose.onNodeWithText("Analyze description").performScrollTo().assertIsDisplayed().performClick()
+            expectRecord("food-submit",20000){runBlocking{c.nutritionAnalyzer.observeRecent(100).first()}.size>before}
             capture("simulation-food-saved")
             settings()
             compose.onNodeWithText("Medications & supplements").performScrollTo().performClick();await("Keep your routine close.")
@@ -266,7 +292,7 @@ class FullAppSimulationTest {
     @Test fun settingsReminderIntervalsAiKeysAppearanceAndOfflineCoachAreFunctional(){
         setup()
         val c=app.container
-        ActivityScenario.launch(MainActivity::class.java).use{
+        ActivityScenario.launch(MainActivity::class.java).use{ scenario ->
             settings()
             compose.onNodeWithText("AI",useUnmergedTree=true).performScrollTo().performClick()
             compose.onNodeWithTag("ai-provider-picker").performScrollTo().performClick()
@@ -306,8 +332,9 @@ class FullAppSimulationTest {
             compose.onNodeWithTag("tab-coach").performClick()
             val count=runBlocking{c.aiCoachRepository.observeSessions().first()}.size
             compose.onNodeWithTag("coach-question").performScrollTo().performTextInput("Suggest a gentle walking habit")
-            compose.onNodeWithText("Send").performScrollTo().performClick()
-            compose.waitUntil(30000){runBlocking{c.aiCoachRepository.observeSessions().first()}.size>count}
+            hideKeyboard(scenario)
+            compose.onNodeWithText("Send").performScrollTo().assertIsDisplayed().performClick()
+            expectRecord("coach-submit",30000){runBlocking{c.aiCoachRepository.observeSessions().first()}.size>count}
             assertTrue(runBlocking{c.aiCoachRepository.observeSessions().first()}.first().fullResponse.isNotBlank())
             compose.onNodeWithTag("tab-insights").performClick();await("See the bigger picture.")
             capture("simulation-insights")
