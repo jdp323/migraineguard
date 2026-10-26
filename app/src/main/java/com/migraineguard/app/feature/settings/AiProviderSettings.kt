@@ -32,7 +32,8 @@ fun AiProviderSettings(repository: UserPreferencesRepository) {
     val scope = rememberCoroutineScope()
     val service = AiCatalog.service(providerId) ?: AiCatalog.services.first()
     val saved = prefs.connection(providerId)
-    LaunchedEffect(providerId, saved) { key = suggestedPaste ?: saved.apiKey; suggestedPaste = null; model = saved.model; tested = false; status = "" }
+    LaunchedEffect(providerId, saved) { key = suggestedPaste ?: saved.apiKey; suggestedPaste = null; model = saved.model; tested = false }
+    LaunchedEffect(providerId) { status = "" }
     SectionCard("AI providers", icon = Icons.Default.SmartToy) {
         Text("Active: "+when(prefs.preferredAiProvider) { "auto" -> "Legacy automatic fallback"; "offline" -> "On-device only"; else -> AiCatalog.service(prefs.preferredAiProvider)?.label ?: "Not selected" })
         Text("Choose a provider, paste your own key, then save. ChatGPT/Claude subscriptions do not include API credits. Provider requests may cost money.", style = MaterialTheme.typography.bodySmall)

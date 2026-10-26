@@ -36,7 +36,7 @@ fun ReminderSettings(repository:UserPreferencesRepository){
     val backgroundPermission = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted -> backgroundAllowed = MovementCheck.BACKGROUND_PERMISSION in granted }
     var permissionMessage by remember{mutableStateOf("")}
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){ok->permissionMessage=if(ok)"Notification permission granted." else "Notifications are blocked by Android. Your saved preferences are kept."}
-    fun saveIntervals(water:Int=prefs.waterReminderMinutes,food:Int=prefs.foodReminderMinutes,med:Int=prefs.medicationReminderMinutes,migraine:Int=prefs.migraineReminderMinutes,foodOn:Boolean=prefs.foodReminders,start:Int=prefs.reminderStartHour,end:Int=prefs.reminderEndHour){scope.launch{repository.setReminderOptions(foodOn,water,food,med,migraine,start,end)}}
+    fun saveIntervals(water:Int?=null,food:Int?=null,med:Int?=null,migraine:Int?=null,foodOn:Boolean?=null,start:Int?=null,end:Int?=null){scope.launch{repository.setReminderOptions(foodOn,water,food,med,migraine,start,end)}}
     SectionCard("Notification controls"){
         ToggleRow("Enable notifications",prefs.notificationsEnabled){scope.launch{repository.setNotificationsEnabled(it)};if(it&&Build.VERSION.SDK_INT>=33)permission.launch(Manifest.permission.POST_NOTIFICATIONS)}
         Text(if(ReminderWorker.canPostNotifications(context))"Android allows notifications." else "Android currently blocks notifications for this app.",style=MaterialTheme.typography.bodySmall)

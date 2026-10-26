@@ -459,13 +459,20 @@ class UserPreferencesRepository(context: Context, account: String = AccountStora
     }
     suspend fun setBodyPhotoDriveBackup(enabled: Boolean) { editUser { it[bodyPhotoDriveKey] = enabled } }
     suspend fun setUpdateChecks(enabled: Boolean) { editUser { it[updateChecksKey] = enabled } }
-    suspend fun setReminderOptions(food: Boolean, waterMinutes: Int, foodMinutes: Int, medMinutes: Int, migraineMinutes: Int, startHour: Int, endHour: Int) {
-        require(listOf(waterMinutes, foodMinutes, medMinutes, migraineMinutes).all { it in 15..1440 })
-        require(startHour in 0..23 && endHour in 0..23 && startHour != endHour)
+    /** Updates only supplied fields, avoiding stale UI snapshots overwriting another reminder edit. */
+    suspend fun setReminderOptions(food: Boolean? = null, waterMinutes: Int? = null, foodMinutes: Int? = null, medMinutes: Int? = null, migraineMinutes: Int? = null, startHour: Int? = null, endHour: Int? = null) {
+        require(listOfNotNull(waterMinutes, foodMinutes, medMinutes, migraineMinutes).all { it in 15..1440 })
         editUser { p ->
-            p[foodRemindersKey] = food; p[waterReminderMinutesKey] = waterMinutes; p[foodReminderMinutesKey] = foodMinutes
-            p[medicationReminderMinutesKey] = medMinutes; p[migraineReminderMinutesKey] = migraineMinutes
-            p[reminderStartHourKey] = startHour; p[reminderEndHourKey] = endHour
+            val start = startHour ?: p[reminderStartHourKey] ?: 8
+            val end = endHour ?: p[reminderEndHourKey] ?: 22
+            require(start in 0..23 && end in 0..23 && start != end)
+            food?.let { p[foodRemindersKey] = it }
+            waterMinutes?.let { p[waterReminderMinutesKey] = it }
+            foodMinutes?.let { p[foodReminderMinutesKey] = it }
+            medMinutes?.let { p[medicationReminderMinutesKey] = it }
+            migraineMinutes?.let { p[migraineReminderMinutesKey] = it }
+            startHour?.let { p[reminderStartHourKey] = it }
+            endHour?.let { p[reminderEndHourKey] = it }
         }
     }
 }

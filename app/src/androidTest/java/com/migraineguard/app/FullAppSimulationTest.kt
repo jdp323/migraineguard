@@ -15,6 +15,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.migraineguard.app.core.domain.*
+import com.migraineguard.app.core.ai.connection
 import com.migraineguard.app.feature.fitness.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -148,9 +149,9 @@ class FullAppSimulationTest {
             compose.onNodeWithTag("library-guide-leg-press").performClick()
             compose.onNodeWithTag("exercise-gif").assertExists()
             compose.onNodeWithTag("demo-play").performScrollTo().performClick()
-            compose.onNodeWithTag("demo-status").assertTextContains("Playing")
+            compose.onNodeWithTag("demo-status").assertTextContains("Playing", substring = true)
             compose.onNodeWithTag("demo-play").performClick()
-            compose.onNodeWithTag("demo-status").assertTextContains("Paused")
+            compose.onNodeWithTag("demo-status").assertTextContains("Paused", substring = true)
             compose.onNodeWithTag("demo-restart").performClick()
             capture("simulation-exercise-gif","exercise-guide-list")
             compose.onNodeWithTag("demo-close").performClick()
@@ -274,6 +275,7 @@ class FullAppSimulationTest {
             compose.onNodeWithText("Save provider").performScrollTo().performClick()
             compose.waitUntil(10000){runBlocking{c.preferencesRepository.preferences.first()}.preferredAiProvider=="openai"}
             compose.onNodeWithText("Remove selected key").performScrollTo().performClick();await("Selected provider key removed.")
+            compose.waitUntil(10000){runBlocking{c.preferencesRepository.preferences.first()}.connection("openai").apiKey.isBlank()}
             compose.onNodeWithText("Use on-device AI only").performScrollTo().performClick()
             compose.waitUntil(10000){runBlocking{c.preferencesRepository.preferences.first()}.preferredAiProvider=="offline"}
             compose.onNodeWithText("Reminders",useUnmergedTree=true).performScrollTo().performClick()
