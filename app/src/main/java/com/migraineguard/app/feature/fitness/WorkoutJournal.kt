@@ -45,6 +45,7 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
     val entries by repository.observeWorkouts().collectAsStateWithLifecycle(emptyList())
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    var library by rememberSaveable { mutableStateOf(false) }
     var name by rememberSaveable { mutableStateOf("") }
     var minutes by rememberSaveable { mutableStateOf("30") }
     var speed by rememberSaveable { mutableStateOf("") }
@@ -57,7 +58,7 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
     var trainerId by rememberSaveable { mutableStateOf<String?>(null) }
     var strengthTimed by rememberSaveable { mutableStateOf(false) }
     var rir by rememberSaveable { mutableStateOf("") }
-    var appliedRequest by rememberSaveable { mutableStateOf<String?>(null) }
+    var handledExternalRequest by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingTrainer by rememberSaveable { mutableStateOf<String?>(null) }
     var trainerGuidance by rememberSaveable { mutableStateOf("") }
     var typeName by rememberSaveable { mutableStateOf(WorkoutType.STRENGTH.name) }
@@ -92,15 +93,21 @@ fun WorkoutJournal(repository: WorkoutRepository, preferences: UserPreferencesRe
         hold=p.holdSeconds?.toString().orEmpty();rounds=if(strengthTimed)p.sets.toString() else ""
         rir="";notes="";calories="";photo=null;allowPhoto=false;showHistory=false
         trainerGuidance=p.loadReason+" Rest "+p.restSeconds+"s; aim for about "+p.targetRir+" reps in reserve. Check only the sets you actually complete."
-        appliedRequest=request.requestId;pendingTrainer=null;message="Trainer draft ready. Adjust the load after your warm-up."
+        pendingTrainer=null;message="Trainer draft ready. Adjust the load after your warm-up."
     }
     LaunchedEffect(trainerRequestJson) {
         trainerRequestJson?.let { raw ->
             val request=Json.decodeFromString<TrainerLogRequest>(raw)
-            if(request.requestId!=appliedRequest) { if(name.isBlank())applyTrainer(raw) else { pendingTrainer=raw;appliedRequest=request.requestId } }
+            if(request.requestId!=handledExternalRequest) { handledExternalRequest=request.requestId;if(name.isBlank())applyTrainer(raw) else pendingTrainer=raw }
         }
     }
     pendingTrainer?.let { raw -> AlertDialog(onDismissRequest={pendingTrainer=null},title={Text("Replace this exercise draft?")},text={Text("The trainer movement will replace the current unsaved fields. Your saved workout history is kept.")},confirmButton={TextButton(onClick={applyTrainer(raw)}){Text("Use trainer draft")}},dismissButton={TextButton(onClick={pendingTrainer=null}){Text("Keep my draft")}}) }
+    OutlinedButton(onClick={library=true},modifier=Modifier.fillMaxWidth().testTag("training-library")){Text("Exercise & machine guide · GIFs")}
+    if(library) ExerciseLibraryDialog(emptySet(),onUse={ e ->
+        val raw=Json.encodeToString(TrainerLogRequest(java.util.UUID.randomUUID().toString(),TrainerEngine.prescription(e,prefs.trainerProfile,prefs.bodyProfile,entries)))
+        if(name.isBlank())applyTrainer(raw) else pendingTrainer=raw
+        library=false
+    },onDismiss={library=false})
     val previous = TrainingProgress.previous(entries, name).takeIf { name.isNotBlank() }
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) { runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }; photo = uri.toString(); allowPhoto = false }

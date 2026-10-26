@@ -58,6 +58,7 @@ object TrainerExerciseCatalog {
         e("self-curl","Self-resisted curl",Muscle.BICEPS,TrainingEquipment.BODYWEIGHT,"Apply gentle opposing pressure with your other hand. Move slowly; switch arms.",perSide=true),
         e("band-triceps","Band triceps pressdown",Muscle.TRICEPS,TrainingEquipment.BANDS,"Use a secure high anchor. Keep upper arms still and straighten comfortably."),
         e("machine-triceps","Cable triceps pushdown",Muscle.TRICEPS,TrainingEquipment.GYM,"Keep elbows close and upper arms still. Lower the handle smoothly without leaning on it."),
+        e("cable-overhead-triceps","Overhead cable triceps extension",Muscle.TRICEPS,TrainingEquipment.GYM,"Use a suitable high cable station and a light test load. Face away from the pulley, keep upper arms stable, extend elbows comfortably and return slowly."),
         e("db-triceps","Lying dumbbell triceps extension",Muscle.TRICEPS,TrainingEquipment.DUMBBELLS,"Use very light dumbbells on a stable surface. Keep upper arms still; bend elbows slowly."),
         e("dead-bug","Dead bug",Muscle.CORE,TrainingEquipment.BODYWEIGHT,"Keep your lower back comfortably supported. Extend opposite limbs slowly while breathing.",perSide=true),
         e("plank","Elevated plank",Muscle.CORE,TrainingEquipment.BODYWEIGHT,"Use a stable elevated surface. Keep a straight body line and breathe throughout.",timed=true),
@@ -89,8 +90,8 @@ object TrainerExerciseCatalog {
 }
 @Serializable data class TrainerLogRequest(val requestId:String,val prescription:ExercisePrescription)
 @Serializable data class TrainingDay(val weekday: Int, val title: String, val exercises: List<ExercisePrescription>)
-@Serializable data class TrainingWeek(val id: String = UUID.randomUUID().toString(), val startDateIso: String,
-    val source: String = "On-device planner", val note: String = "", val days: List<TrainingDay>, val createdAtMillis: Long = System.currentTimeMillis()) {
+@Serializable @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class) data class TrainingWeek(val id: String = UUID.randomUUID().toString(), val startDateIso: String,
+    val source: String = "On-device planner", val note: String = "", val days: List<TrainingDay>, @kotlinx.serialization.EncodeDefault val createdAtMillis: Long = System.currentTimeMillis()) {
     fun validate() {
         require(id.length in 1..64 && startDateIso.length <= 10); LocalDate.parse(startDateIso)
         require(source.length <= 100 && note.length <= 1200 && days.size in 2..4 && createdAtMillis >= 0)
@@ -103,10 +104,10 @@ object TrainerEngine {
     fun age(body:BodyProfile,today:LocalDate=LocalDate.now()):Int? = runCatching { Period.between(LocalDate.parse(body.dateOfBirthIso),today).years }.getOrNull()
     fun ensureReady(profile:TrainerProfile,body:BodyProfile) {
         profile.validate()
-        require(profile.ready && profile.adultConfirmed && (age(body)?.let { it >= 18 } != false)) { "Complete your adult training preferences first." }
+        // Preferences are optional. Validate stored values, but never gate a local workout behind onboarding.
     }
     fun prescription(exercise:TrainerExercise,p:TrainerProfile,body:BodyProfile,history:List<WorkoutEntry>):ExercisePrescription {
-        val reduced = p.experience == TrainingExperience.NEW || p.minutesPerSession <= 30 || (age(body) ?: 0) >= 65 || body.activityLevel == com.migraineguard.app.core.domain.ActivityLevel.SEDENTARY
+        val reduced = (age(body)?.let { it < 18 } == true) || p.experience == TrainingExperience.NEW || p.minutesPerSession <= 30 || (age(body) ?: 0) >= 65 || body.activityLevel == com.migraineguard.app.core.domain.ActivityLevel.SEDENTARY
         val strength = p.goal == TrainingGoal.STRENGTH && !reduced
         val sets = if(reduced) 2 else 3
         val min = if(strength) 6 else 8; val max = if(strength) 8 else 12
@@ -167,6 +168,6 @@ object TrainerEngine {
         }
         val covered=days.flatMap { it.exercises }.flatMap { TrainerExerciseCatalog.byId(it.exerciseId)!!.muscles }.toSet()
         require((priorities-p.avoid).all(covered::contains)) { "Some priorities do not fit this week. Choose fewer areas or more session time." }
-        return TrainingWeek(startDateIso=start.toString(),days=days,note="5-minute easy warm-up; finish with a short easy cooldown. Keep 2–4 reps in reserve. Rest days can be easy walking or comfortable mobility. This is a general adult training template, not injury rehabilitation.").also { it.validate() }
+        return TrainingWeek(startDateIso=start.toString(),days=days,note="5-minute easy warm-up; finish with a short easy cooldown. Keep 2–4 reps in reserve. Rest days can be easy walking or comfortable mobility. This is a general training template, not injury rehabilitation.").also { it.validate() }
     }
 }

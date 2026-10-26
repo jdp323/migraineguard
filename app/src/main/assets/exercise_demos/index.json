@@ -1,0 +1,92 @@
+[
+  {
+    "exerciseId": "machine-row",
+    "file": "machine-row.gif",
+    "author": "Goulart",
+    "source": "https://wger.de/media/exercise-video/512/fff4c294-93f0-4926-b3a2-bf59ad4afaa5.MOV",
+    "sourcePage": "https://wger.de/en/exercise/512/view/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Trimmed to a 6-second silent loop, resized to 320px wide, converted to GIF at 8 fps."
+  },
+  {
+    "exerciseId": "machine-shoulder",
+    "file": "machine-shoulder.gif",
+    "author": "Goulart",
+    "source": "https://wger.de/media/exercise-video/543/dbfd396b-1aab-4a64-a50b-2c31ff0a2cf7.MOV",
+    "sourcePage": "https://wger.de/en/exercise/543/view/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Trimmed to a 6-second silent loop, resized to 320px wide, converted to GIF at 8 fps."
+  },
+  {
+    "exerciseId": "db-shoulder",
+    "file": "db-shoulder.gif",
+    "author": "Goulart",
+    "source": "https://wger.de/media/exercise-video/567/64f33c19-1d96-4b7c-af17-6c6a4941c614.MOV",
+    "sourcePage": "https://wger.de/en/exercise/567/view/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Trimmed to a 6-second silent loop, resized to 320px wide, converted to GIF at 8 fps."
+  },
+  {
+    "exerciseId": "machine-calf",
+    "file": "machine-calf.gif",
+    "author": "Goulart",
+    "source": "https://wger.de/media/exercise-video/590/a325ae2e-686b-4a1f-aff2-ba37fa3fa157.MOV",
+    "sourcePage": "https://wger.de/en/exercise/590/view/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Trimmed to a 6-second silent loop, resized to 320px wide, converted to GIF at 8 fps."
+  },
+  {
+    "exerciseId": "db-curl",
+    "file": "db-curl.gif",
+    "author": "Goulart",
+    "source": "https://wger.de/media/exercise-video/92/8bfb917c-3d0d-49b9-8073-5d7e01c1b894.MOV",
+    "sourcePage": "https://wger.de/en/exercise/92/view/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Trimmed to a 6-second silent loop, resized to 320px wide, converted to GIF at 8 fps. Excerpt starts at 4.5 seconds to show the active curl."
+  },
+  {
+    "exerciseId": "cable-overhead-triceps",
+    "file": "cable-overhead-triceps.gif",
+    "author": "Goulart",
+    "source": "https://wger.de/media/exercise-video/659/1f2eb3b6-3185-429f-8330-26dc88f39aff.MOV",
+    "sourcePage": "https://wger.de/en/exercise/659/view/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Trimmed to a 6-second silent loop, resized to 320px wide, converted to GIF at 8 fps."
+  },
+  {
+    "exerciseId": "db-triceps",
+    "file": "db-triceps.gif",
+    "author": "Goulart",
+    "source": "https://wger.de/media/exercise-video/245/c253303e-9160-4f1f-b4fe-daf1e6c8661d.MOV",
+    "sourcePage": "https://wger.de/en/exercise/245/view/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Trimmed to a 6-second silent loop, resized to 320px wide, converted to GIF at 8 fps."
+  },
+  {
+    "exerciseId": "leg-press",
+    "file": "leg-press.gif",
+    "author": "Goulart",
+    "source": "https://wger.de/media/exercise-video/371/6aae16b4-01b9-4eb4-935c-3250f84d2c59.MOV",
+    "sourcePage": "https://wger.de/en/exercise/371/view/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Trimmed to a 6-second silent loop, resized to 320px wide, converted to GIF at 8 fps."
+  },
+  {
+    "exerciseId": "leg-curl",
+    "file": "leg-curl.gif",
+    "author": "Goulart",
+    "source": "https://wger.de/media/exercise-video/366/43df4b79-d4c3-4fbf-bcb5-e0d825b84120.MOV",
+    "sourcePage": "https://wger.de/en/exercise/366/view/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Trimmed to a 6-second silent loop, resized to 320px wide, converted to GIF at 8 fps."
+  }
+]

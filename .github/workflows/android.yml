@@ -113,15 +113,21 @@ jobs:
             adb shell am instrument -w com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-runtime-results.txt
             adb pull /sdcard/Android/data/com.migraineguard.app/files/verification ui-verification || true
             cat android-runtime-results.txt
-            grep -q 'OK (37 tests)' android-runtime-results.txt
+            grep -q 'OK (44 tests)' android-runtime-results.txt
             adb shell settings put global window_animation_scale 1.0
             adb shell settings put global transition_animation_scale 1.0
             adb shell settings put global animator_duration_scale 1.0
-            adb shell am instrument -w -e class com.migraineguard.app.SwipeNavigationTest,com.migraineguard.app.TrainerFlowTest com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-gesture-results.txt
+            adb shell settings put system font_scale 1.25
+            adb shell am instrument -w -e class com.migraineguard.app.SwipeNavigationTest,com.migraineguard.app.TrainerFlowTest,com.migraineguard.app.FullAppSimulationTest com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-gesture-results.txt
             cat android-gesture-results.txt
-            grep -q 'OK (6 tests)' android-gesture-results.txt
+            grep -q 'OK (13 tests)' android-gesture-results.txt
+            adb shell settings put system font_scale 1.0
             adb shell am start -n com.migraineguard.app/.MainActivity
             sleep 5
+            adb shell monkey -p com.migraineguard.app --pct-syskeys 0 --pct-appswitch 0 --ignore-security-exceptions --throttle 100 -s 26026 300 > android-smoke-results.txt
+            cat android-smoke-results.txt
+            adb logcat -d -s AndroidRuntime:E > android-crash-log.txt
+            if grep -q "FATAL EXCEPTION" android-crash-log.txt; then exit 1; fi
             adb exec-out screencap -p > android-startup.png
       - name: Save Android runtime evidence
         if: always()
@@ -131,8 +137,11 @@ jobs:
           path: |
             android-runtime-results.txt
             android-gesture-results.txt
+            android-smoke-results.txt
+            android-crash-log.txt
             android-startup.png
             ui-verification/*.png
+            ui-verification/updates-check-status.txt
           if-no-files-found: ignore
           retention-days: 7
   publish:
@@ -160,15 +169,17 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
-          Fitness → Trainer now uses clean anatomical front/back illustrations instead of the polygon mannequin. Choose Male or Female as a display-only illustration, tap several muscles, and use coral highlights to review your focus. Swipe inside the map or use Front/Back and Flip view for animated side changes. Labeled muscle chips remain available.
+          Select muscles and press Build today's workout immediately. Training preferences are optional; the former mandatory age/setup checkbox no longer blocks generating or logging workouts. Default workouts start with beginner-friendly bodyweight choices; equipment/goals/experience remain editable.
 
-          Drawing and touch hit testing share the same vector paths and coordinate transforms. Selection survives illustration/side changes. The anatomical vectors are adapted from MIT-licensed react-native-body-highlighter, with the full notice included in the app and repository. No MuscleWiki asset or service is used.
+          The anatomical selector adds 100–300% pinch/button zoom, pan, double-tap/Fit controls and corrected male rear-head artwork. Zoomed drawing and touch targets share the same transform.
 
-          Existing personalized sessions, confirmed/history-based load guidance, sets/reps/holds, rest timer, editable actual logging and optional AI weekly planning remain. No new health permission, cloud scope, database schema or backup format is introduced.
+          An exercise/machine library provides setup steps for all 35 catalog movements and nine offline GIF demonstrations. Guides have Play/Pause/Restart and visible CC BY-SA attribution. A guide can prefill the editable log while protecting unsaved drafts; movements without matching media show honest text-only guidance.
 
-          Publication requires JVM tests, lint, retained signing, 37 Android runtime tests and six repeated gesture/trainer tests with animations enabled. This does not certify phone frame rate, wearable transport or live AI quality. See docs/UPDATE_1_14_0.md for controls, attribution, implementation and evidence.
+          Additional fixes preserve exact plan creation timestamps across JSON restore, separate internal guide choices from external draft requests, validate weight entries and improve action labels.
 
-          Use Standard to update com.migraineguard.app with the retained FB:67 certificate, or Preview alongside it with separate records/permissions. Do not uninstall an older app containing records to resolve a signing conflict.
+          Release gates include JVM tests/lint, retained Standard/Preview signing, 44 Android runtime tests, 13 larger-font animation-enabled repeats and a seeded 300-event smoke/crash check. Synthetic emulator checks do not establish actual watch sync, live OAuth/Drive/provider quality or OEM reminder delivery. Read docs/SIMULATION_REPORT.md and docs/UPDATE_1_15_0.md for exact results and limits.
+
+          Choose Standard to update the retained com.migraineguard.app installation; Preview installs separately. Preserve existing records when resolving a signing conflict.
           NOTES
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists; it will not be overwritten."

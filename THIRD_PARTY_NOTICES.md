@@ -25,3 +25,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Exercise demonstration GIFs
+
+The nine video-derived GIFs in app/src/main/assets/exercise_demos are adapted from videos by Goulart, distributed through the wger exercise API under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The GIF adaptations use that same license. Changes: an approximately six-second silent excerpt, resizing to 320px wide, conversion to GIF at eight frames per second with a reduced palette. Exact source URLs and per-asset attribution are included in exercise_demos/index.json inside the APK and this repository. Full license text is bundled at app/src/main/assets/licenses/wger-exercise-media.txt. Credits and original-video/license links are available in each exercise guide. No wger account, health-data connection or API key is used for playback.

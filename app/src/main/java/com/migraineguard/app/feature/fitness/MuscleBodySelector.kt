@@ -4,7 +4,13 @@ import android.graphics.Region
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ZoomIn
+import androidx.compose.material.icons.filled.ZoomOut
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -45,7 +51,12 @@ private fun prepareAnatomy(asset: AnatomyAsset): PreparedAnatomy {
         PreparedAnatomyPart(part.slug, AnatomyRegionMapping.muscleFor(part.slug), path,
             Region().apply { setPath(path.asAndroidPath(), clip) })
     }
-    return PreparedAnatomy(asset, PathParser().parsePathString(asset.outline).toPath(), parts)
+    val outline = PathParser().parsePathString(asset.outline).toPath()
+    asset.bodyClipTop?.let { top ->
+        val clip = Path().apply { addRect(Rect(asset.viewBox[0]-10, top, asset.viewBox[0]+asset.viewBox[2]+10, asset.viewBox[1]+asset.viewBox[3]+10)) }
+        outline.op(outline, clip, PathOperation.Intersect)
+    }
+    return PreparedAnatomy(asset, outline, parts)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -65,6 +76,23 @@ fun MuscleBodySelector(selected: Set<Muscle>, onToggle: (Muscle) -> Unit) {
             }
         }
     }
+    var zoom by rememberSaveable { mutableFloatStateOf(1f) }
+    var panX by rememberSaveable { mutableFloatStateOf(0f) }
+    var panY by rememberSaveable { mutableFloatStateOf(0f) }
+    var canvasWidth by remember { mutableIntStateOf(0) }
+    var canvasHeight by remember { mutableIntStateOf(0) }
+    fun setCamera(value: Float, x: Float = panX, y: Float = panY) {
+        if(!value.isFinite() || !x.isFinite() || !y.isFinite()) return
+        zoom = value.coerceIn(1f, 3f)
+        if(canvasWidth > 0 && canvasHeight > 0) {
+            val box = drawings[if(back) 1 else 0].asset.viewBox
+            val t = AnatomyTransform.fit(box,canvasWidth.toFloat(),canvasHeight.toFloat(),zoom,x,y)
+            panX = t.left-(canvasWidth-box[2]*t.scale)/2
+            panY = t.top-(canvasHeight-box[3]*t.scale)/2
+        }
+    }
+    var cameraViewKey by rememberSaveable { mutableStateOf(illustration.name+back) }
+    LaunchedEffect(illustration, back) { val key=illustration.name+back;if(cameraViewKey!=key){panX=0f;panY=0f;cameraViewKey=key} }
     val progress by animateFloatAsState(if (back) 1f else 0f, tween(260), label = "anatomy front back")
     val selection by rememberUpdatedState(selected)
     val toggle by rememberUpdatedState(onToggle)
@@ -81,7 +109,7 @@ fun MuscleBodySelector(selected: Set<Muscle>, onToggle: (Muscle) -> Unit) {
         verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text("Choose your focus", style = MaterialTheme.typography.titleLarge)
-            Text("Tap muscles · swipe for the other side", style = MaterialTheme.typography.bodySmall,
+            Text("Tap muscles · pinch to zoom", style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant)
         }
         Text(selected.size.toString() + " selected", style = MaterialTheme.typography.labelMedium,
@@ -95,28 +123,68 @@ fun MuscleBodySelector(selected: Set<Muscle>, onToggle: (Muscle) -> Unit) {
                 label = { Text(value.label) }, modifier = Modifier.testTag("body-illustration-" + value.name))
         }
     }
-    Canvas(Modifier.fillMaxWidth().height(350.dp).testTag("muscle-body").semantics {
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically) {
+        IconButton(onClick={setCamera(zoom-.5f)},enabled=zoom>1f,modifier=Modifier.testTag("body-zoom-out")) { Icon(Icons.Default.ZoomOut,"Zoom out") }
+        Text((zoom*100).toInt().toString()+"%",style=MaterialTheme.typography.labelLarge)
+        IconButton(onClick={setCamera(zoom+.5f)},enabled=zoom<3f,modifier=Modifier.testTag("body-zoom-in")) { Icon(Icons.Default.ZoomIn,"Zoom in") }
+        TextButton(onClick={setCamera(1f,0f,0f)},modifier=Modifier.testTag("body-zoom-fit")) { Text("Fit body") }
+    }
+    Text(if(zoom>1.01f) "Drag to explore · double-tap to fit" else "Swipe for front/back · double-tap to enlarge",style=MaterialTheme.typography.bodySmall,color=colors.onSurfaceVariant)
+    Canvas(Modifier.fillMaxWidth().height(350.dp).clipToBounds().onSizeChanged { canvasWidth=it.width;canvasHeight=it.height }.testTag("muscle-body").semantics {
         contentDescription = "Interactive anatomical muscle map"
         stateDescription = (if (back) "Back" else "Front") + " · " + illustration.label + " · " +
-            selected.joinToString { it.label }
+            selected.joinToString { it.label } + " · Zoom " + (zoom*100).toInt()+"%"
         customActions = listOf(
             CustomAccessibilityAction("Show front") { back = false; true },
             CustomAccessibilityAction("Show back") { back = true; true })
-    }.pointerInput(Unit) {
-        var distance = 0f
-        detectHorizontalDragGestures(
-            onDragStart = { distance = 0f },
-            onDragEnd = { if (abs(distance) > 32.dp.toPx()) back = !back },
-            onDragCancel = { distance = 0f }
-        ) { change, amount -> change.consume(); distance += amount }
     }.pointerInput(illustration, back) {
-        detectTapGestures { point ->
+        awaitEachGesture {
+            awaitFirstDown(requireUnconsumed = false)
+            var distance = Offset.Zero
+            var captured = false
+            var multiple = false
+            do {
+                val event = awaitPointerEvent()
+                val pan = event.calculatePan()
+                val pressed = event.changes.count { it.pressed }
+                if (pressed > 1 || multiple) {
+                    multiple = true
+                    val factor = event.calculateZoom()
+                    val nextZoom = (zoom * factor).coerceIn(1f, 3f)
+                    val ratio = nextZoom / zoom
+                    val centroid = event.calculateCentroid(useCurrent = false)
+                    if (centroid.x.isFinite() && centroid.y.isFinite()) {
+                        setCamera(nextZoom,
+                            panX * ratio + (centroid.x - size.width/2f)*(1-ratio) + pan.x,
+                            panY * ratio + (centroid.y - size.height/2f)*(1-ratio) + pan.y)
+                    }
+                    event.changes.forEach { if (it.position != it.previousPosition) it.consume() }
+                } else if (zoom > 1.01f) {
+                    if (pan.getDistance() > 0) {
+                        distance += pan
+                        if (distance.getDistance() > viewConfiguration.touchSlop || captured) {
+                            captured = true
+                            setCamera(zoom, panX + pan.x, panY + pan.y)
+                            event.changes.forEach { it.consume() }
+                        }
+                    }
+                } else {
+                    distance += pan
+                    if (!captured && abs(distance.y)>viewConfiguration.touchSlop && abs(distance.y)>abs(distance.x)) break
+                    if (abs(distance.x)>viewConfiguration.touchSlop) captured = true
+                    if (captured) event.changes.forEach { it.consume() }
+                }
+            } while (event.changes.any { it.pressed })
+            if (!multiple && captured && zoom <= 1.01f && abs(distance.x) > 32.dp.toPx()) back = !back
+        }
+    }.pointerInput(illustration, back) {
+        detectTapGestures(onDoubleTap={setCamera(if(zoom>1.01f) 1f else 2f,0f,0f)},onTap={ point ->
             if (abs(progress - if (back) 1f else 0f) < .03f) {
                 val drawing = drawings[if (back) 1 else 0]
-                val transform = AnatomyTransform.fit(drawing.asset.viewBox, size.width.toFloat(), size.height.toFloat())
+                val transform = AnatomyTransform.fit(drawing.asset.viewBox, size.width.toFloat(), size.height.toFloat(),zoom,panX,panY)
                 drawing.hit(transform.bodyX(point.x), transform.bodyY(point.y))?.let(toggle)
             }
-        }
+        })
     }) {
         if (size.width <= 0 || size.height <= 0) return@Canvas
         drawOval(colors.primary.copy(alpha = .045f), Offset(size.width * .20f, size.height * .08f),
@@ -124,7 +192,7 @@ fun MuscleBodySelector(selected: Set<Muscle>, onToggle: (Muscle) -> Unit) {
         drawings.forEachIndexed { index, drawing ->
             val alpha = if (index == 0) 1f - progress else progress
             if (alpha > .001f) {
-                val transform = AnatomyTransform.fit(drawing.asset.viewBox, size.width, size.height)
+                val transform = AnatomyTransform.fit(drawing.asset.viewBox, size.width, size.height,zoom,panX,panY)
                 val slide = if (index == 0) -progress else 1f - progress
                 withTransform({
                     translate(transform.left + slide * size.width * .12f, transform.top)

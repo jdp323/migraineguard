@@ -29,6 +29,7 @@ fun TrainerScreen(repository:TrainerRepository,preferences:UserPreferencesReposi
     val scope=rememberCoroutineScope()
     var musclesJson by rememberSaveable { mutableStateOf("[]") }
     val muscles=Json.decodeFromString<Set<Muscle>>(musclesJson)
+    var library by rememberSaveable { mutableStateOf(false) }
     var editing by rememberSaveable { mutableStateOf(false) }
     var todayJson by rememberSaveable { mutableStateOf("[]") }
     val today=Json.decodeFromString<List<ExercisePrescription>>(todayJson)
@@ -44,14 +45,16 @@ fun TrainerScreen(repository:TrainerRepository,preferences:UserPreferencesReposi
         MuscleBodySelector(muscles) { m -> musclesJson=Json.encodeToString(if(m in muscles)muscles-m else muscles+m);todayJson="[]" }
         if(muscles.isNotEmpty()) TextButton(onClick={musclesJson="[]";todayJson="[]"}) { Text("Clear selection") }
     }
+    OutlinedButton(onClick={library=true},modifier=Modifier.fillMaxWidth().testTag("trainer-library")){Text("Exercise & machine guide · GIFs")}
+    if(library) ExerciseLibraryDialog(muscles,onUse={ e -> onLog(TrainerEngine.prescription(e,prefs.trainerProfile,prefs.bodyProfile,entries));library=false },onDismiss={library=false})
     SectionCard("Made for your routine",icon=Icons.Default.Tune) {
         val body=prefs.bodyProfile
         val age=TrainerEngine.age(body)
         Text(listOfNotNull(age?.let{"$it years"},body.heightCm?.let{"%.0f cm".format(it)},body.weightKg?.let{if(body.useMetric)"%.1f kg".format(it) else "%.1f lb".format(it*2.2046226f)}).joinToString(" · ").ifBlank{"Your body profile is available in Account settings."})
         Text(prefs.trainerProfile.experience.label+" · "+prefs.trainerProfile.goal.label+" · "+prefs.trainerProfile.minutesPerSession+" min",style=MaterialTheme.typography.titleSmall)
-        Text("Starting volume adapts to your routine and experience. Working loads use your own test loads or comparable completed sets.",style=MaterialTheme.typography.bodySmall)
+        Text("Ready to build now. Preferences are optional; new workouts start with beginner-friendly volume. Working loads use your own test loads or completed sets.",style=MaterialTheme.typography.bodySmall)
         OutlinedButton(onClick={editing=!editing},modifier=Modifier.fillMaxWidth().testTag("trainer-preferences")) { Text(if(editing)"Close preferences" else "Training preferences") }
-        if(editing || !prefs.trainerProfile.ready) TrainerProfileEditor(prefs.trainerProfile) { value -> scope.launch { val latest=preferences.preferences.first().trainerProfile;preferences.saveTrainerProfile(value.copy(testedLoadsKg=latest.testedLoadsKg,testedLoadsAt=latest.testedLoadsAt));editing=false;message="Training preferences saved.";todayJson="[]" } }
+        if(editing) TrainerProfileEditor(prefs.trainerProfile) { value -> scope.launch { val latest=preferences.preferences.first().trainerProfile;preferences.saveTrainerProfile(value.copy(testedLoadsKg=latest.testedLoadsKg,testedLoadsAt=latest.testedLoadsAt));editing=false;message="Training preferences saved.";todayJson="[]" } }
         Button(onClick={scope.launch { busy=true;message="";try { todayJson=Json.encodeToString(repository.session(muscles));message="Your session is ready. Review the loads and choose each exercise to log it." } catch(e:CancellationException){throw e} catch(e:Exception){message=e.message?:"Could not build this session."} finally{busy=false} }},enabled=!busy && muscles.isNotEmpty(),modifier=Modifier.fillMaxWidth().testTag("trainer-build-session")) { Text(if(busy)"Building…" else "Build today's workout") }
         if(message.isNotBlank()) Text(message,modifier=Modifier.testTag("trainer-message"),style=MaterialTheme.typography.bodySmall)
     }
@@ -126,13 +129,14 @@ private fun TrainerProfileEditor(initial:TrainerProfile,onSave:(TrainerProfile)-
     FlowRow(horizontalArrangement=Arrangement.spacedBy(6.dp)) { listOf(30,45,60,75).forEach{v->FilterChip(p.minutesPerSession==v,{change(p.copy(minutesPerSession=v))},label={Text("$v min")})} }
     Text("Areas to skip (optional)",style=MaterialTheme.typography.labelLarge)
     FlowRow(horizontalArrangement=Arrangement.spacedBy(6.dp)) { Muscle.entries.forEach{v->FilterChip(v in p.avoid,{change(p.copy(avoid=if(v in p.avoid)p.avoid-v else p.avoid+v))},label={Text(v.label)})} }
-    Row(verticalAlignment=androidx.compose.ui.Alignment.CenterVertically) { Checkbox(p.adultConfirmed,{change(p.copy(adultConfirmed=it))},modifier=Modifier.testTag("trainer-adult"));Text("I am 18 or older. This is general fitness planning, not rehabilitation.",Modifier.weight(1f),style=MaterialTheme.typography.bodySmall) }
-    Button(onClick={onSave(p.copy(ready=true))},enabled=p.adultConfirmed,modifier=Modifier.fillMaxWidth().testTag("trainer-save-preferences")){Text("Save training preferences")}
+    Button(onClick={onSave(p.copy(ready=true))},modifier=Modifier.fillMaxWidth().testTag("trainer-save-preferences")){Text("Save training preferences")}
 }
 
 @Composable
 private fun PrescriptionCard(p:ExercisePrescription,prefs:UserPreferences,logged:Boolean,preferences:UserPreferencesRepository,history:List<com.migraineguard.app.core.domain.WorkoutEntry>,onLog:(ExercisePrescription)->Unit) {
     val e=TrainerExerciseCatalog.byId(p.exerciseId)?:return
+    var guide by remember { mutableStateOf(false) }
+    if(guide) ExerciseGuideDialog(e){guide=false}
     val currentLoad=TrainerEngine.prescription(e,prefs.trainerProfile,prefs.bodyProfile,history)
     val effective=p.copy(loadKg=currentLoad.loadKg,loadReason=currentLoad.loadReason)
     val metric=prefs.bodyProfile.useMetric
@@ -158,7 +162,8 @@ private fun PrescriptionCard(p:ExercisePrescription,prefs:UserPreferences,logged
             TextButton(onClick={val raw=calibration.toFloatOrNull();val kg=raw?.let{if(metric)it else it/2.2046226f};if(kg==null || !kg.isFinite() || kg !in .1f..500f)info="Enter a valid load." else scope.launch {preferences.saveTrainerProfile(prefs.trainerProfile.copy(testedLoadsKg=prefs.trainerProfile.testedLoadsKg+(e.id to kg),testedLoadsAt=prefs.trainerProfile.testedLoadsAt+(e.id to System.currentTimeMillis())));info="Test load saved. This load suggestion is updated."}},enabled=confirmed){Text("Remember my tested load")}
             if(info.isNotBlank())Text(info,style=MaterialTheme.typography.bodySmall)
         }
-        val allowed=prefs.trainerProfile.ready && prefs.trainerProfile.adultConfirmed && (TrainerEngine.age(prefs.bodyProfile)?.let{it>=18}!=false) && TrainerExerciseCatalog.available(prefs.trainerProfile).any{it.id==e.id}
+        OutlinedButton(onClick={guide=true},modifier=Modifier.testTag("trainer-demo-"+e.id)){Text(if(ExerciseGuideCatalog.hasGif(e.id))"How to do it · GIF" else "How to do it")}
+        val allowed=TrainerExerciseCatalog.available(prefs.trainerProfile).any{it.id==e.id}
         Button(onClick={onLog(effective)},enabled=allowed,modifier=Modifier.fillMaxWidth().testTag("trainer-log-"+e.id)){Text("Use in exercise log")}
         if(!allowed)Text("Your current preferences exclude this movement. Rebuild your plan.",style=MaterialTheme.typography.bodySmall)
     }

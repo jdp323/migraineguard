@@ -25,7 +25,7 @@ private fun ToggleRow(label:String,checked:Boolean,onChange:(Boolean)->Unit){Row
 @Composable
 private fun IntervalPicker(label:String,value:Int,onChange:(Int)->Unit){
     var expanded by remember{mutableStateOf(false)}
-    Box{OutlinedButton(onClick={expanded=true},modifier=Modifier.fillMaxWidth()){Text(label+": every "+value+" min ▾")};DropdownMenu(expanded=expanded,onDismissRequest={expanded=false}){listOf(15,30,45,60,90,120,180,240,360,720,1440).forEach{n->DropdownMenuItem(text={Text(if(n==1440)"Every day" else "Every "+n+" minutes")},onClick={expanded=false;onChange(n)})}}}
+    Box{OutlinedButton(onClick={expanded=true},modifier=Modifier.fillMaxWidth().testTag("interval-"+label)){Text(label+": every "+value+" min ▾")};DropdownMenu(expanded=expanded,onDismissRequest={expanded=false}){listOf(15,30,45,60,90,120,180,240,360,720,1440).forEach{n->DropdownMenuItem(text={Text(if(n==1440)"Every day" else "Every "+n+" minutes")},onClick={expanded=false;onChange(n)})}}}
 }
 @Composable
 fun ReminderSettings(repository:UserPreferencesRepository){

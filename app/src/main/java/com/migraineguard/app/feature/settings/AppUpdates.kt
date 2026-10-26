@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.migraineguard.app.BuildConfig
 import com.migraineguard.app.core.ui.SectionCard
@@ -73,8 +74,8 @@ fun AppUpdateCard() {
         Text("Installed: "+BuildConfig.VERSION_NAME+" ("+BuildConfig.VERSION_CODE+")")
         release?.let { Text(if(AppUpdates.newer(it.version,BuildConfig.VERSION_NAME)) "New version available: "+it.version else "Latest checked release: "+it.version) }
         Text("Checks the public GitHub release. Nothing is installed automatically.", style=MaterialTheme.typography.bodySmall)
-        Button(onClick={scope.launch{busy=true;message="Checking GitHub…";try{release=AppUpdates.check(context);message=if(AppUpdates.newer(release!!.version,BuildConfig.VERSION_NAME)) "An update is available." else "You have the latest published version or a newer local build."}catch(e:CancellationException){throw e}catch(e:Exception){message=e.message?:"Could not check. Your current app is unchanged."}finally{busy=false}}},enabled=!busy){Text(if(busy)"Checking…" else "Check for updates")}
-        if(message.isNotBlank())Text(message)
+        Button(onClick={scope.launch{busy=true;message="Checking GitHub…";try{release=AppUpdates.check(context);message=if(AppUpdates.newer(release!!.version,BuildConfig.VERSION_NAME)) "An update is available." else "You have the latest published version or a newer local build."}catch(e:CancellationException){throw e}catch(e:Exception){message=e.message?:"Could not check. Your current app is unchanged."}finally{busy=false}}},enabled=!busy,modifier=Modifier.testTag("check-updates")){Text(if(busy)"Checking…" else "Check for updates")}
+        if(message.isNotBlank())Text(message,Modifier.testTag("update-status"))
         val checked=context.getSharedPreferences("public_release_cache",Context.MODE_PRIVATE).getLong("checked",0)
         if(checked>0) Text("Last successful check: "+java.time.Instant.ofEpochMilli(checked).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("MMM d, HH:mm")),style=MaterialTheme.typography.bodySmall)
         OutlinedButton(onClick={runCatching{context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(release?.url?:AppUpdates.LATEST)))}}){Text(if(release?.let{AppUpdates.newer(it.version,BuildConfig.VERSION_NAME)}==true)"Download update on GitHub" else "Open downloads on GitHub")}

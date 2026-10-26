@@ -28,11 +28,12 @@ class TrainerEngineTest {
         assertEquals(2f,TrainerEngine.prescription(exercise,profile,body,listOf(logged(kg=2f))).loadKg!!,0f)
         assertNull(TrainerEngine.prescription(exercise,profile,body,listOf(logged(time=System.currentTimeMillis()-100L*86400000))).loadKg)
     }
-    @Test fun avoidAreasAndAdultGateCannotBeBypassedByTargets() {
+    @Test fun avoidAreasAreRespectedAndOptionalPreferencesDoNotBlockWorkouts() {
         val avoid=profile.copy(avoid=setOf(Muscle.TRICEPS))
         assertFalse(TrainerExerciseCatalog.available(avoid).any { Muscle.TRICEPS in it.muscles })
         try { TrainerEngine.session(setOf(Muscle.TRICEPS),avoid,body,emptyList());fail("Excluded area accepted") } catch(_:IllegalArgumentException){}
-        try { TrainerEngine.session(setOf(Muscle.CHEST),profile,body.copy(dateOfBirthIso=LocalDate.now().minusYears(15).toString()),emptyList());fail("Adult routine for child accepted") }catch(_:IllegalArgumentException){}
+        val direct=TrainerEngine.session(setOf(Muscle.CHEST),TrainerProfile(),body,emptyList());assertTrue(direct.isNotEmpty())
+        val younger=TrainerEngine.session(setOf(Muscle.CHEST),profile,body.copy(dateOfBirthIso=LocalDate.now().minusYears(15).toString()),emptyList());assertTrue(younger.all{it.sets<=2})
     }
     @Test fun allSupportedWeeklyFrequenciesFitTimeAndHaveRecoveryBetweenRepeatedAreas() {
         for(days in 2..4) {

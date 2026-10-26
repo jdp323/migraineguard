@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -64,6 +65,7 @@ fun BodyMetricsScreen(
     var notes by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val metric = prefs.bodyProfile.useMetric
+    val validWeightKg = weightText.toFloatOrNull()?.let { if(metric) it else it / 2.20462f }?.takeIf { it.isFinite() && it in 1f..700f }
     val lineColor = MaterialTheme.colorScheme.primary
 
     Scaffold(
@@ -101,7 +103,8 @@ fun BodyMetricsScreen(
                     value = weightText,
                     onValueChange = { weightText = it.filter { c -> c.isDigit() || c == '.' }.take(5) },
                     label = { Text(if (metric) "Weight (kg)" else "Weight (lb)") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("body-weight-input"),
+                    isError = weightText.isNotBlank() && validWeightKg == null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
@@ -115,8 +118,7 @@ fun BodyMetricsScreen(
                 )
                 Button(
                     onClick = {
-                        val raw = weightText.toFloatOrNull() ?: return@Button
-                        val kg = if (metric) raw else raw / 2.20462f
+                        val kg = validWeightKg ?: return@Button
                         scope.launch {
                             weightRepository.save(
                                 WeightEntry(
@@ -132,7 +134,7 @@ fun BodyMetricsScreen(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = weightText.toFloatOrNull() != null,
+                    enabled = validWeightKg != null,
                 ) { Text("Save weight") }
             }
 
