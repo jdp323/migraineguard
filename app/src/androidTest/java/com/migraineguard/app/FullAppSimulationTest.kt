@@ -240,7 +240,7 @@ class FullAppSimulationTest {
             compose.onNodeWithTag("food-description").performScrollTo().performTextInput("Simulation banana and plain yogurt")
             try {
                 hideKeyboard(scenario)
-                compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.ScrollToIndex))
+                compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.ScrollToIndex) and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange))
                     .performScrollToNode(hasText("Analyze description") and hasClickAction())
                 compose.onNodeWithText("Analyze description").assertIsDisplayed().performClick()
                 expectRecord("food-submit",20000){runBlocking{c.nutritionAnalyzer.observeRecent(100).first()}.size>before}
