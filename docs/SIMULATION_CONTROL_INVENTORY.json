@@ -1,6 +1,16 @@
 {
-  "note": "Source declaration sites, not a measured runtime click-coverage percentage.",
+  "note": "Selected Compose button, chip and toggle declaration sites; not all text inputs, gestures or generated runtime controls, and not a measured runtime click-coverage percentage. The simulation matrix documents functional coverage separately.",
   "sites": [
+    {
+      "file": "app/src/main/java/com/migraineguard/app/core/ui/DateOfBirthField.kt",
+      "line": 90,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/core/ui/DateOfBirthField.kt",
+      "line": 104,
+      "kind": "TextButton"
+    },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/auth/SignInScreen.kt",
       "line": 105,
@@ -98,23 +108,18 @@
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/coach/CoachScreen.kt",
-      "line": 148,
+      "line": 157,
       "kind": "OutlinedButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/coach/CoachScreen.kt",
-      "line": 156,
+      "line": 165,
       "kind": "FilterChip"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/coach/CoachScreen.kt",
-      "line": 161,
+      "line": 170,
       "kind": "FilterChip"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/coach/CoachScreen.kt",
-      "line": 179,
-      "kind": "AssistChip"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/coach/CoachScreen.kt",
@@ -123,22 +128,27 @@
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/coach/CoachScreen.kt",
-      "line": 198,
+      "line": 197,
       "kind": "AssistChip"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/coach/CoachScreen.kt",
-      "line": 211,
+      "line": 207,
+      "kind": "AssistChip"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/coach/CoachScreen.kt",
+      "line": 220,
       "kind": "Checkbox"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/coach/CoachScreen.kt",
-      "line": 222,
+      "line": 231,
       "kind": "Button"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/coach/CoachScreen.kt",
-      "line": 247,
+      "line": 256,
       "kind": "OutlinedButton"
     },
     {
@@ -148,67 +158,67 @@
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
-      "line": 83,
+      "line": 88,
       "kind": "TextButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
-      "line": 90,
+      "line": 99,
       "kind": "Button"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
-      "line": 91,
-      "kind": "OutlinedButton"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
       "line": 100,
-      "kind": "TextButton"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
-      "line": 103,
       "kind": "OutlinedButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
-      "line": 105,
+      "line": 109,
       "kind": "TextButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
-      "line": 127,
-      "kind": "TextButton"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
-      "line": 132,
-      "kind": "FilterChip"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
-      "line": 133,
-      "kind": "FilterChip"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
-      "line": 135,
-      "kind": "Checkbox"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
-      "line": 136,
-      "kind": "Checkbox"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
-      "line": 144,
+      "line": 112,
       "kind": "OutlinedButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
+      "line": 114,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
+      "line": 140,
+      "kind": "TextButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
       "line": 145,
+      "kind": "FilterChip"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
+      "line": 146,
+      "kind": "FilterChip"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
+      "line": 148,
+      "kind": "Checkbox"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
+      "line": 149,
+      "kind": "Checkbox"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
+      "line": 157,
+      "kind": "OutlinedButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/ExerciseGuide.kt",
+      "line": 158,
       "kind": "Button"
     },
     {
@@ -728,28 +738,23 @@
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/AiProviderSettings.kt",
-      "line": 40,
+      "line": 41,
       "kind": "OutlinedButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/AiProviderSettings.kt",
-      "line": 48,
+      "line": 49,
       "kind": "TextButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/AiProviderSettings.kt",
-      "line": 51,
+      "line": 52,
       "kind": "Button"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/AiProviderSettings.kt",
-      "line": 56,
+      "line": 57,
       "kind": "OutlinedButton"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/settings/AiProviderSettings.kt",
-      "line": 65,
-      "kind": "TextButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/AiProviderSettings.kt",
@@ -764,6 +769,11 @@
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/AiProviderSettings.kt",
       "line": 68,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/settings/AiProviderSettings.kt",
+      "line": 69,
       "kind": "TextButton"
     },
     {

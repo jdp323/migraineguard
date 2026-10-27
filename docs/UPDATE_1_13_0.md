@@ -1,3 +1,5 @@
+> Historical release baseline. [v1.15.0](UPDATE_1_15_0.md) removes the mandatory adult/preferences gate and adds zoom, a repaired rear head and licensed offline GIF guides.
+
 > Historical v1.13 implementation and captures. The polygon mannequin was replaced in [v1.14: anatomical illustrations](UPDATE_1_14_0.md); training/AI/load rules below remain applicable.
 
 # v1.13.1 — glass design and the training studio

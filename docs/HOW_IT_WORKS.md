@@ -1,6 +1,6 @@
 # How MigraineGuard works
 
-Current behavior: v1.14.0 / code 24. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
+Current behavior: v1.15.0 / code 25. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
 
 ## From your device to the screen
 
@@ -64,7 +64,7 @@ Water notifications add three fixed glass actions. Immutable PendingIntents targ
 
 The glass system draws a static ambient gradient field behind transparent scaffolds, tinted translucent surfaces, edge sheen and shadows. Text is not blurred; reduced transparency gives cards solid fills. The anatomical selector caches licensed vector Paths and Android Regions for male/female front/back drawings. Rendering and taps use one shared viewport transform; unsupported body details do not become rectangular targets. A swipe switches sides with a slide/crossfade. Labeled chips and accessibility actions remain. [Exact new functions and attribution](UPDATE_1_14_0.md).
 
-Trainer preferences/plans are account-local settings. Deterministic catalog/coverage/time/effort rules build a session and bounded weekly template. Current comparable actual logs and timestamped test loads drive load guidance; demographic mass is never converted into a fabricated machine load. Structured workout details now include optional actual RIR and trainer exercise ID. Explicit AI sharing can request an allowed-ID week arrangement, which is validated and assigned local prescriptions. No cloud request runs merely by opening Trainer. [Exact functions, schema, prompt, storage and limits](UPDATE_1_13_0.md).
+Trainer preferences/plans are account-local settings. Default profiles build selected-region workouts immediately; optional preferences no longer block generation with an adult/ready checkbox. Zoom/pan and hit testing share one coordinate transform; the repaired male rear skull is an original overlay above a clipped legacy outline. All 35 catalog movements have written equipment/setup steps, and nine matched variants have offline CC BY-SA GIF playback. See the [current file/function and media map](UPDATE_1_15_0.md). Deterministic catalog/coverage/time/effort rules build a session and bounded weekly template. Current comparable actual logs and timestamped test loads drive load guidance; demographic mass is never converted into a fabricated machine load. Structured workout details now include optional actual RIR and trainer exercise ID. Explicit AI sharing can request an allowed-ID week arrangement, which is validated and assigned local prescriptions. No cloud request runs merely by opening Trainer. [Exact functions, schema, prompt, storage and limits](UPDATE_1_13_0.md).
 
 ## Body progress and export
 
@@ -94,7 +94,7 @@ Run the unit/lint/Standard assembly tasks before making a release; build Preview
 
 The pipeline restores its signing key from a GitHub Actions secret for eligible push builds, checks the retained SHA-1, runs checks and builds both APKs. Pull requests do not receive that secret or publish. A release requires successful build and Android runtime jobs and the retained signer. Existing version tags are not overwritten; app binary changes need a new version/code.
 
-For v1.14.0, [run 40245349190](https://github.com/jdp323/migraineguard/actions/runs/40245349190) passed **88 JVM tests and 37 Android runtime tests**, compilation, lint with zero errors and retained Standard/Preview signature checks. All six gesture/trainer tests passed again with animations enabled. Real male/female anatomical path taps, selection retention, swipe ownership and existing workout/backup/AI flows passed. Both anonymous public APK downloads match inspected artifacts; artwork attribution is bundled in both packages. [Exact evidence and actual captures](UPDATE_1_14_0.md#published-v1140-verification). Actual wearable sync, native Drive transfer, live AI and phone frame rate remain acceptance checks.
+[Run 40435413413](https://github.com/jdp323/migraineguard/actions/runs/40435413413) passed 91 JVM tests, 44 Android runtime tests, 2 focused preflights and 13 animation-enabled larger-text repeats. A seeded 300-event smoke run completed without an app fatal exception; two hardware flip injections were blocked by the emulator. Both public APKs match tested hashes and retain the signer. Lint passed with 0 errors and 121 warnings. [Exact evidence and captures](UPDATE_1_15_0.md#verification) · [Functional simulation matrix](SIMULATION_REPORT.md). Actual wearable sync, native Drive transfer, live AI and phone frame rate remain acceptance checks.
 
 ## Current limits
 

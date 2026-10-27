@@ -1,4 +1,15 @@
-> Current v1.14.0: [anatomical front/back illustrations, multi-muscle selection, native hit testing, credits and verification](UPDATE_1_14_0.md). [v1.13 training rules, plans and exact AI prompt](UPDATE_1_13_0.md).
+> Current v1.15.0: [direct workouts without the age/setup gate, rear-head fix, zoom, exercise GIFs, full file/function changes and exact AI prompt](UPDATE_1_15_0.md). [Functional simulation coverage and remaining phone checks](SIMULATION_REPORT.md).
+
+## v1.15.0 direct Trainer, zoom and guide acceptance
+
+1. Update Standard without uninstalling; verify About shows 1.15.0/code25. Open Fitness → Trainer, select Chest and Quads and build immediately without opening Training preferences. No adult warning/checkbox should appear. Optional equipment preferences change the available movements.
+2. Try Male/Female and Front/Back. Pinch or use +/− to enlarge, tap visible muscle regions and drag to pan. Fit body restores 100% and side swipes. Verify the repaired male rear skull/ears/nape and preserved selection after rotation/recreation.
+3. Open Exercise & machine guide · GIFs from Trainer and manual Training. Search Leg press, enable GIFs, open Steps & GIF, Play, Pause and Restart. Check setup/steps and Source & license. Airplane mode should not prevent packaged playback. Nine variants have clips; the other movements have written steps.
+4. Use a guide while a draft exists: Keep my draft should retain it; Use trainer draft should replace only after confirmation. Planned sets start unchecked. Save actual completed sets and reuse history without inheriting completion checks.
+5. Save/remove a provider key and check the confirmation stays visible; do not send a real key in a report. Change several reminder intervals and reopen Settings to confirm each sticks.
+
+The [simulation matrix](SIMULATION_REPORT.md) identifies actual UI coverage and remaining external-account/device checks; it does not claim every hardware interaction was simulated.
+
 
 > Historical v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
 

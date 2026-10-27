@@ -2,9 +2,17 @@
 
 # Troubleshooting MigraineGuard
 
-Applies to v1.14.0 (24). Check **Settings → App → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
+Applies to v1.15.0 (24). Check **Settings → App → About** first. The Standard and Preview apps have different storage and permission grants. Preserve records before uninstalling, clearing storage or switching APK identities.
 
 [User guide](USER_GUIDE.md) · [Latest download](https://github.com/jdp323/migraineguard/releases/latest) · [Technical guide](HOW_IT_WORKS.md)
+
+## Trainer and exercise guides
+
+- **Complete your adult training preferences first:** this was a first-use blocker in older builds. Update to 1.15.0/code25, select one or more muscles and build directly. Preferences are optional.
+- **Dragging flips/pans unexpectedly:** fitted size uses horizontal side swipes; zoomed size uses panning. Use Front/Back at any zoom or Fit body to reset. Selection applies to supported muscle regions and labeled chips.
+- **No GIF for this exercise:** nine exact catalog variants currently include a clip. Other movements have written setup/steps. Use Show exercises with GIFs to filter; do not substitute a different machine just because its name is similar.
+- **GIF paused:** press Play GIF; Pause and Restart control the local clip. Leaving the app pauses playback. Source/license links need an available browser, but the GIF itself is offline.
+- **Provider feedback disappears or intervals revert:** v1.15.0 preserves key-action confirmation during settings refresh and writes individual reminder changes atomically. Verify the installed version and reopen the relevant settings section.
 
 ## Install, update and downloads
 
@@ -107,7 +115,7 @@ Use Fitness → Training → Log exercise and choose the matching tile. Cardio �
 
 ## Swipe or back gesture does not behave as expected
 
-Confirm v1.14.0/code24. Swipe within the main page to move between neighboring tabs; the first/last page does not wrap. A drag on the head map, slider, text selection or horizontally scrolling chips belongs to that control; swipe another part of the page or tap the dock. Screen-edge back is Android’s system gesture and depends on gesture-navigation settings; toolbar and three-button Back still work. Back inside the migraine journal returns through its panes; from another main tab it returns Home. Profile and Drive editing now return to Settings instead of resetting the main screen.
+Confirm v1.15.0/code25. Swipe within the main page to move between neighboring tabs; the first/last page does not wrap. A drag on the head map, slider, text selection or horizontally scrolling chips belongs to that control; swipe another part of the page or tap the dock. Screen-edge back is Android’s system gesture and depends on gesture-navigation settings; toolbar and three-button Back still work. Back inside the migraine journal returns through its panes; from another main tab it returns Home. Profile and Drive editing now return to Settings instead of resetting the main screen.
 
 If transitions snap, check Android’s animation/accessibility preferences: a zero duration scale intentionally removes animations. No app setting forces them back on. Screen-scoped AI work may be cancelled if its page is disposed; saved replies remain in history, and requests are not automatically retried. Report app version, Android version, screen, font/display scale and reproducible gesture; remove private data from screenshots. Emulator gesture checks are not a frame-rate certification.
 
@@ -123,7 +131,7 @@ Settings → Data has readable ZIP and encrypted .mgbak options. ZIPs are not en
 
 ## Muscle map, training loads or AI weekly plan
 
-Open Fitness → Trainer. Swipe within the anatomical figure to switch Front/Back; swipe outside it to change main tabs. Choose Male/Female for the display drawing only. Wait for the transition to finish before tapping a region; unsupported body details have no training target. Front/Back and labeled muscle chips avoid precise touch targets. Select at least one region and save adult training preferences. If targets cannot be covered, choose fewer regions, more session time, suitable equipment or review areas to skip. The app does not offer injury rehabilitation. [Current anatomical controls and credits](UPDATE_1_14_0.md).
+Open Fitness → Trainer. Swipe within the anatomical figure to switch Front/Back; swipe outside it to change main tabs. Choose Male/Female for the display drawing only. Wait for the transition to finish before tapping a region; unsupported body details have no training target. Front/Back and labeled muscle chips avoid precise touch targets. Select at least one region and build directly. Training preferences is optional; v1.15.0 removes the old adult/setup gate. If that message still appears, update the installed APK and check About says 1.15.0/code25. Pinch or use the zoom buttons; at enlarged size drag pans rather than switching sides. Fit body restores side swipes. If targets cannot be covered, choose fewer regions, more session time, suitable equipment or review areas to skip. The app does not offer injury rehabilitation. [Current controls, GIF library, source/license details and simulation](UPDATE_1_15_0.md).
 
 An unknown machine/dumbbell load is intentional: height and body weight cannot establish a safe working load. Use a controlled light test set and record a comfortable load with roughly three repetitions left. Verify the same equipment and kg/lb/per-hand convention. A newer comparable logged session supersedes an older test; stale/future/uncompleted records do not establish progression. Actual reps-in-reserve is optional; lack of effort feedback keeps the suggestion conservative.
 

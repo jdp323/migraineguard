@@ -4,9 +4,9 @@ This is a functional simulation on an Android emulator with synthetic accounts, 
 
 ## What the audit found
 
-The user's exact Trainer failure came from a mandatory ready/adultConfirmed gate; tests had bypassed it with preconfigured profiles. The gate is removed and a new default-profile UI journey covers it. Review also found a plan timestamp serialization edge case and guided-draft replay risk. The [release guide](UPDATE_1_15_0.md) explains the fixes, zoom, repaired rear head and accurately labeled GIF variants.
+The user's exact Trainer failure came from a mandatory ready/adultConfirmed gate; tests had bypassed it with preconfigured profiles. The gate is removed and a new default-profile UI journey covers it. Review also found a plan timestamp serialization edge case, guided-draft replay risk, provider feedback cleared by a settings refresh, transparent full-screen guide windows and Coach persistence coupled to scroll animations. Individual reminder edits now write only supplied fields to avoid stale-snapshot overwrites. The [release guide](UPDATE_1_15_0.md) explains the fixes, zoom, repaired rear head and accurately labeled GIF variants.
 
-A source inventory lists control declaration sites for review. It counts source sites rather than distinct runtime buttons, since loops render multiple choices. It is an audit aid, not a fabricated click-coverage percentage: [control-site inventory](SIMULATION_CONTROL_INVENTORY.json).
+A source inventory lists 221 button/chip/toggle declaration occurrences for review. It counts source sites rather than distinct runtime buttons, since loops render multiple choices. It is an audit aid, not a fabricated click-coverage percentage: [control-site inventory](SIMULATION_CONTROL_INVENTORY.json).
 
 ## Functional coverage matrix
 
@@ -47,10 +47,18 @@ D = actual rendered UI action with state/persistence assertions; R = Android rep
 
 ## Stress and accessibility-sized replay
 
-The main suite is followed by the gesture, trainer and full simulation scenarios with system animations enabled and font scale 1.25. A fixed-seed 300-event Android Monkey run exercises additional taps, drags and navigation; runtime crash logs are inspected. This can expose crashes and layout failures but does not prove that every control or hardware path was reached.
+Focused larger-text Food and Coach save preflights run before the main suite. The main suite is followed by the gesture, trainer and full simulation scenarios with system animations enabled and font scale 1.25. A fixed-seed 300-event Android Monkey run exercises additional taps, drags and navigation; runtime crash logs are inspected. This can expose crashes and layout failures but does not prove that every control or hardware path was reached.
+
+Food and Coach submission tests dismiss the native keyboard and wait for its inset to close before tapping the real action button; database insert assertions remain required. Food is a virtualized LazyColumn, so its test scrolls the parent list to discover the offscreen submit control rather than assuming every item is already composed. The parent selector requires vertical scrolling and excludes the horizontal main-tab pager. The keyboard-open submit/IME-shortcut path is not separately simulated. Native IME animations do not run on Compose’s test clock.
 
 Screenshots use synthetic records. Native status/navigation bars or keyboard may be outside Compose captures; some intentionally scroll to a control. External OAuth, Health Connect device data, native file/photo pickers, real cloud AI and OEM reminder delivery must not be described as proven by the emulator fixtures.
 
 ## Results
 
-Pending the final hosted run. Exact source, test counts, repeat counts, smoke result, real update-check result and screenshot links will be recorded here after verification.
+[Run 40435413413](https://github.com/jdp323/migraineguard/actions/runs/40435413413), source bf995c20f1eea49507a5de356a0b1588209ffa22: all gates passed. **91 JVM + 44 Android runtime tests**, **2 focused preflights** and **13 animation-enabled repeats at font scale 1.25** passed. Main runtime: 158.642 s; preflights: 64.296 s; repeats: 139.244 s. Lint: zero errors, 121 warnings.
+
+The seeded smoke run reported 300 injected events and no app fatal exception. Two hardware keyboard/flip events were blocked by the emulator (/dev/input/event0 EACCES); those random injections are not counted as proven user actions.
+
+The update-check UI performed a real public metadata request and reported that the candidate was the latest published version or newer; the capture shows installed 1.15.0 versus then-published 1.14.0. Both public 1.15.0 APK downloads now match the tested artifact hashes and retained signer. [Exact hashes, six inspected native screenshots, file/function changes and prompt](UPDATE_1_15_0.md#verification).
+
+The review found and fixed the default-profile training gate, plan timestamp encoding, guided-draft replay risk, disappearing provider-action feedback, stale reminder edits, transparent dialog backgrounds and Coach response persistence coupled to scrolling. The test harness now handles native keyboard closure and virtualized list discovery explicitly. Passing fixtures do not convert the P entries above into verified real-device services.

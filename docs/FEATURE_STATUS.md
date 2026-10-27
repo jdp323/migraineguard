@@ -1,4 +1,4 @@
-> Current v1.14.0: [anatomical front/back illustrations, multi-muscle selection, native hit testing, credits and verification](UPDATE_1_14_0.md). [v1.13 training rules, plans and exact AI prompt](UPDATE_1_13_0.md).
+> Current v1.15.0: [direct workouts without the age/setup gate, rear-head fix, zoom, exercise GIFs, full file/function changes and exact AI prompt](UPDATE_1_15_0.md). [Functional simulation coverage and remaining phone checks](SIMULATION_REPORT.md).
 
 > Historical v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
 

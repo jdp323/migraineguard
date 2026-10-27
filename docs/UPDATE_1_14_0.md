@@ -1,3 +1,5 @@
+> Historical release baseline. [v1.15.0](UPDATE_1_15_0.md) removes the mandatory adult/preferences gate and adds zoom, a repaired rear head and licensed offline GIF guides.
+
 # v1.14.0 — anatomical muscle selector
 
 This replaces the v1.13 polygon mannequin with flat anatomical illustrations. The visual reference was [MuscleWiki](https://musclewiki.com/); the bundled artwork is adapted from the MIT-licensed [react-native-body-highlighter](https://github.com/HichamELBSI/react-native-body-highlighter), pinned to commit 8ed39ac2ae9cb46fb79d77eedec7e5b029a75174. No MuscleWiki page asset, logo, exercise video, account or API is used.
