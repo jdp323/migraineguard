@@ -238,9 +238,17 @@ class FullAppSimulationTest {
             compose.onNodeWithTag("tab-food").performClick()
             val before=runBlocking{c.nutritionAnalyzer.observeRecent(100).first()}.size
             compose.onNodeWithTag("food-description").performScrollTo().performTextInput("Simulation banana and plain yogurt")
-            hideKeyboard(scenario)
-            compose.onNodeWithText("Analyze description").performScrollTo().assertIsDisplayed().performClick()
-            expectRecord("food-submit",20000){runBlocking{c.nutritionAnalyzer.observeRecent(100).first()}.size>before}
+            try {
+                hideKeyboard(scenario)
+                compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.ScrollToIndex))
+                    .performScrollToNode(hasText("Analyze description") and hasClickAction())
+                compose.onNodeWithText("Analyze description").assertIsDisplayed().performClick()
+                expectRecord("food-submit",20000){runBlocking{c.nutritionAnalyzer.observeRecent(100).first()}.size>before}
+            } catch(e:Throwable) {
+                runCatching { captureWindow("failure-food-submit") }
+                runCatching { File(context.getExternalFilesDir(null),"verification/failure-food-submit.txt").writeText(compose.onRoot().printToString()) }
+                throw e
+            }
             capture("simulation-food-saved")
             settings()
             compose.onNodeWithText("Medications & supplements").performScrollTo().performClick();await("Keep your routine close.")

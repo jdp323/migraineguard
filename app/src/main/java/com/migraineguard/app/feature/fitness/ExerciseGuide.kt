@@ -17,6 +17,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.graphics.luminance
+import com.migraineguard.app.core.design.GlassBackdrop
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -80,6 +84,7 @@ fun ExerciseGuideDialog(exercise:TrainerExercise,onDismiss:()->Unit) {
         onDispose{drawable?.pause();owner.lifecycle.removeObserver(observer)}
     }
     Dialog(onDismissRequest=onDismiss,properties=DialogProperties(usePlatformDefaultWidth=false)) {
+        GlassBackdrop(MaterialTheme.colorScheme.onSurface.luminance() > .5f) {
         Scaffold(topBar={AppTopBar(title={Text("Exercise guide")},navigationIcon={TextButton(onClick=onDismiss,modifier=Modifier.testTag("demo-close")){Text("Close")}})}){padding->
             LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal=18.dp).testTag("exercise-guide-list"),verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(bottom=24.dp)) {
                 item { Text(exercise.name,style=MaterialTheme.typography.headlineSmall);Text(exercise.muscles.joinToString{it.label},style=MaterialTheme.typography.labelLarge) }
@@ -107,12 +112,15 @@ fun ExerciseGuideDialog(exercise:TrainerExercise,onDismiss:()->Unit) {
                 }
             }
         }
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class,ExperimentalLayoutApi::class)
 @Composable
 fun ExerciseLibraryDialog(targets:Set<Muscle>,onUse:(TrainerExercise)->Unit,onDismiss:()->Unit) {
+    val keyboard=LocalSoftwareKeyboardController.current
+    val focus=LocalFocusManager.current
     var search by rememberSaveable{mutableStateOf("")}
     var equipment by rememberSaveable{mutableStateOf("ALL")}
     var onlyGifs by rememberSaveable{mutableStateOf(false)}
@@ -124,6 +132,7 @@ fun ExerciseLibraryDialog(targets:Set<Muscle>,onUse:(TrainerExercise)->Unit,onDi
         (!selectedOnly||e.muscles.any{it in targets})
     }
     Dialog(onDismissRequest=onDismiss,properties=DialogProperties(usePlatformDefaultWidth=false)) {
+        GlassBackdrop(MaterialTheme.colorScheme.onSurface.luminance() > .5f) {
         Scaffold(topBar={AppTopBar(title={Text("Exercises & machines")},navigationIcon={TextButton(onClick=onDismiss,modifier=Modifier.testTag("library-close")){Text("Close")}})}){padding->
             LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal=18.dp).testTag("exercise-library-list"),verticalArrangement=Arrangement.spacedBy(10.dp),contentPadding=PaddingValues(bottom=24.dp)) {
                 item {
@@ -141,11 +150,12 @@ fun ExerciseLibraryDialog(targets:Set<Muscle>,onUse:(TrainerExercise)->Unit,onDi
                     SectionCard(e.name) {
                         Text(e.equipment.label+" · "+e.muscles.joinToString{it.label})
                         Text(e.cue,style=MaterialTheme.typography.bodySmall)
-                        OutlinedButton(onClick={guide=e.id},modifier=Modifier.testTag("library-guide-"+e.id)){Text(if(ExerciseGuideCatalog.hasGif(e.id))"Steps & GIF" else "View steps")}
-                        Button(onClick={onUse(e)},modifier=Modifier.testTag("library-use-"+e.id)){Text("Use in exercise log")}
+                        OutlinedButton(onClick={focus.clearFocus();keyboard?.hide();guide=e.id},modifier=Modifier.testTag("library-guide-"+e.id)){Text(if(ExerciseGuideCatalog.hasGif(e.id))"Steps & GIF" else "View steps")}
+                        Button(onClick={focus.clearFocus();keyboard?.hide();onUse(e)},modifier=Modifier.testTag("library-use-"+e.id)){Text("Use in exercise log")}
                     }
                 }
             }
+        }
         }
     }
     guide?.let{id->TrainerExerciseCatalog.byId(id)?.let{ExerciseGuideDialog(it){guide=null}}}
