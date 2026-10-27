@@ -89,7 +89,11 @@ fun ExerciseGuideDialog(exercise:TrainerExercise,onDismiss:()->Unit) {
             LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal=18.dp).testTag("exercise-guide-list"),verticalArrangement=Arrangement.spacedBy(12.dp),contentPadding=PaddingValues(bottom=24.dp)) {
                 item { Text(exercise.name,style=MaterialTheme.typography.headlineSmall);Text(exercise.muscles.joinToString{it.label},style=MaterialTheme.typography.labelLarge) }
                 if(drawable!=null) {
-                    item { AndroidView(factory={ImageView(it).apply{setImageDrawable(drawable);contentDescription=exercise.name+" exercise demonstration"}},modifier=Modifier.fillMaxWidth().height(300.dp).testTag("exercise-gif")) }
+                    item { BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        val ratio=drawable.intrinsicWidth.toFloat()/drawable.intrinsicHeight.coerceAtLeast(1)
+                        val demoHeight=(maxWidth/ratio).coerceIn(160.dp,340.dp)
+                        AndroidView(factory={ImageView(it).apply{setImageDrawable(drawable);contentDescription=exercise.name+" exercise demonstration"}},modifier=Modifier.fillMaxWidth().height(demoHeight).testTag("exercise-gif"))
+                    } }
                     item {
                         Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) {
                             Button(onClick={if(playing)drawable.pause() else drawable.play();playing=!playing},modifier=Modifier.testTag("demo-play")){Text(if(playing)"Pause GIF" else "Play GIF")}

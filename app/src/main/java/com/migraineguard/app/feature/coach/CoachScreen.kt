@@ -35,6 +35,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,6 +78,14 @@ fun CoachScreen(
     val scope = rememberCoroutineScope()
     val scroll = rememberScrollState()
 
+    // UI following must not block response processing/persistence or cancel it when a scroll is interrupted.
+    LaunchedEffect(streaming) {
+        if (streaming.isNotBlank()) {
+            withFrameNanos { }
+            scroll.animateScrollTo(scroll.maxValue)
+        }
+    }
+
     fun runPrompt(prompt: String, p: AiPersona = persona) {
         if (prompt.isBlank() || busy) return
         persona = p
@@ -87,7 +97,6 @@ fun CoachScreen(
             val result = try {
                 coachRepository.ask(p, prompt, shareHealthContext) { chunk ->
                     streaming = chunk
-                    scroll.animateScrollTo(scroll.maxValue)
                 }
             } catch (e: CancellationException) { throw e }
             catch (_: Exception) { Result.Error("Could not complete or save this request. Try again.") }

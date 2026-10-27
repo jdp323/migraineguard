@@ -68,7 +68,7 @@ class FullAppSimulationTest {
         compose.waitForIdle()
     }
     private fun expectRecord(name:String,timeout:Long,predicate:()->Boolean){
-        try { compose.waitUntil(timeout,predicate) } catch(e:Exception){
+        try { compose.waitUntil(timeout,predicate) } catch(e:Throwable){
             runCatching { captureWindow("failure-"+name); File(context.getExternalFilesDir(null),"verification/failure-"+name+".txt").writeText(compose.onRoot().printToString()) }
             throw e
         }
@@ -341,7 +341,10 @@ class FullAppSimulationTest {
             val count=runBlocking{c.aiCoachRepository.observeSessions().first()}.size
             compose.onNodeWithTag("coach-question").performScrollTo().performTextInput("Suggest a gentle walking habit")
             hideKeyboard(scenario)
-            compose.onNodeWithText("Send").performScrollTo().assertIsDisplayed().performClick()
+            compose.onNodeWithText("Send").performScrollTo().assertIsDisplayed()
+            captureWindow("coach-before-submit")
+            compose.onNodeWithText("Send").performClick()
+            captureWindow("coach-after-tap")
             expectRecord("coach-submit",30000){runBlocking{c.aiCoachRepository.observeSessions().first()}.size>count}
             assertTrue(runBlocking{c.aiCoachRepository.observeSessions().first()}.first().fullResponse.isNotBlank())
             compose.onNodeWithTag("tab-insights").performClick();await("See the bigger picture.")
