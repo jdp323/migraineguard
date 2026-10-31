@@ -182,7 +182,7 @@ class BodyMeasurementsTest {
             tap("measurements-trends")
             compose.onNodeWithTag("measurement-change").performScrollTo().assertTextContains("Since first log: -2.0 cm")
             capture("measurements-trend-metric")
-            tap("measurement-delete-"+first.id);tap("measurement-confirm-delete")
+            tap("measurement-delete-"+first.id);compose.onNodeWithTag("measurement-confirm-delete").assertIsDisplayed().performClick()
             await { runBlocking { repository.observe().first().size } == 1 }
             assertTrue(runBlocking { db.bodyMeasurementDao().get(first.id) }!!.deleted)
         } finally { db.close() }
@@ -210,7 +210,7 @@ class BodyMeasurementsTest {
             assertEquals(39.37f,latest.measurementsCm.getValue("custom:left knee"),.001f)
             tap("measurements-add");fill("measurement-value-waist","35");tap("measurement-discard");compose.onNodeWithText("Keep draft").performClick()
             compose.onNodeWithTag("measurement-value-waist").performScrollTo().assertTextContains("35")
-            tap("measurement-discard");tap("measurement-confirm-discard");assertEquals(2,runBlocking { repository.observe().first().size })
+            tap("measurement-discard");compose.onNodeWithTag("measurement-confirm-discard").assertIsDisplayed().performClick();assertEquals(2,runBlocking { repository.observe().first().size })
             tap("optimize-journal-storage")
             await { compose.onAllNodesWithTag("journal-storage-message").fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithTag("journal-storage-message").performScrollTo().assertTextContains("Storage optimized.",substring=true)
