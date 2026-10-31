@@ -125,16 +125,16 @@ jobs:
             adb shell am instrument -w com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-runtime-results.txt
             adb pull /sdcard/Android/data/com.migraineguard.app/files/verification ui-verification || true
             cat android-runtime-results.txt
-            grep -q 'OK (44 tests)' android-runtime-results.txt
+            grep -q 'OK (48 tests)' android-runtime-results.txt
             adb shell settings put global window_animation_scale 1.0
             adb shell settings put global transition_animation_scale 1.0
             adb shell settings put global animator_duration_scale 1.0
             adb shell settings put system font_scale 1.25
-            adb shell am instrument -w -e class com.migraineguard.app.SwipeNavigationTest,com.migraineguard.app.TrainerFlowTest,com.migraineguard.app.FullAppSimulationTest com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-gesture-results.txt
+            adb shell am instrument -w -e class com.migraineguard.app.SwipeNavigationTest,com.migraineguard.app.TrainerFlowTest,com.migraineguard.app.FullAppSimulationTest,com.migraineguard.app.BodyMeasurementsTest com.migraineguard.app.test/androidx.test.runner.AndroidJUnitRunner > android-gesture-results.txt
             adb pull /sdcard/Android/data/com.migraineguard.app/files/verification ui-verification-large-font || true
             adb logcat -d -s AndroidRuntime:E > android-crash-log.txt
             cat android-gesture-results.txt
-            grep -q 'OK (13 tests)' android-gesture-results.txt
+            grep -q 'OK (17 tests)' android-gesture-results.txt
             adb shell settings put system font_scale 1.0
             adb shell am start -n com.migraineguard.app/.MainActivity
             sleep 5
@@ -157,10 +157,13 @@ jobs:
             android-startup.png
             ui-verification/*.png
             ui-verification/*.txt
+            ui-verification/*.json
             ui-verification-large-font/*.png
             ui-verification-large-font/*.txt
+            ui-verification-large-font/*.json
             ui-verification-preflight/*.png
             ui-verification-preflight/*.txt
+            ui-verification-preflight/*.json
           if-no-files-found: ignore
           retention-days: 7
   publish:
@@ -188,17 +191,15 @@ jobs:
           mv phone-build/app-preview.apk "$PREVIEW"
           sha256sum "$APK" "$PREVIEW" > phone-build/SHA256SUMS.txt
           cat > phone-build/notes.md <<'NOTES'
-          Select muscles and press Build today's workout immediately. Training preferences are optional; the former mandatory age/setup checkbox no longer blocks generating or logging workouts. Default workouts start with beginner-friendly bodyweight choices; equipment/goals/experience remain editable.
+          Body metrics adds dated circumference logs for 20 areas: neck, shoulders, chest, abdomen/tummy, waist, hips, left/right relaxed arms, flexed biceps, forearms, wrists, thighs, calves and ankles, plus up to eight custom areas. Enter centimetres or inches, edit dates/values, compare trends and review/delete history. Unfilled areas take no map entry; hiding a form preserves its draft.
 
-          The anatomical selector adds 100–300% pinch/button zoom, pan, double-tap/Fit controls and corrected male rear-head artwork. Zoomed drawing and touch targets share the same transform.
+          Storage is more compact: body photos migrate from Base64 text to binary JPEGs without changing the image bytes. New Drive snapshots and password-encrypted recovery exports use compact JSON with gzip when beneficial. Legacy JSON and encrypted backups remain readable. Data settings shows journal storage and offers an Optimize local storage action to reclaim unused database pages while preserving records.
 
-          An exercise/machine library provides setup steps for all 35 catalog movements and nine offline GIF demonstrations. Guides have Play/Pause/Restart and visible CC BY-SA attribution. A guide can prefill the editable log while protecting unsaved drafts; movements without matching media show honest text-only guidance.
+          Room version 8 preserves prior journals/photos and adds measurement records. New manual format 4 and Drive format 5 include measurements and deletion markers. Update other devices before using the new backup format; older app versions cannot read compressed snapshots. Photos remain an independent Drive opt-in; circumference logs follow normal account backup. No new health permission, AI sharing or developer data backend is added.
 
-          Additional fixes preserve exact plan creation timestamps across JSON restore, separate internal guide choices from external draft requests, validate weight entries and improve action labels.
+          Release gates include JVM tests/lint, retained Standard/Preview signing, 48 Android runtime tests, two focused preflights, 17 larger-text animation-enabled repeats and a seeded 300-event smoke/crash check. Read docs/UPDATE_1_16_0.md and docs/SIMULATION_REPORT.md for exact evidence and remaining real-phone checks.
 
-          Release gates include JVM tests/lint, retained Standard/Preview signing, 44 Android runtime tests, 13 larger-font animation-enabled repeats and a seeded 300-event smoke/crash check. Synthetic emulator checks do not establish actual watch sync, live OAuth/Drive/provider quality or OEM reminder delivery. Read docs/SIMULATION_REPORT.md and docs/UPDATE_1_15_0.md for exact results and limits.
-
-          Choose Standard to update the retained com.migraineguard.app installation; Preview installs separately. Preserve existing records when resolving a signing conflict.
+          Standard updates the retained com.migraineguard.app installation; Preview installs separately. Preserve existing records when resolving a signing conflict.
           NOTES
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists; it will not be overwritten."

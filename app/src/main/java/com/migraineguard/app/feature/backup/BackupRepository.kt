@@ -8,6 +8,7 @@ import com.migraineguard.app.core.data.db.*
 import com.migraineguard.app.core.data.prefs.UserPreferencesRepository
 import com.migraineguard.app.core.domain.BodyProfile
 import com.migraineguard.app.core.security.BackupCipher
+import com.migraineguard.app.core.storage.CompactJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -18,8 +19,9 @@ import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 
 @Serializable
+@OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
 data class JournalBackup(
-    val formatVersion: Int = 3,
+    @kotlinx.serialization.EncodeDefault val formatVersion: Int = 4,
     val createdAtMillis: Long,
     val appVersion: String,
     val profile: BodyProfile? = null,
@@ -34,12 +36,13 @@ data class JournalBackup(
     val medications: List<MedicationEntity> = emptyList(),
     val sessions: List<AiSessionEntity> = emptyList(),
     val bodyProgress: List<BodyProgressEntity> = emptyList(),
+    val bodyMeasurements: List<BodyMeasurementEntity> = emptyList(),
     val settings: com.migraineguard.app.core.data.prefs.UserPreferences? = null,
 ) {
     fun validate() {
-        require(formatVersion in 1..3) { "Unsupported backup version." }
+        require(formatVersion in 1..4) { "Unsupported backup version." }
         require(listOf(migraines.size, nutrition.size, water.size, workouts.size,
-            weights.size, medications.size, sessions.size, bodyProgress.size).sum() <= 50_000)
+            weights.size, medications.size, sessions.size, bodyProgress.size, bodyMeasurements.size).sum() <= 50_000)
         require(waterGoalCups in 1..20 && stepGoal in 1000..30000 && sleepGoalHours in 4f..12f)
         require(migraines.all { it.overallIntensity in 1..10 && it.timestampMillis >= 0 &&
             it.markers.all { marker -> marker.x in 0f..1f && marker.y in 0f..1f && marker.intensity in 1..10 } })
@@ -57,6 +60,8 @@ data class JournalBackup(
             require(p.weeklyWorkoutGoal in 1..7 && p.stepSource in setOf("combined","samsung"))
             require(p.reminderStartHour in 0..23 && p.reminderEndHour in 0..23 && p.reminderStartHour != p.reminderEndHour)
         }
+        bodyMeasurements.forEach { it.validate() }
+        require(bodyMeasurements.map { it.id }.distinct().size == bodyMeasurements.size)
         bodyProgress.forEach { it.validate() }
         require(bodyProgress.map { it.id }.distinct().size == bodyProgress.size)
         profile?.let {
@@ -72,9 +77,10 @@ class BackupRepository(
     private val db: AppDatabase,
     private val preferences: UserPreferencesRepository,
 ) {
+    val storage = JournalStorageRepository(db)
     private val resolver = context.applicationContext.contentResolver
     internal fun exportOutput(uri: Uri): java.io.OutputStream = resolver.openOutputStream(uri, "wt") ?: error("Could not open selected file.")
-    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = false }
 
     suspend fun snapshot(includeBodyPhotos: Boolean = true, includeSettings: Boolean = false): JournalBackup = withContext(Dispatchers.IO) {
         val prefs = preferences.preferences.first()
@@ -87,6 +93,7 @@ class BackupRepository(
                 water = dao.water(), workouts = dao.workouts().map { it.copy(equipmentPhotoUri = null) }, weights = dao.weights(),
                 medications = dao.medications(), sessions = dao.sessions(),
                 bodyProgress = if(includeBodyPhotos) db.bodyProgressDao().all() else emptyList(),
+                bodyMeasurements = db.bodyMeasurementDao().all(),
                 settings = if(includeSettings) com.migraineguard.app.feature.backup.ExportPrivacy.settings(prefs) else null)
         }
         payload.validate()
@@ -96,7 +103,8 @@ class BackupRepository(
     suspend fun export(uri: Uri, password: CharArray) = withContext(Dispatchers.IO) {
         val payload = snapshot(includeSettings = true)
         val plain = json.encodeToString(payload).toByteArray(Charsets.UTF_8)
-        val bytes = try { BackupCipher.encrypt(plain, password) } finally { plain.fill(0); password.fill('\u0000') }
+        val packed = try { CompactJson.pack(plain) } finally { plain.fill(0) }
+        val bytes = try { BackupCipher.encrypt(packed, password) } finally { packed.fill(0); password.fill('\u0000') }
         resolver.openOutputStream(uri, "wt")?.use { it.write(bytes) } ?: error("Could not open the selected file.")
     }
 
@@ -113,7 +121,8 @@ class BackupRepository(
             result.toByteArray()
         } ?: error("Could not read the selected file.")
         val plain = try { BackupCipher.decrypt(encrypted, password) } finally { password.fill('\u0000') }
-        val payload = try { json.decodeFromString<JournalBackup>(String(plain, Charsets.UTF_8)) } finally { plain.fill(0) }
+        val expanded = try { CompactJson.unpack(plain) } finally { plain.fill(0) }
+        val payload = try { json.decodeFromString<JournalBackup>(String(expanded, Charsets.UTF_8)) } finally { expanded.fill(0) }
         mergeSnapshot(payload, restoreProfile)
     }
 
@@ -132,6 +141,13 @@ class BackupRepository(
                 if (current == null || (row.deleted && !current.deleted) ||
                     (!current.deleted && row.modifiedAtMillis > current.modifiedAtMillis)) {
                     db.bodyProgressDao().put(row); count++
+                }
+            }
+            for (row in payload.bodyMeasurements) {
+                val current = db.bodyMeasurementDao().get(row.id)
+                if (current == null || (row.deleted && !current.deleted) ||
+                    (!current.deleted && row.modifiedAtMillis > current.modifiedAtMillis)) {
+                    db.bodyMeasurementDao().put(row); count++
                 }
             }
             count += merge(payload.sessions, dao.sessions(), { it.copy(id = 0) }) { db.aiSessionDao().insert(it) }

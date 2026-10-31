@@ -59,6 +59,7 @@ class AppReliabilityTest {
                 assertEquals(7, db.waterHistoryDao().get("2026-10-01")!!.cups)
                 assertTrue(db.backupDao().sessions().isEmpty())
                 assertTrue(db.bodyProgressDao().all().isEmpty())
+                assertTrue(db.bodyMeasurementDao().all().isEmpty())
                 if (version >= 2) { val oldWorkout = db.workoutDao().inRange(0,2000).single().toDomain(); assertEquals("old workout",oldWorkout.notes); assertTrue(oldWorkout.sets.isEmpty()); assertEquals("",oldWorkout.exerciseName); assertEquals(com.migraineguard.app.core.domain.WorkoutDetails(),oldWorkout.details) }
             } finally { db.close(); context.deleteDatabase(name) }
         }

@@ -2,12 +2,12 @@ package com.migraineguard.app.core.data.db
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 
 @Serializable
-@Entity(tableName = "body_progress")
 data class BodyProgressEntity(
-    @PrimaryKey val id: String,
+    val id: String,
     val dateIso: String,
     val pose: String,
     val notes: String = "",
@@ -35,11 +35,37 @@ data class BodyProgressEntity(
     }
 }
 
+@Entity(tableName = "body_progress")
+data class BodyProgressRow(
+    @PrimaryKey val id: String,
+    val dateIso: String,
+    val pose: String,
+    val notes: String,
+    val weightKg: Float?,
+    val waistCm: Float?,
+    val bodyFatPercent: Float?,
+    @ColumnInfo(typeAffinity = ColumnInfo.BLOB) val jpegBytes: ByteArray,
+    val modifiedAtMillis: Long,
+    val deleted: Boolean,
+) {
+    fun portable() = BodyProgressEntity(id, dateIso, pose, notes, weightKg, waistCm, bodyFatPercent,
+        java.util.Base64.getEncoder().encodeToString(jpegBytes), modifiedAtMillis, deleted)
+    companion object {
+        fun from(entry: BodyProgressEntity) = BodyProgressRow(entry.id, entry.dateIso, entry.pose, entry.notes,
+            entry.weightKg, entry.waistCm, entry.bodyFatPercent, java.util.Base64.getDecoder().decode(entry.jpegBase64),
+            entry.modifiedAtMillis, entry.deleted)
+    }
+}
+
 @Dao
-interface BodyProgressDao {
+abstract class BodyProgressDao {
     @Query("SELECT * FROM body_progress WHERE deleted = 0 ORDER BY dateIso DESC, modifiedAtMillis DESC")
-    fun observe(): Flow<List<BodyProgressEntity>>
-    @Query("SELECT * FROM body_progress") suspend fun all(): List<BodyProgressEntity>
-    @Query("SELECT * FROM body_progress WHERE id = :id") suspend fun get(id: String): BodyProgressEntity?
-    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun put(entry: BodyProgressEntity)
+    abstract fun observeRows(): Flow<List<BodyProgressRow>>
+    @Query("SELECT * FROM body_progress") abstract suspend fun allRows(): List<BodyProgressRow>
+    @Query("SELECT * FROM body_progress WHERE id = :id") abstract suspend fun getRow(id: String): BodyProgressRow?
+    @Insert(onConflict = OnConflictStrategy.REPLACE) abstract suspend fun putRow(entry: BodyProgressRow)
+    fun observe(): Flow<List<BodyProgressEntity>> = observeRows().map { rows -> rows.map { it.portable() } }
+    suspend fun all(): List<BodyProgressEntity> = allRows().map { it.portable() }
+    suspend fun get(id: String): BodyProgressEntity? = getRow(id)?.portable()
+    suspend fun put(entry: BodyProgressEntity) { entry.validate(); putRow(BodyProgressRow.from(entry)) }
 }

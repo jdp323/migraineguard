@@ -57,6 +57,7 @@ fun BodyMetricsScreen(
     progressRepository: BodyProgressRepository,
     preferencesRepository: UserPreferencesRepository,
     onBack: () -> Unit,
+    measurementRepository: BodyMeasurementRepository? = null,
     modifier: Modifier = Modifier,
 ) {
     val entries by weightRepository.observeEntries().collectAsStateWithLifecycle(emptyList())
@@ -95,6 +96,8 @@ fun BodyMetricsScreen(
                     Text("%.1f · %s".format(bmi, prefs.bodyProfile.bmiLabel), style = MaterialTheme.typography.titleLarge)
                 }
             }
+
+            measurementRepository?.let { BodyMeasurementsPanel(it, metric) }
 
             BodyProgressPanel(progressRepository, preferencesRepository, metric)
 

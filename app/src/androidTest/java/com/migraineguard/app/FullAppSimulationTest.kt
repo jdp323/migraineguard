@@ -261,7 +261,7 @@ class FullAppSimulationTest {
             compose.onNodeWithTag("medication-delete-"+med.id).performClick()
             compose.waitUntil(10000){runBlocking{c.medicationRepository.observeMedications().first()}.none{it.id==med.id}}
             compose.onNodeWithContentDescription("Back").performClick()
-            compose.onNodeWithText("Body progress / photos / weight").performScrollTo().performClick();await("Log weight")
+            compose.onNodeWithText("Body measurements / photos / weight").performScrollTo().performClick();await("Log weight")
             compose.onNodeWithTag("body-weight-input").performScrollTo().performTextInput("0")
             compose.onNodeWithText("Save weight").performScrollTo().assertIsNotEnabled()
             compose.onNodeWithTag("body-weight-input").performScrollTo().performTextReplacement("71")

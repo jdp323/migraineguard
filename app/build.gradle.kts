@@ -33,8 +33,8 @@ android {
         manifestPlaceholders["appLabel"] = if (preview) "@string/preview_app_name" else "@string/app_name"
         minSdk = 26
         targetSdk = 35
-        versionCode = 25
-        versionName = "1.15.0"
+        versionCode = 26
+        versionName = "1.16.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -77,6 +77,8 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
 
     buildFeatures {
         compose = true

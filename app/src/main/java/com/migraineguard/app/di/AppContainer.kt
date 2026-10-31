@@ -64,6 +64,7 @@ class AppContainer(context: Context, val account: String = AccountStorage.LOCAL,
     val healthDataRepository: HealthDataRepository = AccountHealthDataRepository(HealthConnectHealthDataRepository(appContext, stepSource = { preferencesRepository.preferences.first().stepSource }), preferencesRepository)
     val healthRefreshCoordinator = HealthRefreshCoordinator(healthDataRepository, appScope)
     val workoutRepository = WorkoutRepository(db.workoutDao())
+    val bodyMeasurementRepository = com.migraineguard.app.feature.body.BodyMeasurementRepository(db.bodyMeasurementDao())
     val bodyProgressRepository = com.migraineguard.app.feature.body.BodyProgressRepository(appContext, db.bodyProgressDao())
     val trainerRepository = com.migraineguard.app.feature.fitness.TrainerRepository(preferencesRepository,workoutRepository)
     val weightRepository = WeightRepository(db.weightDao())

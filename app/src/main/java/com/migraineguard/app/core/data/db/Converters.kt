@@ -22,6 +22,12 @@ class Converters {
     private val json = Json { ignoreUnknownKeys = true }
 
     @TypeConverter
+    fun measurementsToString(value: Map<String, Float>): String = json.encodeToString(value)
+
+    @TypeConverter
+    fun stringToMeasurements(value: String): Map<String, Float> = json.decodeFromString(value)
+
+    @TypeConverter
     fun symptomsToString(value: List<MigraineSymptom>): String =
         value.joinToString(",") { it.name }
 

@@ -221,7 +221,7 @@ fun SettingsScreen(
                     Text("Edit profile")
                 }
                 OutlinedButton(onClick = onOpenBody, modifier = Modifier.fillMaxWidth()) {
-                    Text("Body progress / photos / weight")
+                    Text("Body measurements / photos / weight")
                 }
                 OutlinedButton(onClick = onOpenMeds, modifier = Modifier.fillMaxWidth()) {
                     Text("Medications & supplements")
@@ -347,6 +347,7 @@ fun SettingsScreen(
             if (settingsGroup == "Data") {
             com.migraineguard.app.feature.backup.DataExportCard(backupRepository)
             BackupCard(backupRepository)
+            com.migraineguard.app.feature.backup.JournalStorageCard(backupRepository.storage)
 
             }
             if (settingsGroup == "App") {

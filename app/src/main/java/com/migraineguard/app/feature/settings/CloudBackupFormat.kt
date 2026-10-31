@@ -3,6 +3,7 @@ package com.migraineguard.app.feature.settings
 import com.migraineguard.app.core.data.prefs.UserPreferences
 import com.migraineguard.app.core.security.AccountStorage
 import com.migraineguard.app.core.security.BackupCipher
+import com.migraineguard.app.core.storage.CompactJson
 import com.migraineguard.app.feature.backup.JournalBackup
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -10,15 +11,16 @@ import kotlinx.serialization.json.Json
 import java.security.MessageDigest
 
 @Serializable
+@OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
 data class CloudAccountBackup(
-    val formatVersion: Int = 4,
+    @kotlinx.serialization.EncodeDefault val formatVersion: Int = 5,
     val owner: String,
     val savedAtMillis: Long,
     val settings: UserPreferences,
     val journal: JournalBackup,
 ) {
     fun validate(account: String) {
-        require(formatVersion in 2..4 && owner == account && account.startsWith("google-")) {
+        require(formatVersion in 2..5 && owner == account && account.startsWith("google-")) {
             "This backup belongs to a different account or an unsupported app version."
         }
         settings.trainerProfile.validate(); require(settings.trainingPlans.size <= 5); settings.trainingPlans.forEach { it.validate() }
@@ -37,20 +39,20 @@ data class CloudAccountBackup(
 }
 
 object CloudBackupFormat {
-    val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    val json = Json { ignoreUnknownKeys = true; encodeDefaults = false }
     const val FILE_NAME = "migraineguard-account-v2.json"
     const val MAX_BYTES = BackupCipher.MAX_BYTES
 
     fun encode(value: CloudAccountBackup): ByteArray {
         value.validate(value.owner)
-        return json.encodeToString(value).toByteArray(Charsets.UTF_8).also {
-            require(it.size <= MAX_BYTES) { "Backup exceeds the 20 MB limit." }
-        }
+        val plain = json.encodeToString(value).toByteArray(Charsets.UTF_8)
+        return try { CompactJson.pack(plain, MAX_BYTES) } finally { plain.fill(0) }
     }
     fun decode(bytes: ByteArray, account: String): CloudAccountBackup {
         require(bytes.size in 1..MAX_BYTES) { "Invalid or oversized Drive backup." }
-        return json.decodeFromString<CloudAccountBackup>(String(bytes, Charsets.UTF_8))
-            .also { it.validate(account) }
+        val plain = CompactJson.unpack(bytes, MAX_BYTES)
+        return try { json.decodeFromString<CloudAccountBackup>(String(plain, Charsets.UTF_8)).also { it.validate(account) } }
+        finally { plain.fill(0) }
     }
     /** Ignore export timestamps when checking whether actual account data changed. */
     fun fingerprint(value: CloudAccountBackup): String = MessageDigest.getInstance("SHA-256")

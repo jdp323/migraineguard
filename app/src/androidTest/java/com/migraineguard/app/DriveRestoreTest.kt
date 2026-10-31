@@ -86,6 +86,7 @@ class DriveRestoreTest {
             sourceDb.migraineDao().insert(MigraineEpisodeEntity(timestampMillis = 1000, overallIntensity = 4,
                 notes = "fixture restored journal", symptoms = emptyList(), markers = emptyList()))
             sourceDb.workoutDao().insert(WorkoutEntity.fromDomain(com.migraineguard.app.core.domain.WorkoutEntry(timestampMillis=1000,type=com.migraineguard.app.core.domain.WorkoutType.TREADMILL,durationMinutes=20,exerciseName="Treadmill fixture",details=com.migraineguard.app.core.domain.WorkoutDetails(speedKmh=6.5f,inclinePercent=3f,distanceKm=2f))))
+            com.migraineguard.app.feature.body.BodyMeasurementRepository(sourceDb.bodyMeasurementDao()).save(date="2026-10-01",valuesCm=mapOf("waist" to 81f,"leftBiceps" to 34f),notes="restored measurement fixture")
             source.connect(email, email)
             source.backupNow()
             assertNotNull(drive.saved)
@@ -108,6 +109,7 @@ class DriveRestoreTest {
             assertTrue(restored.setupComplete)
             assertFalse(restored.deviceHealthEnabled)
             assertEquals("fixture restored journal", targetDb.backupDao().migraines().single().notes)
+            assertEquals(34f,targetDb.bodyMeasurementDao().all().single().measurementsCm.getValue("leftBiceps"),0f)
             val file = File(context.filesDir, "datastore/" + AccountStorage.settingsName(targetId) + ".preferences_pb")
             assertFalse(String(file.readBytes(), Charsets.ISO_8859_1).contains("fixture-cloud-gemini"))
             assertFalse(String(file.readBytes(), Charsets.ISO_8859_1).contains("fixture-new-provider-key"))

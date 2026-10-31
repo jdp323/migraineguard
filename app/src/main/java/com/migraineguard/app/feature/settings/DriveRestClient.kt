@@ -10,7 +10,7 @@ import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
 
-data class DriveFile(val id: String, val etag: String?, val bytes: ByteArray)
+data class DriveFile(val id: String, val etag: String?, val bytes: ByteArray, val storedBytes: Long? = null)
 
 interface DriveBackupTransport {
     suspend fun verifyAccount(token: String, email: String)
@@ -67,17 +67,18 @@ class DriveRestClient(
         val url = baseUrl.toHttpUrl().newBuilder()
             .addPathSegments("drive/v3/files").addQueryParameter("spaces", "appDataFolder")
             .addQueryParameter("q", "name = '" + CloudBackupFormat.FILE_NAME + "' and trashed = false")
-            .addQueryParameter("fields", "files(id,modifiedTime)")
+            .addQueryParameter("fields", "files(id,modifiedTime,size)")
             .addQueryParameter("pageSize", "100").addQueryParameter("orderBy", "modifiedTime desc").build()
-        val id = http.newCall(request(url.toString(), token).build()).execute().use { response ->
+        val selected = http.newCall(request(url.toString(), token).build()).execute().use { response ->
             val files = JSONObject(String(bytes(checked(response)), Charsets.UTF_8)).getJSONArray("files")
-            if (files.length() == 0) null else files.getJSONObject(0).getString("id")
+            if (files.length() == 0) null else files.getJSONObject(0).let { it.getString("id") to it.optString("size").toLongOrNull()?.takeIf { n -> n >= 0 } }
         } ?: return@withContext null
+        val id = selected.first
         require(id.matches(Regex("[A-Za-z0-9_-]+"))) { "Invalid Drive file identifier." }
         http.newCall(request(baseUrl + "/drive/v3/files/" + id + "?alt=media", token).build())
             .execute().use { response ->
                 checked(response)
-                DriveFile(id, response.header("ETag"), bytes(response))
+                DriveFile(id, response.header("ETag"), bytes(response), selected.second)
             }
     }
 
@@ -85,16 +86,17 @@ class DriveRestClient(
         withContext(Dispatchers.IO) {
             require(payload.size <= CloudBackupFormat.MAX_BYTES)
             val jsonType = "application/json; charset=utf-8".toMediaType()
+            val payloadType = if (com.migraineguard.app.core.storage.CompactJson.isCompressed(payload)) "application/gzip".toMediaType() else jsonType
             val builder = if (previous == null) {
                 val metadata = JSONObject().put("name", CloudBackupFormat.FILE_NAME)
                     .put("parents", org.json.JSONArray().put("appDataFolder")).toString()
                 val body = MultipartBody.Builder().setType("multipart/related".toMediaType())
                     .addPart(metadata.toRequestBody(jsonType))
-                    .addPart(payload.toRequestBody(jsonType)).build()
+                    .addPart(payload.toRequestBody(payloadType)).build()
                 request(baseUrl + "/upload/drive/v3/files?uploadType=multipart&fields=id", token).post(body)
             } else {
                 request(baseUrl + "/upload/drive/v3/files/" + previous.id + "?uploadType=media&fields=id", token)
-                    .patch(payload.toRequestBody(jsonType)).apply { previous.etag?.let { header("If-Match", it) } }
+                    .patch(payload.toRequestBody(payloadType)).apply { previous.etag?.let { header("If-Match", it) } }
             }
             http.newCall(builder.build()).execute().use { response ->
                 JSONObject(String(bytes(checked(response)), Charsets.UTF_8)).getString("id")

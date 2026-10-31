@@ -244,6 +244,7 @@ fun MigraineGuardNavHost(container: AppContainer, requestedRoute: String? = null
             composable(Routes.BodyMetrics) {
                 BodyMetricsScreen(
                     progressRepository = container.bodyProgressRepository,
+                    measurementRepository = container.bodyMeasurementRepository,
                     weightRepository = container.weightRepository,
                     preferencesRepository = container.preferencesRepository,
                     onBack = { navController.popBackStack() },

@@ -82,7 +82,7 @@ class BodyProgressTest {
             val files=mutableMapOf<String,ByteArray>()
             ZipInputStream(file.inputStream()).use { zip -> while(true) {val entry=zip.nextEntry?:break;files[entry.name]=zip.readBytes()} }
             assertTrue(files.keys.any { it.startsWith("body-photos/") && it.endsWith(".jpg") })
-            assertEquals(11,files.size)
+            assertEquals(12,files.size)
             val structured=String(files.getValue("journal-and-settings.json"))
             assertFalse(structured.contains("fixture-secret-must-not-export"))
             assertTrue(String(files.getValue("body-progress.csv")).contains("'=SUM(A1)"))

@@ -39,5 +39,26 @@ object PreservingMigrations {
             db.execSQL("CREATE TABLE IF NOT EXISTS body_progress (id TEXT NOT NULL PRIMARY KEY, dateIso TEXT NOT NULL, pose TEXT NOT NULL, notes TEXT NOT NULL, weightKg REAL, waistCm REAL, bodyFatPercent REAL, jpegBase64 TEXT NOT NULL, modifiedAtMillis INTEGER NOT NULL, deleted INTEGER NOT NULL)")
         }
     }
-    val ALL: Array<Migration> = oldMigrations + FROM_4 + FROM_5 + FROM_6
+    val FROM_7 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // One row at a time; the surrounding Room migration transaction preserves the original on failure.
+            db.execSQL("CREATE TABLE body_progress_compact (id TEXT NOT NULL PRIMARY KEY, dateIso TEXT NOT NULL, pose TEXT NOT NULL, notes TEXT NOT NULL, weightKg REAL, waistCm REAL, bodyFatPercent REAL, jpegBytes BLOB NOT NULL, modifiedAtMillis INTEGER NOT NULL, deleted INTEGER NOT NULL)")
+            val insert = db.compileStatement("INSERT INTO body_progress_compact VALUES (?,?,?,?,?,?,?,?,?,?)")
+            try {
+                db.query("SELECT id,dateIso,pose,notes,weightKg,waistCm,bodyFatPercent,jpegBase64,modifiedAtMillis,deleted FROM body_progress").use { rows ->
+                    while (rows.moveToNext()) {
+                        insert.clearBindings()
+                        for (i in 0..3) insert.bindString(i + 1, rows.getString(i))
+                        for (i in 4..6) if (rows.isNull(i)) insert.bindNull(i + 1) else insert.bindDouble(i + 1, rows.getDouble(i))
+                        insert.bindBlob(8, java.util.Base64.getDecoder().decode(rows.getString(7)))
+                        insert.bindLong(9, rows.getLong(8)); insert.bindLong(10, rows.getLong(9)); insert.executeInsert()
+                    }
+                }
+            } finally { insert.close() }
+            db.execSQL("DROP TABLE body_progress")
+            db.execSQL("ALTER TABLE body_progress_compact RENAME TO body_progress")
+            db.execSQL("CREATE TABLE body_measurements (id TEXT NOT NULL PRIMARY KEY, dateIso TEXT NOT NULL, measurementsCm TEXT NOT NULL, notes TEXT NOT NULL, modifiedAtMillis INTEGER NOT NULL, deleted INTEGER NOT NULL)")
+        }
+    }
+    val ALL: Array<Migration> = oldMigrations + FROM_4 + FROM_5 + FROM_6 + FROM_7
 }

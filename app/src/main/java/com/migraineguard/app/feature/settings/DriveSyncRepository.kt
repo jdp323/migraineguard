@@ -51,7 +51,7 @@ class DriveSyncRepository(
             token = accessToken
             refreshAccessToken = refresh
             prefs.setDriveSyncEnabled(true)
-            mutableState.value = DriveBackupState(backupBytes = file?.bytes?.size?.toLong(), connected = true, busy = false, lastSavedMillis = null, message =
+            mutableState.value = DriveBackupState(backupBytes = file?.let { it.storedBytes ?: it.bytes.size.toLong() }, connected = true, busy = false, lastSavedMillis = null, message =
                 if (file == null) "Drive connected. Your details will back up as you save them."
                 else "Your account backup is restored. Checking this phone's health permissions next.")
         } catch (e: CancellationException) {
@@ -79,7 +79,7 @@ class DriveSyncRepository(
 
     private fun journalChanges(): Flow<Unit> = kotlinx.coroutines.flow.callbackFlow {
         val observer = object : InvalidationTracker.Observer("migraine_episodes", "nutrition_scans",
-            "water_history", "workouts", "weight_entries", "medications", "ai_sessions", "body_progress") {
+            "water_history", "workouts", "weight_entries", "medications", "ai_sessions", "body_progress", "body_measurements") {
             override fun onInvalidated(tables: Set<String>) { trySend(Unit) }
         }
         db.invalidationTracker.addObserver(observer)
@@ -111,8 +111,8 @@ class DriveSyncRepository(
                 remote.upload(currentToken, encoded, previous)
                 fingerprint = hash
             }
-            mutableState.value = DriveBackupState(backupBytes = (if (changed) encoded.size else (previous?.bytes?.size ?: encoded.size)).toLong(), connected = true, busy = false, lastSavedMillis = System.currentTimeMillis(), message =
-                "Your profile, settings, API keys and journal are backed up to your private Drive app data." + if(settings.bodyPhotoDriveBackup) " Body progress photos are included." else " Body progress photos are excluded.")
+            mutableState.value = DriveBackupState(backupBytes = if (changed) encoded.size.toLong() else (previous?.storedBytes ?: previous?.bytes?.size?.toLong() ?: encoded.size.toLong()), connected = true, busy = false, lastSavedMillis = System.currentTimeMillis(), message =
+                "Your profile, settings, API keys, measurements and journal are backed up to your private Drive app data." + if(settings.bodyPhotoDriveBackup) " Body progress photos are included." else " Body progress photos are excluded.")
         } catch (e: CancellationException) {
             mutableState.value = mutableState.value.copy(busy=false,message="Backup paused. Your local data is preserved.")
             throw e
