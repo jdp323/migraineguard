@@ -41,6 +41,7 @@ jobs:
           fi
       - name: Build and verify
         run: |
+          python3 -m unittest discover -s scripts -p 'test_*.py'
           chmod +x gradlew
           ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon --console=plain
           mkdir -p verified-build
@@ -91,6 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
         with:
           name: MigraineGuard-debug-apk
@@ -141,7 +143,7 @@ jobs:
             adb shell monkey -p com.migraineguard.app --pct-syskeys 0 --pct-appswitch 0 --ignore-security-exceptions --throttle 100 -s 26026 300 > android-smoke-results.txt
             cat android-smoke-results.txt
             adb logcat -d -s AndroidRuntime:E > android-crash-log.txt
-            if grep -q "FATAL EXCEPTION" android-crash-log.txt; then exit 1; fi
+            python3 scripts/check_android_crashes.py android-crash-log.txt
             adb exec-out screencap -p > android-startup.png
       - name: Save Android runtime evidence
         if: always()

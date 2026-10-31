@@ -1,6 +1,6 @@
 # MigraineGuard user guide
 
-For Android v1.15.0 (version code 25). Start here if a friend shared the app with you. No programming or Google Cloud setup is needed to use the published APK.
+For Android v1.16.0 (version code 26). Start here if a friend shared the app with you. No programming or Google Cloud setup is needed to use the published APK.
 
 [Download the latest release](https://github.com/jdp323/migraineguard/releases/latest) · [Troubleshooting](TROUBLESHOOTING.md) · [How it works](HOW_IT_WORKS.md) · [Privacy](https://gen-lang-client-0426132502.web.app/privacy.html)
 
@@ -9,11 +9,11 @@ For Android v1.15.0 (version code 25). Start here if a friend shared the app wit
 ## 1. Install or update
 
 1. Open the release link on your Android phone. Expand **Assets** if needed.
-2. Download **MigraineGuard-v1.15.0-debug.apk** for the normal app. The word debug identifies the current signed test build; this is not a Play Store release.
+2. Download **MigraineGuard-v1.16.0-debug.apk** for the normal app. The word debug identifies the current signed test build; this is not a Play Store release.
 3. Open the downloaded APK. Android may ask whether your browser or file manager can install apps. Allow that source if you trust this download, install, then turn the source permission back off if you wish. Do not disable Play Protect or other device-wide protections.
 4. Updating the same Standard app with the retained certificate keeps its local data. Do not uninstall an existing app just to get past an installation conflict.
-5. For an incompatible older signing certificate, or to try a fresh setup beside your existing app, use **MigraineGuard-v1.15.0-preview.apk**. Preview is a separate app with its own records, permissions and setup. It does not automatically copy Standard's local data.
-6. Confirm **Settings → App → About** says **1.15.0 (25)** and the intended package: Standard is com.migraineguard.app; Preview ends in .preview.
+5. For an incompatible older signing certificate, or to try a fresh setup beside your existing app, use **MigraineGuard-v1.16.0-preview.apk**. Preview is a separate app with its own records, permissions and setup. It does not automatically copy Standard's local data.
+6. Confirm **Settings → App → About** says **1.15.0 (26)** and the intended package: Standard is com.migraineguard.app; Preview ends in .preview.
 
 The app supports Android 8 and later. Health Connect additionally depends on compatible Android/Google services and source health apps on the phone; an installable app does not guarantee every integration is available. This project contains a phone app, not a separate watch app or iPhone build.
 
@@ -78,17 +78,19 @@ On first Google connection, choose **Allow private Drive backup**. The app check
 
 In Settings, use **Back up now** and wait for a completed save before changing devices or signing out. Changes are saved automatically while the app is active after a short debounce; background/sign-out saves are best effort. A connection check does not prove your most recent edits were uploaded: check the save result/timestamp. If sign-out reports Backup needs attention, reconnect and retry, or knowingly keep only the local copy.
 
-Drive app-data is hidden from ordinary Drive files and belongs to the authorizing Google account. A blank Drive folder view is not evidence that backup failed. The snapshot includes profile/DOB/measurements/goals/settings, personal AI keys and seven original journal tables. Body progress is included only after its separate photo-backup switch is enabled. Meal/equipment photo files and raw Health Connect records are excluded.
+Drive app-data is hidden from ordinary Drive files and belongs to the authorizing Google account. A blank Drive folder view is not evidence that backup failed. The snapshot includes profile/DOB/measurements/goals/settings, personal AI keys, seven original journal tables and dated circumference logs. Body progress is included only after its separate photo-backup switch is enabled. Meal/equipment photo files and raw Health Connect records are excluded.
 
 **Cloud key storage:** Google protects transport/storage, and keys are encrypted again with Android Keystore locally. The portable keys inside the Drive JSON are not separately password-encrypted or end-to-end encrypted. Choose this optional feature only if that matches your preferences. Protect your Google account and provider accounts.
 
-This is a current snapshot with additive journal restore, not WhatsApp-compatible backup or a conflict-free multi-device sync service. A deleted original journal entry can return from an older snapshot; new body-progress check-ins have deletion markers to prevent that photo from returning. Prefer one active editing device and complete a save before moving to the next.
+This is a current snapshot with additive journal restore, not WhatsApp-compatible backup or a conflict-free multi-device sync service. A deleted original journal entry can return from an older snapshot; body-progress check-ins and new circumference logs have deletion markers to prevent that photo from returning. Prefer one active editing device and complete a save before moving to the next.
 
 ## 5. Export your data or a recovery file
 
 Open **Settings → Data**. Export readable data & body photos saves a ZIP with structured JSON, eight CSV tables and body JPEGs. It is **not encrypted**; use a location you trust and review it before sharing. The ZIP is for reading/analysis, not app import.
 
-For recovery, enter a password of at least eight characters and Export encrypted backup. Import backup and keep existing records restores supported .mgbak files without duplicating the same content. Also restore profile, goals and preferences is optional. Body progress photos are included; configured API keys, sign-in tokens, raw Health Connect data and meal/equipment photo files are excluded. Existing local keys are preserved on preference restore. Snapshots have a 20 MB limit; an oversized backup fails visibly. Keep the password and check the file before removing any data. The Android file picker can choose local storage or a document provider such as your own Drive.
+For recovery, enter a password of at least eight characters and Export encrypted backup. Import backup and keep existing records restores supported .mgbak files without duplicating the same content. Also restore profile, goals and preferences is optional. Body progress photos are included; configured API keys, sign-in tokens, raw Health Connect data and meal/equipment photo files are excluded. Existing local keys are preserved on preference restore. Compressed and expanded snapshots each have a 20 MiB limit; an oversized backup fails visibly. Keep the password and check the file before removing any data. The Android file picker can choose local storage or a document provider such as your own Drive.
+
+New snapshots use compact JSON and gzip only when smaller; encrypted recovery compresses before password encryption. This version reads older plain-JSON backups, but older apps cannot read the new formats. Update all devices first.
 
 These manual formats are separate from automatic private Drive app-data backup. [Exact formats and limitations](UPDATE_1_12_0.md#export-and-recovery).
 
@@ -116,7 +118,7 @@ Your selected local/Google identity is remembered on this phone with device encr
 
 Settings → Reminders → Stand, stretch or walk enables adjustable break alerts. Optional background step access suppresses an alert after at least 20 shared steps during that interval. Without usable data it is a general timer; it cannot prove you were sitting. Active hours and Android battery/notification controls apply.
 
-Settings → Account → Body progress / photos / weight opens dated photos, optional measurements and notes. Choose two check-ins to compare photos and recorded weight/waist/scale-body-fat changes. Photos stay in this account on the phone by default and are never sent to AI. Separately enable Include body photos in my Google Drive backup if you want them in your own connected Drive snapshot. Use Delete this check-in to remove one; independent exports/cloud copies need their own controls.
+Settings → Account → Body measurements / photos / weight opens dated photos, optional measurements and notes. Choose two check-ins to compare photos and recorded weight/waist/scale-body-fat changes. Photos stay in this account on the phone by default and are never sent to AI. Separately enable Include body photos in my Google Drive backup if you want them in your own connected Drive snapshot. Use Delete this check-in to remove one; independent exports/cloud copies need their own controls.
 
 ## Fitness trainer and glass appearance
 
@@ -131,3 +133,11 @@ Open Exercise & machine guide · GIFs to search all 35 movements. Nine exact var
 Build week on this device works offline. Optional Arrange week with my AI requires the separate checkbox sharing age/height/weight, preferences and comparable recent workout sets with the selected provider. Review before saving. The latest five schedules are retained; actual journal history is separate. No photos or migraine/medication journal enters this request. Read [exact rules and limits](UPDATE_1_13_0.md).
 
 Settings → App → Reduce transparency changes the new glass cards to solid fills. System theme, dynamic color and supported Android animation preferences remain available.
+
+## Dated tape measurements and storage
+
+Open Settings → Account → Body measurements / photos / weight → Log measurements. Choose YYYY-MM-DD and Core, Upper body, Lower body or Custom. Enter only the areas you measured; empty areas consume no measurement values. Your profile chooses cm/in, and an open draft retains its starting unit. Save adds the dated entry; hiding/reopening preserves a draft, and Discard requires confirmation.
+
+The 20 standard areas include neck/shoulders/chest/abdomen(tummy)/waist/hips and separate left/right relaxed upper arms, flexed biceps, forearms, wrists, thighs, calves and ankles. Add up to eight custom areas. History lets you edit dates/values or delete; Trends selects an area and compares its first and latest values using calendar spacing. These are entered measurements, never estimates from body photos.
+
+Settings → Data → Compact storage shows this account's database/WAL and body JPEG bytes, plus live circumference-log count. Optimize local storage reclaims free SQLite pages while preserving records. It excludes the app, preferences, caches, gallery originals and independent exports. Photos migrate to binary JPEG storage without losing their original saved JPEG bytes; compact backup JSON is compressed when smaller. [Exact format/limits and file map](UPDATE_1_16_0.md).

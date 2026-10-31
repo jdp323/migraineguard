@@ -1,3 +1,5 @@
+> Historical v1.15 release. Current [v1.16 dated measurements and compact storage](UPDATE_1_16_0.md) adds a preserving database migration and new backward-compatible backup readers.
+
 # v1.15.0 — direct workouts, body zoom and exercise GIFs
 
 ## The reported failure and fix

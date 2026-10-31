@@ -1,6 +1,6 @@
 # How MigraineGuard works
 
-Current behavior: v1.15.0 / code 25. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
+Current behavior: v1.16.0 / code 26. This is an overview of the implemented system. For code-by-code detail use the [project guide](PROJECT_GUIDE.md), [file/function reference](FILE_REFERENCE.md) and version supplements linked below. For instructions use the [user guide](USER_GUIDE.md).
 
 ## From your device to the screen
 
@@ -16,10 +16,10 @@ Heart reads include recent record buckets but exclude future samples; the displa
 
 | Location | Contents | Boundaries |
 | --- | --- | --- |
-| Account-local Room database | Migraine episodes, food analysis records, water history, workouts, weight entries, medications and AI sessions | Eight journal categories including body progress photos/measurements, plus local-only water-action receipts. Google accounts and the preserved local profile use separate storage namespaces. This is not a claim that every journal column is encrypted. |
+| Account-local Room database | Migraine episodes, food analysis records, water history, workouts, weight entries, medications and AI sessions | Nine journal categories including body progress photos and dated circumference logs, plus local-only water-action receipts. Google accounts and the preserved local profile use separate storage namespaces. This is not a claim that every journal column is encrypted. |
 | Account-local Preferences DataStore | Profile/DOB/units, goals, appearance, setup flags, connection choices and encrypted provider-key values | API key encryption uses device-bound Android Keystore; decrypted values are used only in app memory for configuration/requests. |
 | Health Connect / source apps | Device health records | These remain controlled by Android and source apps; the app does not back up the full Health Connect database to Drive or GitHub. |
-| Optional Google Drive appDataFolder | Current account snapshot: settings/profile, portable provider keys and seven original journal tables; body progress only after its separate opt-in | Hidden app-specific storage authorized by that Google account. Google transport/storage protection; no separate password/end-to-end encryption for the portable keys. |
+| Optional Google Drive appDataFolder | Current account snapshot: settings/profile, portable provider keys, seven original journal tables and dated circumference logs; body progress only after its separate opt-in | Hidden app-specific storage authorized by that Google account. Google transport/storage protection; no separate password/end-to-end encryption for the portable keys. |
 | Optional manual encrypted file | Journals, body photos and profile/goals/preferences | Password-derived AES-GCM. Excludes provider keys, meal/equipment photos and raw Health Connect records. |
 | Local/source image storage | Selected meal/equipment-photo references or camera files | Meal/equipment references are not portable. Body progress uses normalized JPEG bytes in the private database and optional exports/Drive. |
 | GitHub / public website | Source, docs, synthetic test screenshots and signed test APKs | No user journal or user Drive backup is intentionally uploaded here. See the limited [public exposure audit](PUBLICATION_AUDIT.md). |
@@ -34,7 +34,7 @@ On an authorized login, the app checks Drive before presenting replacement profi
 
 Changes trigger automatic saves after a short debounce; backgrounding and sign-out attempt a final save. The UI distinguishes a connection response from a completed save. Network failure leaves local data available. Tokens are retained in memory and refreshed/reconnected through Google, not committed to source.
 
-Restore validates identity, format, size and records before importing. Journal import is additive/idempotent; colliding IDs are normalized and identical content is deduplicated. There are no deletion tombstones or conflict-free simultaneous-device synchronization. An old cloud snapshot can restore a locally deleted record. See [data removal](USER_GUIDE.md#6-disconnect-and-remove-data).
+Restore validates identity, format, size and records before importing. Journal import is additive/idempotent; colliding IDs are normalized and identical content is deduplicated. The original seven journal categories retain additive merge limits, so old snapshots can restore their deleted entries. Body photo/check-ins and dated circumference logs have deletion tombstones. Conflict-free simultaneous-device synchronization is not implemented. See [data removal](USER_GUIDE.md#6-disconnect-and-remove-data).
 
 ## AI and privacy boundaries
 
@@ -99,3 +99,11 @@ The pipeline restores its signing key from a GitHub Actions secret for eligible 
 ## Current limits
 
 No direct watch app/live pulse, exact-dose alarm scheduler, barcode nutrition database, historical Health Connect series/correlation engine, portable meal/equipment photo backup or conflict-free multi-device sync is implemented. Public Google audience access is enabled, but custom branding is not represented as verified. These limits are documented so missing behavior can be diagnosed rather than mistaken for an already completed feature.
+
+## v1.16 measurement and storage pipeline
+
+BodyMeasurementRepository writes validated dated cm maps through BodyMeasurementDao into schema 8. Maps contain only filled areas. UI converts cm/in without changing stored meaning; revision and permanent deletion markers prevent stale snapshots from resurrecting measurements. PreservingMigrations.FROM_7 transactionally copies existing Base64 photo rows into exact JPEG BLOBs, then adds the measurement table; all earlier migrations chain to it. The portable photo DTO remains compatible with old exports.
+
+CompactJson packs minified JSON with omitted defaults using gzip only when smaller. Manual .mgbak applies existing password encryption afterward. CloudBackupFormat version 5 and manual journal version 4 accept supported older uncompressed JSON, with both packed and expanded content bounded at 20 MiB. Drive keeps the original hidden filename to find the existing snapshot and reports actual stored bytes from metadata. Readable ZIP includes body-measurements.csv in canonical cm.
+
+JournalStorageRepository runs an explicit checkpoint/VACUUM/checkpoint under a maintenance mutex outside transactions. Sizes cover account journal/WAL and raw body JPEG payload, excluding preferences/APK/cache/independent files. Measurements enter enabled private Drive backup independently of the body-photo switch and are not added to AI prompts. [Complete file/function map and compatibility](UPDATE_1_16_0.md).

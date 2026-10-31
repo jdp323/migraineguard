@@ -42,13 +42,98 @@
       "kind": "Button"
     },
     {
+      "file": "app/src/main/java/com/migraineguard/app/feature/backup/JournalStorageCard.kt",
+      "line": 32,
+      "kind": "OutlinedButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 66,
+      "kind": "Button"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 69,
+      "kind": "OutlinedButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 70,
+      "kind": "OutlinedButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 78,
+      "kind": "FilterChip"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 92,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 98,
+      "kind": "OutlinedButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 111,
+      "kind": "Button"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 136,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 150,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 157,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 161,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 164,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 165,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 168,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 169,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMeasurementsPanel.kt",
+      "line": 183,
+      "kind": "OutlinedButton"
+    },
+    {
       "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMetricsScreen.kt",
-      "line": 77,
+      "line": 78,
       "kind": "IconButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/body/BodyMetricsScreen.kt",
-      "line": 119,
+      "line": 122,
       "kind": "Button"
     },
     {
@@ -450,6 +535,11 @@
       "file": "app/src/main/java/com/migraineguard/app/feature/fitness/WorkoutJournal.kt",
       "line": 151,
       "kind": "OutlinedButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/fitness/WorkoutJournal.kt",
+      "line": 160,
+      "kind": "SuggestionChip"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/fitness/WorkoutJournal.kt",
@@ -933,23 +1023,18 @@
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/SettingsScreen.kt",
-      "line": 355,
+      "line": 356,
       "kind": "OutlinedButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/SettingsScreen.kt",
-      "line": 362,
+      "line": 363,
       "kind": "OutlinedButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/SettingsScreen.kt",
-      "line": 387,
+      "line": 388,
       "kind": "Button"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/settings/SettingsScreen.kt",
-      "line": 403,
-      "kind": "TextButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/SettingsScreen.kt",
@@ -958,12 +1043,17 @@
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/SettingsScreen.kt",
-      "line": 407,
+      "line": 405,
+      "kind": "TextButton"
+    },
+    {
+      "file": "app/src/main/java/com/migraineguard/app/feature/settings/SettingsScreen.kt",
+      "line": 408,
       "kind": "OutlinedButton"
     },
     {
       "file": "app/src/main/java/com/migraineguard/app/feature/settings/SettingsScreen.kt",
-      "line": 422,
+      "line": 423,
       "kind": "Switch"
     },
     {
@@ -1095,16 +1185,6 @@
       "file": "app/src/main/java/com/migraineguard/app/feature/water/WaterScreen.kt",
       "line": 69,
       "kind": "IconButton"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/water/WaterScreen.kt",
-      "line": 100,
-      "kind": "FilledIconButton"
-    },
-    {
-      "file": "app/src/main/java/com/migraineguard/app/feature/water/WaterScreen.kt",
-      "line": 107,
-      "kind": "FilledIconButton"
     }
   ]
 }

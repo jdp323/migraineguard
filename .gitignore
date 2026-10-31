@@ -70,3 +70,7 @@ dist/
 
 # Unused legacy Firebase client configuration; current sign-in uses OAuth IDs
 app/google-services.json
+
+# Python verification caches
+__pycache__/
+*.pyc

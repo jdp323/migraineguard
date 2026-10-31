@@ -1,4 +1,6 @@
-> Current v1.15.0: [direct workouts without the age/setup gate, rear-head fix, zoom, exercise GIFs, full file/function changes and exact AI prompt](UPDATE_1_15_0.md). [Functional simulation coverage and remaining phone checks](SIMULATION_REPORT.md).
+> Current v1.16.0: [dated body measurements, compact storage, preserving migration, backup compatibility and full file/function map](UPDATE_1_16_0.md). [Functional test scope](SIMULATION_REPORT.md). Historical descriptions below remain pinned to their stated baselines.
+
+> Previous v1.15.0: [direct workouts without the age/setup gate, rear-head fix, zoom, exercise GIFs, full file/function changes and exact AI prompt](UPDATE_1_15_0.md). [Functional simulation coverage and remaining phone checks](SIMULATION_REPORT.md).
 
 > Historical v1.10.0: [water quick actions, tailored exercise fields, remembered sessions, implementation and tests](UPDATE_1_10_0.md). Historical version supplements below retain their stated baselines.
 

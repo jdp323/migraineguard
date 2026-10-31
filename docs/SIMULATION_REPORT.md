@@ -1,12 +1,14 @@
-# Full app simulation report — v1.15.0
+# Full app simulation report — v1.16.0
 
 This is a functional simulation on an Android emulator with synthetic accounts, records, images and keys. It is not a claim that every possible code branch, physical device, Google account or medical/fitness recommendation is verified. No real personal records or provider keys are used.
 
 ## What the audit found
 
+The v1.16 update adds dated circumference logs and compact storage. BodyMeasurementsTest covers actual metric/imperial forms, groups/custom areas, drafts/discard, edit/date changes, trends, delete, real v7→v8 JPEG migration, storage reclamation, compressed/legacy encrypted restore and tombstones. DriveRestoreTest now includes measurement values in its fresh-install transport fixture. CompactJson/measurement/cloud JVM tests cover unit conversion, corruption/size limits and binary-safe HTTP uploads. No new live-service claim follows from these fixtures.
+
 The user's exact Trainer failure came from a mandatory ready/adultConfirmed gate; tests had bypassed it with preconfigured profiles. The gate is removed and a new default-profile UI journey covers it. Review also found a plan timestamp serialization edge case, guided-draft replay risk, provider feedback cleared by a settings refresh, transparent full-screen guide windows and Coach persistence coupled to scroll animations. Individual reminder edits now write only supplied fields to avoid stale-snapshot overwrites. The [release guide](UPDATE_1_15_0.md) explains the fixes, zoom, repaired rear head and accurately labeled GIF variants.
 
-A source inventory lists 221 button/chip/toggle declaration occurrences for review. It counts source sites rather than distinct runtime buttons, since loops render multiple choices. It is an audit aid, not a fabricated click-coverage percentage: [control-site inventory](SIMULATION_CONTROL_INVENTORY.json).
+A source inventory lists 237 button/chip/toggle declaration occurrences for review. It counts source sites rather than distinct runtime buttons, since loops render multiple choices. It is an audit aid, not a fabricated click-coverage percentage: [control-site inventory](SIMULATION_CONTROL_INVENTORY.json).
 
 ## Functional coverage matrix
 
@@ -33,6 +35,9 @@ D = actual rendered UI action with state/persistence assertions; R = Android rep
 | Week build/review/save/reopen/remove, latest-five retention, actual logged markers | D/R/U — trainer UI and plan/persistence tests; individual phone acceptance still needed for all account/backup timing combinations |
 | AI week consent, allowed IDs, recovery/time validation, invalid reply fallback, cancellation | R/U — TrainerFlowTest and TrainerEngineTest with deterministic provider fixtures; real-key provider quality remains P |
 | Weight input, invalid zero, valid save and profile update | D — FullAppSimulationTest |
+| Dated measurements, cm/in, core/arms/legs/custom, notes, dated edit/history/trends/delete/drafts | D/R/U — BodyMeasurementsTest, BodyMeasurementTest; 20 standard + eight custom areas, chronological gaps and permanent deletion markers |
+| Schema 7 photo BLOB migration, storage usage and Optimize | R/D — real populated v7 fixture preserves exact JPEG bytes and journals; actual SQLite checkpoint/VACUUM retains measurements |
+| New compressed snapshots, old encrypted/plain JSON, measurement Drive restore, tombstone merge | R/U — BodyMeasurementsTest, CloudBackupTest, CompactJsonTest, DriveRestoreTest; actual Google authorization/transfer remain P |
 | Body photo normalization, note check-ins, compare, deletion markers | D/R — BodyProgressTest |
 | Readable export, encrypted recovery, wrong password, idempotent restore, original migrations | R/U/D — AppReliabilityTest, BodyProgressTest and existing format tests; real document-provider destination UX remains P |
 | Private Drive restore/merge, key/profile recovery, failed/cancelled check, body-photo opt-in/deletion | R — DriveRestoreTest with simulated transport; native friend-account transfer and authorization remain P |
@@ -47,7 +52,7 @@ D = actual rendered UI action with state/persistence assertions; R = Android rep
 
 ## Stress and accessibility-sized replay
 
-Focused larger-text Food and Coach save preflights run before the main suite. The main suite is followed by the gesture, trainer and full simulation scenarios with system animations enabled and font scale 1.25. A fixed-seed 300-event Android Monkey run exercises additional taps, drags and navigation; runtime crash logs are inspected. This can expose crashes and layout failures but does not prove that every control or hardware path was reached.
+Focused larger-text Food and Coach save preflights run before the main suite. The main suite is followed by the gesture, trainer, measurement and full simulation scenarios with system animations enabled and font scale 1.25. A fixed-seed 300-event Android Monkey run exercises additional taps, drags and navigation; runtime crash logs are inspected. This can expose crashes and layout failures but does not prove that every control or hardware path was reached.
 
 Food and Coach submission tests dismiss the native keyboard and wait for its inset to close before tapping the real action button; database insert assertions remain required. Food is a virtualized LazyColumn, so its test scrolls the parent list to discover the offscreen submit control rather than assuming every item is already composed. The parent selector requires vertical scrolling and excludes the horizontal main-tab pager. The keyboard-open submit/IME-shortcut path is not separately simulated. Native IME animations do not run on Compose’s test clock.
 
@@ -55,10 +60,27 @@ Screenshots use synthetic records. Native status/navigation bars or keyboard may
 
 ## Results
 
-[Run 40435413413](https://github.com/jdp323/migraineguard/actions/runs/40435413413), source bf995c20f1eea49507a5de356a0b1588209ffa22: all gates passed. **91 JVM + 44 Android runtime tests**, **2 focused preflights** and **13 animation-enabled repeats at font scale 1.25** passed. Main runtime: 158.642 s; preflights: 64.296 s; repeats: 139.244 s. Lint: zero errors, 121 warnings.
+[Run 41163227312, attempt 2](https://github.com/jdp323/migraineguard/actions/runs/41163227312/attempts/2), source e9fa3942dd5324b38517abd9c48ab39008816e3a: **100 JVM tests, 48 Android runtime tests, two focused larger-text preflights and 17 animation-enabled repeats at font scale 1.25 passed**. Main runtime 204.682 s, preflights 77.028 s, repeats 195.107 s. Lint: zero errors, 122 warnings. Standard/Preview compilation and retained signing passed.
 
-The seeded smoke run reported 300 injected events and no app fatal exception. Two hardware keyboard/flip events were blocked by the emulator (/dev/input/event0 EACCES); those random injections are not counted as proven user actions.
+The seeded smoke run reported 300 events with an empty Android fatal-exception log. Two hardware keyboard/flip injections were blocked by emulator /dev/input/event0 permissions and are not counted as proven actions. The previous attempt passed all app tests but failed the old global crash check because the emulator's Google Wallpaper process crashed. The successful retry retained the same APK bytes.
 
-The update-check UI performed a real public metadata request and reported that the candidate was the latest published version or newer; the capture shows installed 1.15.0 versus then-published 1.14.0. Both public 1.15.0 APK downloads now match the tested artifact hashes and retained signer. [Exact hashes, six inspected native screenshots, file/function changes and prompt](UPDATE_1_15_0.md#verification).
+Both anonymous public APK downloads match the tested artifact hashes, report 1.16.0/code26 and retain SHA-1 FB:67:0D:1D:96:C2:8B:9E:27:0D:36:F8:D6:57:53:E3:6B:30:8D:E8. Nine GIFs and both complete license files match source inside each APK; migration-test schema assets are excluded from phone APKs.
 
-The review found and fixed the default-profile training gate, plan timestamp encoding, guided-draft replay risk, disappearing provider-action feedback, stale reminder edits, transparent dialog backgrounds and Coach response persistence coupled to scrolling. The test harness now handles native keyboard closure and virtualized list discovery explicitly. Passing fixtures do not convert the P entries above into verified real-device services.
+| Package | SHA-256 |
+| --- | --- |
+| [Standard](https://github.com/jdp323/migraineguard/releases/download/v1.16.0-debug/MigraineGuard-v1.16.0-debug.apk) | 4013e101fc2c182ea8e8fbc36b1a2a78c9f82d595ef74803d3517e7e8d30aef9 |
+| [Preview](https://github.com/jdp323/migraineguard/releases/download/v1.16.0-debug/MigraineGuard-v1.16.0-preview.apk) | 16fd3bce078b0720bdb9265419d4081ea4035809a29b7b6f88489550db892bef |
+
+The real populated v7 migration fixture preserved exact JPEG bytes, notes, measurements, deletion markers and older journals; compaction preserved records. Compressed/legacy encrypted restore, old Base64 photo import, measurement revisions/tombstones and simulated Drive restore passed. Metric/imperial forms, multiple groups/custom areas, date edits, history/trends, draft protection and delete/optimization were exercised on rendered Android components. Six normal/larger-text captures were visually inspected.
+
+| Synthetic storage comparison | Before | After |
+| --- | ---: | ---: |
+| Photo payload: Base64 text → exact JPEG bytes | 1112 B | 833 B |
+| Compact journal JSON → packed snapshot | 1830 B | 887 B |
+| Journal database + WAL before/after Optimize | 86096 B | 77824 B |
+
+These are measured disposable-fixture sizes, not a promised percentage reduction for every user's database. Already-compressed JPEGs, record mix and SQLite page allocation affect results.
+
+Real Google authorization/transfer, actual wearable/Health Connect synchronization, live provider responses and OEM notification delivery remain phone acceptance checks; deterministic emulator fixtures do not prove them. [Functional matrix and limits](SIMULATION_REPORT.md) · [Phone checklist](PHONE_TESTING.md).
+
+The post-verification CI-only crash classifier has eight standalone Python fixtures and was checked against both an app-fatal fixture (exit1) and the actual unrelated wallpaper log (exit0). Runtime jobs now check out that helper. These maintenance files do not change the released APK; the successful hosted attempt used the earlier stricter global-fatal gate.

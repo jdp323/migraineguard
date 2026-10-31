@@ -1,6 +1,6 @@
-> Current v1.15.0: [direct workouts without the age/setup gate, rear-head fix, zoom, exercise GIFs, full file/function changes and exact AI prompt](UPDATE_1_15_0.md). [Functional simulation coverage and remaining phone checks](SIMULATION_REPORT.md).
+> Current v1.16.0: [direct workouts without the age/setup gate, rear-head fix, zoom, exercise GIFs, full file/function changes and exact AI prompt](UPDATE_1_15_0.md). [Functional simulation coverage and remaining phone checks](SIMULATION_REPORT.md).
 
-## v1.15.0 direct Trainer, zoom and guide acceptance
+## v1.16.0 direct Trainer, zoom and guide acceptance
 
 1. Update Standard without uninstalling; verify About shows 1.15.0/code25. Open Fitness → Trainer, select Chest and Quads and build immediately without opening Training preferences. No adult warning/checkbox should appear. Optional equipment preferences change the available movements.
 2. Try Male/Female and Front/Back. Pinch or use +/− to enlarge, tap visible muscle regions and drag to pan. Fit body restores 100% and side swipes. Verify the repaired male rear skull/ears/nape and preserved selection after rotation/recreation.
@@ -140,3 +140,11 @@ Reference: https://android.googlesource.com/platform/packages/modules/HealthFitn
 2. Tap a filled chest region, add quads, deselect/reselect, switch sides and illustrations. Coral highlights and labeled chips must agree. Select glutes/hamstrings on Back. Head/joints/unsupported details must not trigger a different target.
 3. Swipe within the map to switch sides, outside it to navigate main tabs. Check native Back and disabled/reduced system animations. Selections must remain across Fitness modes.
 4. Generate a multi-target session and use it in the actual editable exercise log. Existing weekly planning, load/history rules, backup formats, account isolation and AI explicit consent still follow the v1.13 checklist; no permission should be newly requested by opening the map.
+
+## v1.16 measurement/compact-storage acceptance
+
+1. Update Standard in place. Check 1.16.0 (26), existing photos/notes/weight and journal history.
+2. Add dated waist/chest/both biceps and thighs, a custom area, and a second date; check trends, edit, delete and draft Discard. Repeat in inches.
+3. Export an encrypted recovery file and readable ZIP through your actual document provider. Verify body-measurements.csv uses cm and that a second installation restores old and new supported files. Do not remove originals before verifying.
+4. Complete a private Drive save, sign into the same account on another updated installation and check measurements/profile/keys plus the separate photo opt-in. Actual Google transport is outside the deterministic emulator fixture. Avoid simultaneous edits.
+5. Read Compact storage, Optimize and confirm all records remain. Exports/gallery originals are separate copies.

@@ -2,14 +2,14 @@
 
 A native Android companion for migraine journaling, movement, sleep, hydration, meals, body measurements, medication check-ins and optional educational AI coaching.
 
-**Latest verified build: v1.15.0 (25)** · Android 8+ · Public signed test APKs
+**Latest verified build: v1.16.0 (26)** · Android 8+ · Public signed test APKs
 
 ## Download and share
 
 **[Download MigraineGuard](https://github.com/jdp323/migraineguard/releases/latest)** — share this link with friends. Open **Assets** and choose the Standard .apk. No GitHub repository invitation is needed.
 
-- [Standard v1.15.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.15.0-debug/MigraineGuard-v1.15.0-debug.apk): normal app, com.migraineguard.app. Update in place when the signing certificate matches; keep local records.
-- [Preview v1.15.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.15.0-debug/MigraineGuard-v1.15.0-preview.apk): separate installation beside Standard, with its own storage and permissions.
+- [Standard v1.16.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.16.0-debug/MigraineGuard-v1.16.0-debug.apk): normal app, com.migraineguard.app. Update in place when the signing certificate matches; keep local records.
+- [Preview v1.16.0 APK](https://github.com/jdp323/migraineguard/releases/download/v1.16.0-debug/MigraineGuard-v1.16.0-preview.apk): separate installation beside Standard, with its own storage and permissions.
 - [User guide](docs/USER_GUIDE.md): installation, checked setup, daily features, Google Drive restore and data controls.
 - [Troubleshooting](docs/TROUBLESHOOTING.md): possible errors, what they mean and how to resolve them.
 - [How it works](docs/HOW_IT_WORKS.md): device path, account isolation, AI/backup boundaries and code map.
@@ -17,23 +17,21 @@ A native Android companion for migraine journaling, movement, sleep, hydration, 
 
 Do not uninstall an old installation containing records to resolve a signature conflict. Use Preview or verify a recovery export first. These are development builds, distributed outside the Play Store; app updates are downloaded from Releases.
 
-## What's new in v1.15.0
+## What's new in v1.16.0
 
-Select muscles in Fitness → Trainer and press Build today's workout directly. The mandatory adult/preferences step that blocked first use is removed. Preferences remain optional for equipment, experience, goals and time. Unknown lifting loads still require a comfortable test set.
+Settings → Account → Body measurements / photos / weight now includes dated tape-measurement logs: 20 standard areas plus up to eight custom areas, cm/in, editable history and area-specific trends. Fill only the areas you measure. Old weight and photo/check-in records remain intact.
 
-Pinch or use +/− to zoom the anatomical map up to 300%, drag to pan while enlarged, and Fit body to restore side swipes. The male rear head now has a symmetric skull, ears and nape. Selection and zoom survive activity recreation.
+Local journals retain reliable account-separated SQLite storage. Measurements use sparse compact JSON; existing body photos migrate losslessly from Base64 text to binary JPEGs. Drive and encrypted recovery snapshots now use compact JSON with gzip when smaller. Settings → Data shows journal/photo size and offers Optimize local storage. Update all devices before using the new backup formats; the new version still reads old backups.
 
-The exercise and machine library has searchable setup/step guidance for all 35 movements and nine accurately matched offline GIFs with Play, Pause and Restart. Use a guide to fill an editable exercise draft; existing fields are protected and planned sets remain unchecked. Weekly templates, optional explicit AI planning and actual workout history remain available.
+[Usage, storage formats, file/function map and verification](docs/UPDATE_1_16_0.md) · [Full simulation scope](docs/SIMULATION_REPORT.md) · [AI and permissions](docs/AI_AND_PERMISSIONS.md).
 
-[Changes, file/function map, exact AI prompt, media credits and verification](docs/UPDATE_1_15_0.md) · [Full simulation coverage and remaining phone checks](docs/SIMULATION_REPORT.md) · [AI and permissions](docs/AI_AND_PERMISSIONS.md).
-
-All [v1.14 glass/anatomy controls](docs/UPDATE_1_14_0.md), [v1.12 movement breaks, private body photos and export](docs/UPDATE_1_12_0.md), [v1.11 swipe navigation](docs/UPDATE_1_11_0.md) and [v1.10 tracking features](docs/UPDATE_1_10_0.md) remain. Data is stored locally or in the user's optional private Drive; no developer health-data/photo backend is used.
+The direct Trainer, anatomical zoom, 35 exercise guides and nine offline GIFs from [v1.15](docs/UPDATE_1_15_0.md) remain. Data stays locally or in the user's optional private Drive; no developer health-data/photo backend is used.
 
 ## A look inside
 
-Synthetic emulator captures from the running app. [Exact test scope and more screens](docs/UPDATE_1_15_0.md#verification).
+Synthetic emulator captures from the running app. [Exact test scope and more screens](docs/UPDATE_1_16_0.md#verification).
 
-<table><tr><td><img src="docs/screenshots/v1.15.0/trainer-body-front-light.png" width="250" alt="Multiple muscle regions selected"></td><td><img src="docs/screenshots/v1.15.0/simulation-zoomed-head.png" width="250" alt="Repaired rear head at enlarged zoom"></td><td><img src="docs/screenshots/v1.15.0/simulation-exercise-gif.png" width="250" alt="Offline exercise GIF guide with playback controls"></td></tr></table>
+<table><tr><td><img src="docs/screenshots/v1.16.0/measurements-history-metric.png" width="250" alt="Dated body measurement history"></td><td><img src="docs/screenshots/v1.16.0/measurements-trend-metric.png" width="250" alt="Waist measurement trend by date"></td><td><img src="docs/screenshots/v1.15.0/simulation-exercise-gif.png" width="250" alt="Offline exercise GIF guide with playback controls"></td></tr></table>
 
 Anatomy derives from MIT-licensed react-native-body-highlighter; the exercise demo frame is Goulart / wger, CC BY-SA 4.0. [Full credits and licenses](THIRD_PARTY_NOTICES.md).
 
@@ -55,9 +53,9 @@ Fitness defaults new profiles to All sources, with an optional Samsung alternati
 
 ## Accounts, backup and privacy
 
-A device-encrypted remembered identity restores the selected profile after restart, without storing Google API tokens. Explicit sign-out clears that session. Each Google account keeps its own local profile, settings, keys and journal. Continue locally preserves its own records. Optional Drive backup restores profile, DOB, measurements, goals, settings, personal provider keys and seven original journal tables. Body progress enters Drive only after its separate opt-in; meal/equipment photos and raw Health Connect records are excluded.
+A device-encrypted remembered identity restores the selected profile after restart, without storing Google API tokens. Explicit sign-out clears that session. Each Google account keeps its own local profile, settings, keys and journal. Continue locally preserves its own records. Optional Drive backup restores profile, DOB, measurements, goals, settings, personal provider keys, seven original journal tables and dated circumference logs. Body progress enters Drive only after its separate opt-in; meal/equipment photos and raw Health Connect records are excluded.
 
-Drive snapshots use Google's transport/storage protection; portable keys inside the JSON are **not separately password-encrypted or end-to-end encrypted**. Keys are encrypted with Android Keystore locally. Manual password-encrypted exports are a separate recovery format and exclude provider keys. Readable ZIP exports are not encrypted. New body progress has deletion markers; original journal tables retain their older merge/deletion limits. Conflict-free simultaneous-device sync is not implemented.
+Drive snapshots use Google's transport/storage protection; portable keys inside the compressed JSON are **not separately password-encrypted or end-to-end encrypted**. Keys are encrypted with Android Keystore locally. Manual password-encrypted exports are a separate recovery format and exclude provider keys. Readable ZIP exports are not encrypted. Body progress and circumference logs have deletion markers; original journal tables retain their older merge/deletion limits. Conflict-free simultaneous-device sync is not implemented.
 
 Cloud AI uses your selected provider/key, then offline fallback. Optional legacy Auto uses Gemini → Groq → OpenRouter → offline. Sending the health summary or a meal photo requires the corresponding explicit choice. Opening Insights does not automatically upload health context. Provider quotas/charges vary; historical class names containing Free are not a pricing promise.
 
@@ -65,9 +63,9 @@ Cloud AI uses your selected provider/key, then offline fallback. Optional legacy
 
 ## Verification and remaining phone checks
 
-[Release run 40435413413](https://github.com/jdp323/migraineguard/actions/runs/40435413413) passed **91 JVM and 44 Android runtime tests**, **2 focused larger-text preflights**, and **13 animation-enabled repeats at font scale 1.25**. Compilation, lint (0 errors; 121 warnings) and retained Standard/Preview signing passed. A seeded 300-event smoke run completed without an app fatal exception; the report records two emulator-blocked hardware flip injections. Both anonymous public APK downloads match tested bytes and include all nine GIFs plus complete licenses. [Evidence and inspected screenshots](docs/UPDATE_1_15_0.md#verification) · [Functional coverage and limits](docs/SIMULATION_REPORT.md).
+[Release run 41163227312, attempt 2](https://github.com/jdp323/migraineguard/actions/runs/41163227312/attempts/2) passed **100 JVM and 48 Android runtime tests**, **two focused larger-text preflights**, and **17 animation-enabled repeats at font scale 1.25**. Compilation, lint (zero errors; 122 warnings), retained signing and a seeded 300-event smoke run passed. Both anonymous public APK downloads match the tested bytes. Migration checks preserve exact saved JPEG bytes and older journals; new/legacy recovery and measurement Drive-transport fixtures pass. [Exact hashes, storage benchmark and inspected captures](docs/UPDATE_1_16_0.md#verification) · [Coverage and limits](docs/SIMULATION_REPORT.md).
 
-These tests use synthetic data and simulated Drive transport. Actual watch synchronization, friend-account native Drive transfer, live AI and OEM notification delivery still require phone acceptance. [Phone test checklist](docs/PHONE_TESTING.md) · [Feature status](docs/FEATURE_STATUS.md)
+Tests use synthetic data and simulated Drive transport. Actual watch synchronization, native Google account transfer, live AI and OEM delivery remain phone acceptance checks. [Phone checklist](docs/PHONE_TESTING.md) · [Feature status](docs/FEATURE_STATUS.md).
 
 ## Build and technical documentation
 
